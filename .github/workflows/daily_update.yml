@@ -1,0 +1,43 @@
+name: Cap nhat TPCP hang ngay
+
+on:
+  # KHONG dung "schedule: cron" cua GitHub — da xac nhan khong dang tin cay
+  # tren repo moi it hoat dong (bai hoc tu daily-news-pipeline). Dung
+  # cron-job.org ban ngoai goi repository_dispatch, giong het pattern da
+  # dung cho daily-news-pipeline / vn-sector-indices-bot.
+  repository_dispatch:
+    types: [daily-tpcp-update]
+  workflow_dispatch: {}
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    # Cap nhat hang ngay chi quet vai ngay gan nhat -> phai xong trong vai
+    # phut. Treo qua muc nay la dau hieu bat thuong that su can xem ngay,
+    # khong phai backfill dai ngay dung.
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - run: pip install -r requirements.txt
+
+      - name: Quet 10 ngay gan nhat (checked_dates tu bo qua ngay da co)
+        run: |
+          python -c "
+          from datetime import date, timedelta
+          from hnx_auctions_daily import run
+          start = str(date.today() - timedelta(days=10))
+          run(start, cache_dir='./cache')
+          "
+
+      - name: Commit neu co du lieu moi
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add cache/
+          git diff --cached --quiet || git commit -m "Cap nhat TPCP $(date +%F)"
+          git push
