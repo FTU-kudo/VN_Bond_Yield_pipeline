@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="vi" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Đường Cong Lợi Suất — VN Bond Dashboard</title>
+  <meta name="description" content="Phân tích đường cong lợi suất TPCP Việt Nam: Nelson-Siegel fitting, term spread, so sánh lịch sử.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📈</text></svg>">
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+
+<nav class="sidebar" role="navigation" aria-label="Main navigation">
+  <div class="sidebar-logo">VN</div>
+  <ul class="nav-items">
+    <li class="nav-item"><a href="index.html" id="nav-home"><span class="nav-icon">🏛️</span><span class="nav-label">Tổng Quan</span></a></li>
+    <li class="nav-item"><a href="yield_curve.html" id="nav-curve" class="active"><span class="nav-icon">📈</span><span class="nav-label">Đường Cong Lợi Suất</span></a></li>
+    <li class="nav-item"><a href="auctions.html" id="nav-auctions"><span class="nav-icon">🏷️</span><span class="nav-label">Đấu Thầu Sơ Cấp</span></a></li>
+    <li class="nav-item"><a href="foreign_flows.html" id="nav-foreign"><span class="nav-icon">🌏</span><span class="nav-label">Dòng Vốn Ngoại</span></a></li>
+  </ul>
+</nav>
+
+<main class="main-content">
+  <header class="page-header">
+    <div>
+      <h1 class="page-title">Đường Cong Lợi Suất TPCP</h1>
+      <p class="page-subtitle">Nelson-Siegel fitting · Lịch sử từ 2012 · Dữ liệu HNX + VBMA</p>
+    </div>
+    <div style="display:flex; gap:1rem; align-items:center;">
+      <select id="method-select" aria-label="Chọn phương pháp fitting">
+        <option value="ns" selected>Nelson-Siegel (NS)</option>
+        <option value="nss">Svensson (NSS)</option>
+      </select>
+      <span id="live-clock" style="font-size:0.8rem; color:var(--text-secondary); font-family:'JetBrains Mono',monospace;"></span>
+    </div>
+  </header>
+
+  <div class="page-body">
+
+    <!-- ── Date Slider ─────────────────────────────────────────────── -->
+    <div class="chart-card" style="margin-bottom: 1.5rem; padding: 1rem 1.5rem;">
+      <div style="display:flex; align-items:center; gap:1.5rem;">
+        <div style="flex: 1;">
+          <p style="font-size:0.75rem; color:var(--text-secondary); margin-bottom:0.5rem;">
+            📅 Ngày xem: <strong id="slider-date-display" style="color:var(--text-accent);">—</strong>
+          </p>
+          <div class="slider-container" style="padding: 0;">
+            <input type="range" id="date-slider" aria-label="Chọn ngày">
+          </div>
+        </div>
+        <div style="display:flex; gap:0.5rem;">
+          <button class="btn btn-ghost" id="btn-prev-day" onclick="stepDate(-1)" aria-label="Ngày trước">◀</button>
+          <button class="btn btn-ghost" id="btn-next-day" onclick="stepDate(1)" aria-label="Ngày sau">▶</button>
+          <button class="btn btn-ghost" onclick="goToLatest()" aria-label="Hôm nay">Mới nhất</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Full Width Yield Curve ─────────────────────────────────── -->
+    <div class="chart-card chart-card-full" style="margin-bottom: 1.5rem;">
+      <div class="chart-title">
+        Đường Cong Lợi Suất theo Ngày Chọn
+        <div class="btn-group" style="margin-left:auto;">
+          <button class="btn btn-ghost" onclick="toggleCompareCurve()" id="btn-compare">So sánh ngày khác</button>
+        </div>
+      </div>
+      <p class="chart-subtitle" id="curve-info">Dữ liệu spot rate liên tục — kỳ hạn 1 tháng đến 30 năm</p>
+      <div class="chart-body chart-body-tall" id="yield-curve-main" style="min-height: 380px;"></div>
+    </div>
+
+    <!-- ── Spread Analysis Row ────────────────────────────────────── -->
+    <div class="chart-grid chart-grid-2" style="margin-bottom: 1.5rem;">
+
+      <!-- Spread History -->
+      <div class="chart-card">
+        <p class="chart-title">↕️ Term Spread 10Y-2Y (bps)</p>
+        <p class="chart-subtitle">Toàn bộ lịch sử — Màu đỏ = đảo ngược đường cong</p>
+        <div class="chart-body" id="spread-history-chart" style="min-height: 250px;"></div>
+      </div>
+
+      <!-- Butterfly -->
+      <div class="chart-card">
+        <p class="chart-title">🦋 Butterfly Spread 2s5s10s (bps)</p>
+        <p class="chart-subtitle">Đo độ cong đường cong — Dương = bướu ở kỳ hạn giữa</p>
+        <div class="chart-body" id="butterfly-chart" style="min-height: 250px;"></div>
+      </div>
+
+    </div>
+
+    <!-- ── Parameter Evolution ────────────────────────────────────── -->
+    <div class="chart-card chart-card-full" style="margin-bottom: 1.5rem;">
+      <p class="chart-title">⚙️ Tham Số Nelson-Siegel theo Thời Gian</p>
+      <p class="chart-subtitle">β₀ (level) · β₁ (slope) · β₂ (curvature) · λ (decay)</p>
+      <div class="chart-body" id="ns-params-chart" style="min-height: 280px;"></div>
+    </div>
+
+    <!-- ── Percentile Rank Table ──────────────────────────────────── -->
+    <div class="chart-card">
+      <p class="chart-title">📊 Lợi Suất So Với Lịch Sử (Percentile 1 năm)</p>
+      <p class="chart-subtitle">0% = thấp nhất · 100% = cao nhất trong 252 ngày giao dịch gần nhất</p>
+      <div id="percentile-table-body" style="margin-top:0.75rem;">
+        <div class="skeleton" style="height: 180px; border-radius:8px;"></div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+<script src="assets/app.js"></script>
+<script>
+// ── Yield Curve Page Logic ────────────────────────────────────────────
+let allDates = [];
+let curveDataGlobal = null;
+let spreadDataGlobal = null;
+
+(async function init() {
+  await VNBond.loadAllData();
+  curveDataGlobal = VNBond.state.curveData;
+  spreadDataGlobal = VNBond.state.spreadData;
+
+  if (!curveDataGlobal) {
+    // Render demo
+    curveDataGlobal = generateDemoCurve();
+  }
+
+  // Init slider
+  allDates = VNBond.initDateSlider('date-slider', curveDataGlobal, (date) => {
+    document.getElementById('slider-date-display').textContent = VNBond.formatDateVN(date);
+    document.getElementById('curve-info').textContent =
+      `Nelson-Siegel fitting — Ngày ${VNBond.formatDateVN(date)}`;
+    VNBond.drawYieldCurve('yield-curve-main', curveDataGlobal, date);
+  });
+
+  // Initial render
+  const latestDate = allDates[allDates.length - 1];
+  document.getElementById('slider-date-display').textContent = VNBond.formatDateVN(latestDate);
+  VNBond.drawYieldCurve('yield-curve-main', curveDataGlobal, latestDate);
+
+  VNBond.onResize('yield-curve-main', () => {
+    const idx = parseInt(document.getElementById('date-slider').value);
+    VNBond.drawYieldCurve('yield-curve-main', curveDataGlobal, allDates[idx] || latestDate);
+  });
+
+  // Spread & butterfly charts
+  if (spreadDataGlobal) {
+    VNBond.drawSpreadChart('spread-history-chart', spreadDataGlobal, 'spread_10y_2y');
+    VNBond.drawSpreadChart('butterfly-chart', spreadDataGlobal, 'butterfly_2s5s10s');
+  } else {
+    drawDemoSpreadHistory();
+  }
+
+  // NS params chart
+  drawNSParams(curveDataGlobal);
+
+  // Percentile table
+  renderPercentileTable(curveDataGlobal, spreadDataGlobal);
+})();
+
+function stepDate(delta) {
+  const slider = document.getElementById('date-slider');
+  const newVal = Math.max(0, Math.min(allDates.length - 1, parseInt(slider.value) + delta));
+  slider.value = newVal;
+  slider.dispatchEvent(new Event('input'));
+}
+
+function goToLatest() {
+  const slider = document.getElementById('date-slider');
+  slider.value = allDates.length - 1;
+  slider.dispatchEvent(new Event('input'));
+}
+
+function toggleCompareCurve() {
+  // TODO: overlay đường cong ngày khác để so sánh
+  alert('Tính năng so sánh sẽ được cập nhật sau khi có dữ liệu thật.');
+}
+
+function drawNSParams(curveData) {
+  // Placeholder — sẽ vẽ từ fitted_params_ns.parquet
+  const container = document.getElementById('ns-params-chart');
+  container.innerHTML = `
+    <div style="display:flex; align-items:center; justify-content:center; height:100%; color:var(--text-muted); font-size:0.85rem; flex-direction:column; gap:0.5rem;">
+      <span style="font-size:2rem; opacity:0.4;">⚙️</span>
+      <span>Chưa có fitted_params_ns.parquet</span>
+      <span style="font-size:0.75rem;">Hãy chạy: python analysis/yield_curve_fitting.py</span>
+    </div>`;
+}
+
+function renderPercentileTable(curveData, spreadData) {
+  const container = document.getElementById('percentile-table-body');
+  if (!spreadData || !spreadData.length) {
+    container.innerHTML = `<div style="padding:1.5rem; text-align:center; color:var(--text-muted); font-size:0.85rem;">Cần dữ liệu spread để tính percentile rank.</div>`;
+    return;
+  }
+
+  const cols = ['y_3m', 'y_2y', 'y_5y', 'y_10y', 'spread_10y_2y', 'butterfly_2s5s10s'];
+  const labels = { y_3m: '3M', y_2y: '2Y', y_5y: '5Y', y_10y: '10Y',
+    spread_10y_2y: 'Spread 10Y-2Y', butterfly_2s5s10s: 'Butterfly' };
+
+  const n = Math.min(252, spreadData.length);
+  const recent = spreadData.slice(-n);
+  const last = spreadData[spreadData.length - 1];
+
+  const rows = cols.filter(c => last[c] != null).map(col => {
+    const values = recent.map(d => d[col]).filter(v => v != null);
+    const cur = last[col];
+    const rank = values.filter(v => v <= cur).length / values.length;
+    const percentile = Math.round(rank * 100);
+    const barColor = percentile > 80 ? 'var(--color-down)' : percentile < 20 ? 'var(--color-up)' : 'var(--color-neutral)';
+    return `
+      <tr>
+        <td style="color:var(--text-secondary); font-size:0.8rem;">${labels[col]}</td>
+        <td class="mono text-accent">${col.startsWith('y_') ? VNBond.fmt.rate(cur) : (cur*100).toFixed(1)+' bps'}</td>
+        <td style="width:40%">
+          <div style="background:var(--border-subtle); border-radius:4px; height:6px; overflow:hidden;">
+            <div style="width:${percentile}%; height:100%; background:${barColor}; border-radius:4px; transition: width 0.6s;"></div>
+          </div>
+        </td>
+        <td class="mono" style="text-align:right; color:${barColor};">${percentile}%</td>
+      </tr>`;
+  });
+
+  container.innerHTML = `
+    <table class="data-table">
+      <thead><tr><th>Chỉ Số</th><th>Hiện Tại</th><th>Vị Trí trong 252D</th><th>Rank</th></tr></thead>
+      <tbody>${rows.join('')}</tbody>
+    </table>`;
+}
+
+function generateDemoCurve() {
+  const today = new Date().toISOString().substring(0, 10);
+  const tenors = [0.25, 0.5, 1, 2, 3, 5, 7, 10, 15, 20, 30];
+  const baseRates = [3.8, 3.9, 4.1, 4.35, 4.6, 4.95, 5.2, 5.5, 5.8, 6.0, 6.2];
+  const result = [];
+  for (let i = 30; i >= 0; i--) {
+    const d = new Date(); d.setDate(d.getDate() - i * 7);
+    const dateStr = d.toISOString().substring(0, 10);
+    tenors.forEach((t, idx) => {
+      result.push({
+        date: dateStr, tenor_yr: t,
+        yield_pct: baseRates[idx] + (Math.random() - 0.5) * 0.3,
+      });
+    });
+  }
+  return result;
+}
+
+function drawDemoSpreadHistory() {
+  const today = new Date();
+  const demoSpread = Array.from({length: 500}, (_, i) => {
+    const d = new Date(today); d.setDate(d.getDate() - 500 + i);
+    const trend = Math.max(-0.5, Math.min(2, 1.5 - (i > 300 ? (i - 300) * 0.01 : 0)));
+    return {
+      date: d.toISOString().substring(0, 10),
+      spread_10y_2y: trend + Math.sin(i / 30) * 0.25 + (Math.random() - 0.5) * 0.1,
+      butterfly_2s5s10s: 0.3 + Math.sin(i / 20) * 0.15,
+    };
+  });
+  VNBond.drawSpreadChart('spread-history-chart', demoSpread, 'spread_10y_2y');
+  VNBond.drawSpreadChart('butterfly-chart', demoSpread, 'butterfly_2s5s10s');
+  renderPercentileTable(null, demoSpread);
+}
+</script>
+
+</body>
+</html>

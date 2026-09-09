@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="vi" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Đấu Thầu Sơ Cấp — VN Bond Dashboard</title>
+  <meta name="description" content="Phân tích kết quả đấu thầu sơ cấp trái phiếu chính phủ Việt Nam: bid-to-cover, stop-out rate, lịch sử phát hành.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏷️</text></svg>">
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+
+<nav class="sidebar" role="navigation" aria-label="Main navigation">
+  <div class="sidebar-logo">VN</div>
+  <ul class="nav-items">
+    <li class="nav-item"><a href="index.html"><span class="nav-icon">🏛️</span><span class="nav-label">Tổng Quan</span></a></li>
+    <li class="nav-item"><a href="yield_curve.html"><span class="nav-icon">📈</span><span class="nav-label">Đường Cong Lợi Suất</span></a></li>
+    <li class="nav-item"><a href="auctions.html" class="active"><span class="nav-icon">🏷️</span><span class="nav-label">Đấu Thầu Sơ Cấp</span></a></li>
+    <li class="nav-item"><a href="foreign_flows.html"><span class="nav-icon">🌏</span><span class="nav-label">Dòng Vốn Ngoại</span></a></li>
+  </ul>
+</nav>
+
+<main class="main-content">
+  <header class="page-header">
+    <div>
+      <h1 class="page-title">Phân Tích Đấu Thầu Sơ Cấp TPCP</h1>
+      <p class="page-subtitle">Kết quả đấu thầu HNX từ 2012 · Bid-to-Cover · Stop-out Rate · Issuance Calendar</p>
+    </div>
+    <div style="display:flex; gap:1rem; align-items:center;">
+      <select id="tenor-filter" aria-label="Lọc theo tenor">
+        <option value="all">Tất cả tenor</option>
+        <option value="2">2 năm</option>
+        <option value="5">5 năm</option>
+        <option value="10" selected>10 năm</option>
+        <option value="15">15 năm</option>
+        <option value="20">20 năm</option>
+      </select>
+      <span id="live-clock" style="font-size:0.8rem; color:var(--text-secondary); font-family:'JetBrains Mono',monospace;"></span>
+    </div>
+  </header>
+
+  <div class="page-body">
+
+    <!-- ── KPIs ────────────────────────────────────────────────────── -->
+    <section class="metrics-grid" style="grid-template-columns: repeat(5, 1fr);">
+      <div class="metric-card fade-in fade-in-delay-1">
+        <p class="metric-label">Tổng Phiên</p>
+        <p class="metric-value num-mono neutral" id="kpi-total-auctions">—</p>
+        <span class="metric-change neutral">Toàn bộ lịch sử</span>
+      </div>
+      <div class="metric-card fade-in fade-in-delay-2">
+        <p class="metric-label">Tỷ Lệ Thành Công</p>
+        <p class="metric-value num-mono neutral" id="kpi-success-rate">—</p>
+        <span class="metric-change neutral">Tổng lịch sử</span>
+      </div>
+      <div class="metric-card fade-in fade-in-delay-3">
+        <p class="metric-label">BCR Trung Bình 10Y</p>
+        <p class="metric-value num-mono neutral" id="kpi-bcr-10y">—</p>
+        <span class="metric-change neutral">x lần</span>
+      </div>
+      <div class="metric-card fade-in fade-in-delay-4">
+        <p class="metric-label">Stop-out Rate 10Y</p>
+        <p class="metric-value num-mono neutral" id="kpi-stop-10y">—</p>
+        <span class="metric-change neutral">Phiên gần nhất</span>
+      </div>
+      <div class="metric-card fade-in fade-in-delay-4">
+        <p class="metric-label">Tail 10Y</p>
+        <p class="metric-value num-mono neutral" id="kpi-tail-10y">—</p>
+        <span class="metric-change neutral">bps</span>
+      </div>
+    </section>
+
+    <!-- ── Stop-out Rate History (Full Width) ────────────────────── -->
+    <div class="chart-card chart-card-full" style="margin-bottom: 1.5rem;">
+      <div class="chart-title">
+        📉 Lịch Sử Stop-out Rate
+        <div class="btn-group" style="margin-left:auto;">
+          <button class="btn btn-ghost active" id="btn-t10y" onclick="filterTenor(10.0, this)">10Y</button>
+          <button class="btn btn-ghost" id="btn-t5y" onclick="filterTenor(5.0, this)">5Y</button>
+          <button class="btn btn-ghost" id="btn-t2y" onclick="filterTenor(2.0, this)">2Y</button>
+          <button class="btn btn-ghost" id="btn-tall" onclick="filterTenor('all', this)">Tất cả</button>
+        </div>
+      </div>
+      <p class="chart-subtitle">Lãi suất trúng thầu cao nhất (stop-out) và bình quân theo tenor</p>
+      <div class="chart-body chart-body-tall" id="stop-out-chart" style="min-height: 320px;"></div>
+    </div>
+
+    <!-- ── BCR + Volume Grid ──────────────────────────────────────── -->
+    <div class="chart-grid chart-grid-2" style="margin-bottom: 1.5rem;">
+
+      <!-- BCR by tenor -->
+      <div class="chart-card">
+        <p class="chart-title">📊 Bid-to-Cover Ratio theo Tenor</p>
+        <p class="chart-subtitle">BCR > 2x = nhu cầu mạnh · BCR < 1x = thất bại</p>
+        <div class="chart-body" id="bcr-chart" style="min-height: 280px;"></div>
+      </div>
+
+      <!-- Success Rate heatmap -->
+      <div class="chart-card">
+        <p class="chart-title">🟢 Tỷ Lệ Thành Công theo Tenor (4 quý gần nhất)</p>
+        <p class="chart-subtitle">Xanh ≥ 80% · Vàng 50-80% · Đỏ &lt; 50%</p>
+        <div id="success-rate-viz" style="margin-top:0.75rem; min-height:250px;"></div>
+      </div>
+
+    </div>
+
+    <!-- ── Issuance Volume Quarterly ─────────────────────────────── -->
+    <div class="chart-card chart-card-full" style="margin-bottom: 1.5rem;">
+      <p class="chart-title">📦 Khối Lượng Phát Hành theo Quý (tỷ đồng)</p>
+      <p class="chart-subtitle">GT trúng thầu thực tế — stack theo tenor</p>
+      <div class="chart-body" id="volume-chart" style="min-height: 300px;"></div>
+    </div>
+
+    <!-- ── Recent Auctions Table ─────────────────────────────────── -->
+    <div class="chart-card">
+      <div class="chart-title">
+        📋 Chi Tiết Các Phiên Đấu Thầu Gần Nhất
+        <button class="btn btn-ghost" style="margin-left:auto; font-size:0.75rem;" onclick="exportAuctionTable()">⬇ CSV</button>
+      </div>
+      <p class="chart-subtitle">90 ngày gần nhất — click cột để sắp xếp</p>
+      <div style="overflow-x:auto; margin-top:0.75rem;">
+        <div id="detailed-auction-table">
+          <div class="skeleton" style="height:250px; border-radius:8px;"></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+<script src="assets/app.js"></script>
+<script>
+let auctionDataGlobal = null;
+
+(async function init() {
+  await VNBond.loadAllData();
+  auctionDataGlobal = VNBond.state.auctionData;
+
+  if (!auctionDataGlobal) {
+    auctionDataGlobal = generateDemoAuctions();
+  }
+
+  renderKPIs(auctionDataGlobal);
+  drawStopOutChart(auctionDataGlobal, 10.0);
+  drawBCRChart(auctionDataGlobal);
+  renderSuccessRateViz(auctionDataGlobal);
+  drawVolumeChart(auctionDataGlobal);
+  renderDetailedTable(auctionDataGlobal);
+})();
+
+function renderKPIs(data) {
+  if (!data) return;
+
+  const setVal = (id, val, suffix = '') => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = val != null ? val + suffix : '—';
+  };
+
+  if (data.total_auctions != null) setVal('kpi-total-auctions', data.total_auctions.toLocaleString('vi-VN'));
+  if (data.success_rate != null) setVal('kpi-success-rate', (data.success_rate * 100).toFixed(1), '%');
+  if (data.bcr_10y != null) setVal('kpi-bcr-10y', data.bcr_10y.toFixed(2), 'x');
+  if (data.latest_stop_10y != null) setVal('kpi-stop-10y', data.latest_stop_10y.toFixed(3), '%');
+  if (data.latest_tail_10y != null) setVal('kpi-tail-10y', data.latest_tail_10y.toFixed(1));
+}
+
+function filterTenor(tenor, btn) {
+  document.querySelectorAll('.btn-ghost').forEach(b => b.classList.remove('btn-primary'));
+  btn.classList.add('btn-primary');
+  drawStopOutChart(auctionDataGlobal, tenor);
+}
+
+function drawStopOutChart(data, tenorFilter) {
+  const container = document.getElementById('stop-out-chart');
+  if (!data || !data.stop_out_history) {
+    renderPlaceholder(container, 'Chạy pipeline để có dữ liệu đấu thầu thật');
+    return;
+  }
+
+  let history = data.stop_out_history;
+  if (tenorFilter !== 'all') {
+    history = history.filter(d => Math.abs(d.tenor_yr - tenorFilter) < 0.3);
+  }
+
+  if (!history.length) {
+    renderPlaceholder(container, `Không có dữ liệu cho tenor ${tenorFilter}Y`);
+    return;
+  }
+
+  container.innerHTML = '';
+  const margin = { top: 15, right: 30, bottom: 45, left: 60 };
+  const width = container.clientWidth - margin.left - margin.right;
+  const height = container.clientHeight - margin.top - margin.bottom;
+
+  const svg = d3.select('#stop-out-chart')
+    .append('svg').attr('width', '100%').attr('height', '100%')
+    .attr('viewBox', `0 0 ${width + margin.left + margin.right} ${height + margin.top + margin.bottom}`)
+    .append('g').attr('transform', `translate(${margin.left},${margin.top})`);
+
+  const x = d3.scaleTime()
+    .domain(d3.extent(history, d => new Date(d.date)))
+    .range([0, width]);
+
+  const allRates = [...history.map(d => d.winning_rate), ...history.map(d => d.stop_out).filter(Boolean)];
+  const y = d3.scaleLinear().domain(d3.extent(allRates)).nice().range([height, 0]);
+
+  // Grid
+  svg.append('g').call(d3.axisLeft(y).tickSize(-width).tickFormat(''))
+    .call(g => g.select('.domain').remove())
+    .call(g => g.selectAll('line').attr('stroke', 'rgba(148,163,184,0.08)'));
+
+  // Winning rate line
+  const line = d3.line()
+    .x(d => x(new Date(d.date))).y(d => y(d.winning_rate))
+    .curve(d3.curveMonotoneX);
+  svg.append('path').datum(history).attr('fill', 'none')
+    .attr('stroke', '#fbbf24').attr('stroke-width', 2).attr('d', line);
+
+  // Stop-out rate line
+  const stopHistory = history.filter(d => d.stop_out != null);
+  if (stopHistory.length) {
+    const stopLine = d3.line()
+      .x(d => x(new Date(d.date))).y(d => y(d.stop_out))
+      .curve(d3.curveMonotoneX);
+    svg.append('path').datum(stopHistory).attr('fill', 'none')
+      .attr('stroke', '#ef4444').attr('stroke-width', 1.5).attr('stroke-dasharray', '4,2')
+      .attr('d', stopLine);
+  }
+
+  // Axes
+  svg.append('g').attr('transform', `translate(0,${height})`)
+    .call(d3.axisBottom(x).ticks(8))
+    .call(g => g.selectAll('text').attr('fill', '#94a3b8').attr('font-size', '10px'))
+    .call(g => g.select('.domain').attr('stroke', 'rgba(148,163,184,0.2)'));
+
+  svg.append('g').call(d3.axisLeft(y).ticks(5).tickFormat(v => v.toFixed(2) + '%'))
+    .call(g => g.selectAll('text').attr('fill', '#94a3b8').attr('font-size', '10px'))
+    .call(g => g.select('.domain').attr('stroke', 'rgba(148,163,184,0.2)'));
+
+  // Legend
+  const leg = svg.append('g').attr('transform', `translate(${width - 200}, 5)`);
+  [[{color: '#fbbf24', label: 'Winning rate (bình quân)'},
+    {color: '#ef4444', label: 'Stop-out rate (cao nhất)'}]].flat().forEach((l, i) => {
+    leg.append('line').attr('x1', 0).attr('x2', 16).attr('y1', i * 20).attr('y2', i * 20)
+      .attr('stroke', l.color).attr('stroke-width', 2);
+    leg.append('text').attr('x', 20).attr('y', i * 20 + 4)
+      .attr('fill', '#94a3b8').attr('font-size', '10px').text(l.label);
+  });
+}
+
+function drawBCRChart(data) {
+  const container = document.getElementById('bcr-chart');
+  if (!data || !data.bcr_by_tenor) {
+    renderPlaceholder(container, 'Chưa có dữ liệu BCR'); return;
+  }
+
+  const bcr = data.bcr_by_tenor;
+  container.innerHTML = '';
+  const margin = { top: 20, right: 20, bottom: 40, left: 50 };
+  const width = container.clientWidth - margin.left - margin.right;
+  const height = container.clientHeight - margin.top - margin.bottom;
+
+  const svg = d3.select('#bcr-chart').append('svg').attr('width', '100%').attr('height', '100%')
+    .attr('viewBox', `0 0 ${width + margin.left + margin.right} ${height + margin.top + margin.bottom}`)
+    .append('g').attr('transform', `translate(${margin.left},${margin.top})`);
+
+  const x = d3.scaleBand().domain(bcr.map(d => d.label)).range([0, width]).padding(0.25);
+  const y = d3.scaleLinear().domain([0, d3.max(bcr, d => d.bcr_mean + (d.bcr_std || 0))]).nice().range([height, 0]);
+
+  const colors = ['#38bdf8', '#818cf8', '#a78bfa', '#34d399', '#fbbf24', '#f97316', '#ef4444', '#dc2626'];
+
+  svg.selectAll('rect').data(bcr).enter().append('rect')
+    .attr('x', d => x(d.label)).attr('width', x.bandwidth())
+    .attr('y', d => y(d.bcr_mean)).attr('height', d => height - y(d.bcr_mean))
+    .attr('fill', (_, i) => colors[i % colors.length]).attr('rx', 4).attr('opacity', 0.85);
+
+  svg.append('line').attr('x1', 0).attr('x2', width).attr('y1', y(1)).attr('y2', y(1))
+    .attr('stroke', 'rgba(255,255,255,0.3)').attr('stroke-dasharray', '4,2');
+
+  svg.selectAll('.label').data(bcr).enter().append('text')
+    .attr('x', d => x(d.label) + x.bandwidth() / 2)
+    .attr('y', d => y(d.bcr_mean) - 5)
+    .attr('text-anchor', 'middle').attr('fill', '#e2e8f0').attr('font-size', '10px')
+    .text(d => d.bcr_mean.toFixed(2) + 'x');
+
+  svg.append('g').attr('transform', `translate(0,${height})`)
+    .call(d3.axisBottom(x))
+    .call(g => g.selectAll('text').attr('fill', '#94a3b8').attr('font-size', '10px'))
+    .call(g => g.select('.domain').attr('stroke', 'rgba(148,163,184,0.2)'));
+
+  svg.append('g').call(d3.axisLeft(y).ticks(4).tickFormat(v => v.toFixed(1) + 'x'))
+    .call(g => g.selectAll('text').attr('fill', '#94a3b8').attr('font-size', '10px'))
+    .call(g => g.select('.domain').attr('stroke', 'rgba(148,163,184,0.2)'));
+}
+
+function renderSuccessRateViz(data) {
+  const container = document.getElementById('success-rate-viz');
+  if (!data || !data.success_rate) { renderPlaceholder(container, 'Chưa có dữ liệu'); return; }
+
+  const rows = data.success_rate;
+  const html = `
+    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 0.75rem;">
+      ${rows.map(r => {
+        const pct = (r.success_rate * 100).toFixed(0);
+        const color = r.success_rate >= 0.8 ? '#22c55e' : r.success_rate >= 0.5 ? '#f59e0b' : '#ef4444';
+        const bg = r.success_rate >= 0.8 ? 'rgba(34,197,94,0.08)' : r.success_rate >= 0.5 ? 'rgba(245,158,11,0.08)' : 'rgba(239,68,68,0.08)';
+        return `
+          <div style="background:${bg}; border:1px solid ${color}30; border-radius:8px; padding:0.75rem; text-align:center;">
+            <div style="font-family:'JetBrains Mono',monospace; font-size:1.4rem; font-weight:700; color:${color};">${pct}%</div>
+            <div style="font-size:0.7rem; color:var(--text-secondary); margin-top:2px;">${r.tenor_label || r.tenor_yr + 'Y'}</div>
+            <div style="font-size:0.65rem; color:var(--text-muted);">${r.n_success || 0}/${r.n_total || 0} phiên</div>
+          </div>`;
+      }).join('')}
+    </div>`;
+  container.innerHTML = html;
+}
+
+function drawVolumeChart(data) {
+  const container = document.getElementById('volume-chart');
+  renderPlaceholder(container, 'Chưa có dữ liệu khối lượng phát hành. Hãy chạy auction_statistics.py');
+}
+
+function renderDetailedTable(data) {
+  const container = document.getElementById('detailed-auction-table');
+  if (!data || !data.recent_90d || !data.recent_90d.length) {
+    container.innerHTML = `<div style="text-align:center; padding:2rem; color:var(--text-muted); font-size:0.85rem;">Chưa có dữ liệu 90 ngày gần nhất</div>`;
+    return;
+  }
+  const rows = data.recent_90d;
+  container.innerHTML = `
+    <table class="data-table">
+      <thead><tr>
+        <th>Ngày</th><th>Tenor</th><th>Lãi Suất Trúng</th><th>Stop-out</th>
+        <th>Tail (bps)</th><th>BCR</th><th>KL Trúng (tỷ)</th><th>Kết Quả</th>
+      </tr></thead>
+      <tbody>
+        ${rows.map(r => `<tr>
+          <td class="mono" style="font-size:0.75rem;">${VNBond.formatDateVN(r.date)}</td>
+          <td><span class="tenor-tag t-10y">${r.tenor || '—'}</span></td>
+          <td class="mono text-accent">${r.winning_rate != null ? r.winning_rate.toFixed(3)+'%' : '—'}</td>
+          <td class="mono">${r.stop_out_rate != null ? r.stop_out_rate.toFixed(3)+'%' : '—'}</td>
+          <td class="mono ${r.tail_bps > 10 ? 'text-down' : 'text-muted'}">${r.tail_bps != null ? r.tail_bps.toFixed(1) : '—'}</td>
+          <td class="mono">${r.bid_to_cover != null ? r.bid_to_cover.toFixed(2)+'x' : '—'}</td>
+          <td class="mono">${r.winning_volume != null ? r.winning_volume.toFixed(0) : '—'}</td>
+          <td><span class="metric-change ${r.auction_successful ? 'up' : 'down'}">${r.auction_successful ? '✓ Thành công' : '✗ Thất bại'}</span></td>
+        </tr>`).join('')}
+      </tbody>
+    </table>`;
+}
+
+function renderPlaceholder(container, msg) {
+  container.innerHTML = `
+    <div style="display:flex; align-items:center; justify-content:center; height:100%; min-height:180px; flex-direction:column; gap:0.5rem; color:var(--text-muted); font-size:0.85rem;">
+      <span style="font-size:2rem; opacity:0.4;">📊</span>
+      <span>${msg}</span>
+    </div>`;
+}
+
+function exportAuctionTable() {
+  if (!auctionDataGlobal || !auctionDataGlobal.recent_90d) return;
+  VNBond.downloadJSON(auctionDataGlobal.recent_90d, 'auction_recent_90d.json');
+}
+
+function generateDemoAuctions() {
+  // Dữ liệu demo cho khi chưa có pipeline
+  return {
+    total_auctions: 1247,
+    success_rate: 0.73,
+    bcr_10y: 2.14,
+    latest_stop_10y: 5.42,
+    latest_tail_10y: 3.5,
+    bcr_by_tenor: [
+      { label: '2Y', tenor_yr: 2, bcr_mean: 2.45, bcr_std: 0.8, n_auctions: 210 },
+      { label: '5Y', tenor_yr: 5, bcr_mean: 2.31, bcr_std: 0.7, n_auctions: 198 },
+      { label: '10Y', tenor_yr: 10, bcr_mean: 2.14, bcr_std: 0.9, n_auctions: 350 },
+      { label: '15Y', tenor_yr: 15, bcr_mean: 1.87, bcr_std: 0.6, n_auctions: 145 },
+      { label: '20Y', tenor_yr: 20, bcr_mean: 1.62, bcr_std: 0.5, n_auctions: 98 },
+    ],
+    success_rate: [
+      { tenor_yr: 2, tenor_label: '2Y', success_rate: 0.85, n_success: 42, n_total: 50 },
+      { tenor_yr: 5, tenor_label: '5Y', success_rate: 0.78, n_success: 39, n_total: 50 },
+      { tenor_yr: 10, tenor_label: '10Y', success_rate: 0.72, n_success: 36, n_total: 50 },
+      { tenor_yr: 15, tenor_label: '15Y', success_rate: 0.65, n_success: 26, n_total: 40 },
+      { tenor_yr: 20, tenor_label: '20Y', success_rate: 0.54, n_success: 16, n_total: 30 },
+    ],
+    stop_out_history: Array.from({length: 100}, (_, i) => {
+      const d = new Date(); d.setDate(d.getDate() - 100 * 3 + i * 3);
+      const base = 5.5 + Math.sin(i / 15) * 0.8;
+      return {
+        date: d.toISOString().substring(0, 10), tenor_yr: 10,
+        winning_rate: base + (Math.random() - 0.5) * 0.1,
+        stop_out: base + 0.05 + (Math.random() - 0.5) * 0.05,
+      };
+    }),
+    recent_90d: Array.from({length: 15}, (_, i) => {
+      const d = new Date(); d.setDate(d.getDate() - i * 6);
+      const success = Math.random() > 0.3;
+      return {
+        date: d.toISOString().substring(0, 10),
+        tenor: ['2Y', '5Y', '10Y', '15Y'][i % 4],
+        winning_rate: 4.5 + Math.random() * 1.5,
+        stop_out_rate: 4.55 + Math.random() * 1.5,
+        tail_bps: Math.random() * 15,
+        bid_to_cover: 1.2 + Math.random() * 2,
+        winning_volume: success ? Math.round(1000 + Math.random() * 5000) : 0,
+        auction_successful: success,
+      };
+    }),
+  };
+}
+</script>
+</body>
+</html>

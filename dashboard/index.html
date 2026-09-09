@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="vi" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VN Bond Dashboard — Trái Phiếu Chính Phủ Việt Nam</title>
+  <meta name="description" content="Dashboard phân tích toàn diện thị trường trái phiếu chính phủ Việt Nam: đường cong lợi suất, đấu thầu sơ cấp, dòng vốn khối ngoại.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📊</text></svg>">
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+
+<!-- ── Sidebar Navigation ─────────────────────────────────────────── -->
+<nav class="sidebar" role="navigation" aria-label="Main navigation">
+  <div class="sidebar-logo" aria-hidden="true">VN</div>
+  <ul class="nav-items">
+    <li class="nav-item">
+      <a href="index.html" class="active" id="nav-home">
+        <span class="nav-icon">🏛️</span>
+        <span class="nav-label">Tổng Quan</span>
+      </a>
+    </li>
+    <li class="nav-item">
+      <a href="yield_curve.html" id="nav-curve">
+        <span class="nav-icon">📈</span>
+        <span class="nav-label">Đường Cong Lợi Suất</span>
+      </a>
+    </li>
+    <li class="nav-item">
+      <a href="auctions.html" id="nav-auctions">
+        <span class="nav-icon">🏷️</span>
+        <span class="nav-label">Đấu Thầu Sơ Cấp</span>
+      </a>
+    </li>
+    <li class="nav-item">
+      <a href="foreign_flows.html" id="nav-foreign">
+        <span class="nav-icon">🌏</span>
+        <span class="nav-label">Dòng Vốn Ngoại</span>
+      </a>
+    </li>
+  </ul>
+</nav>
+
+<!-- ── Main Content ───────────────────────────────────────────────── -->
+<main class="main-content">
+
+  <!-- Page Header -->
+  <header class="page-header">
+    <div>
+      <h1 class="page-title">Trái Phiếu Chính Phủ Việt Nam</h1>
+      <p class="page-subtitle">Phân tích thị trường TPCP — Dữ liệu từ HNX & VBMA</p>
+    </div>
+    <div style="display: flex; align-items: center; gap: 1rem;">
+      <span class="status-badge live">Cập nhật hôm nay</span>
+      <span id="live-clock" style="font-size:0.8rem; color: var(--text-secondary); font-family: 'JetBrains Mono', monospace;"></span>
+    </div>
+  </header>
+
+  <!-- Page Body -->
+  <div class="page-body">
+
+    <!-- Alert: Inversion Warning (ẩn khi không có) -->
+    <div id="inversion-alert" class="alert alert-danger" style="display:none;">
+      ⚠️ <strong>Cảnh báo:</strong> Đường cong lợi suất đang đảo ngược (10Y &lt; 2Y). Đây là tín hiệu cần theo dõi chặt.
+    </div>
+
+    <!-- ── Metric Cards ─────────────────────────────────────────────── -->
+    <section class="metrics-grid fade-in" aria-label="Chỉ số tổng quan">
+
+      <div class="metric-card fade-in fade-in-delay-1" id="card-10y">
+        <span class="metric-icon" aria-hidden="true">📊</span>
+        <p class="metric-label">Lợi Suất 10Y</p>
+        <p class="metric-value num-mono neutral" id="val-10y">—</p>
+        <span class="metric-change neutral" id="chg-10y">Chưa có dữ liệu</span>
+      </div>
+
+      <div class="metric-card fade-in fade-in-delay-2" id="card-2y">
+        <span class="metric-icon" aria-hidden="true">📉</span>
+        <p class="metric-label">Lợi Suất 2Y</p>
+        <p class="metric-value num-mono neutral" id="val-2y">—</p>
+        <span class="metric-change neutral" id="chg-2y">Chưa có dữ liệu</span>
+      </div>
+
+      <div class="metric-card fade-in fade-in-delay-3" id="card-spread">
+        <span class="metric-icon" aria-hidden="true">↕️</span>
+        <p class="metric-label">Spread 10Y-2Y</p>
+        <p class="metric-value num-mono neutral" id="val-spread">—</p>
+        <span class="metric-change neutral" id="chg-spread">—</span>
+      </div>
+
+      <div class="metric-card fade-in fade-in-delay-4" id="card-butterfly">
+        <span class="metric-icon" aria-hidden="true">🦋</span>
+        <p class="metric-label">Butterfly 2s5s10s</p>
+        <p class="metric-value num-mono neutral" id="val-butterfly">—</p>
+        <span class="metric-change neutral" id="chg-butterfly">—</span>
+      </div>
+
+    </section>
+
+    <!-- ── Yield Curve + Spreads Grid ──────────────────────────────── -->
+    <div class="chart-grid" style="grid-template-columns: 1.6fr 1fr; margin-bottom: 1.5rem;">
+
+      <!-- Yield Curve ngày gần nhất -->
+      <div class="chart-card fade-in">
+        <div class="chart-title">
+          📈 Đường Cong Lợi Suất TPCP
+          <span class="tenor-tag t-10y" style="margin-left:auto; font-size:0.65rem;" id="curve-date-label">Đang tải...</span>
+        </div>
+        <p class="chart-subtitle">Nelson-Siegel fitting — Dữ liệu HNX thứ cấp & sơ cấp</p>
+        <div class="chart-body chart-body-tall" id="yield-curve-chart"></div>
+      </div>
+
+      <!-- Term Spread Gauge + bảng tenor -->
+      <div class="chart-card fade-in">
+        <p class="chart-title">📋 Bảng Lợi Suất Hiện Tại</p>
+        <p class="chart-subtitle">Đường cong ngày gần nhất (% năm)</p>
+        <div id="tenor-table-body" style="margin-top: 0.5rem;">
+          <div class="skeleton" style="height: 200px; border-radius: 8px;"></div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ── Spread History Chart ──────────────────────────────────── -->
+    <div class="chart-card chart-card-full fade-in" style="margin-bottom: 1.5rem;">
+      <div class="chart-title">
+        ↕️ Lịch Sử Term Spread
+        <div class="btn-group" style="margin-left: auto;">
+          <button class="btn btn-ghost" id="btn-spread-10y2y" onclick="selectSpread('spread_10y_2y', this)">10Y-2Y</button>
+          <button class="btn btn-ghost" id="btn-spread-10y3m" onclick="selectSpread('spread_10y_3m', this)">10Y-3M</button>
+          <button class="btn btn-ghost" id="btn-spread-5y2y" onclick="selectSpread('spread_5y_2y', this)">5Y-2Y</button>
+        </div>
+      </div>
+      <p class="chart-subtitle">Basis points (bps) — Đường 0 = ngưỡng đảo ngược đường cong</p>
+      <div class="chart-body" id="spread-chart" style="min-height: 220px;"></div>
+    </div>
+
+    <!-- ── Bottom Row: Auction + Foreign ──────────────────────────── -->
+    <div class="chart-grid chart-grid-2">
+
+      <!-- Recent Auction Summary -->
+      <div class="chart-card fade-in">
+        <p class="chart-title">🏷️ Đấu Thầu Gần Nhất (30 ngày)</p>
+        <p class="chart-subtitle">Lãi suất trúng thầu & bid-to-cover ratio</p>
+        <div id="recent-auction-table">
+          <div class="skeleton" style="height: 180px; border-radius: 8px;"></div>
+        </div>
+      </div>
+
+      <!-- Foreign Flow -->
+      <div class="chart-card fade-in">
+        <p class="chart-title">🌏 Dòng Vốn Khối Ngoại (30 ngày)</p>
+        <p class="chart-subtitle">Net buy/sell khối ngoại — tỷ đồng</p>
+        <div class="chart-body" id="foreign-flow-chart" style="min-height: 180px;"></div>
+      </div>
+
+    </div>
+
+  </div><!-- end page-body -->
+</main>
+
+<!-- ── Scripts ─────────────────────────────────────────────────────── -->
+<script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+<script src="assets/app.js"></script>
+<script>
+// ── Page-specific initialization ─────────────────────────────────────
+(async function initHomePage() {
+  await VNBond.loadAllData();
+
+  const { curveData, spreadData, auctionData, foreignData, currentDate } = VNBond.state;
+
+  // Update date label
+  const dateLabel = document.getElementById('curve-date-label');
+  if (dateLabel && currentDate) {
+    dateLabel.textContent = VNBond.formatDateVN(currentDate);
+  }
+
+  // Draw yield curve
+  if (curveData && currentDate) {
+    VNBond.drawYieldCurve('yield-curve-chart', curveData, currentDate);
+    VNBond.onResize('yield-curve-chart', () =>
+      VNBond.drawYieldCurve('yield-curve-chart', curveData, currentDate)
+    );
+  } else {
+    // Demo data nếu chưa có cache
+    drawDemoYieldCurve();
+  }
+
+  // Tenor table
+  if (curveData && currentDate) {
+    renderTenorTable(curveData, currentDate);
+  }
+
+  // Metric cards
+  if (spreadData && spreadData.length > 0) {
+    const last = spreadData[spreadData.length - 1];
+    const prev = spreadData.length > 2 ? spreadData[spreadData.length - 2] : last;
+
+    setMetric('val-10y', 'chg-10y', last.y_10y, last.y_10y - (prev.y_10y || last.y_10y));
+    setMetric('val-2y', 'chg-2y', last.y_2y, last.y_2y - (prev.y_2y || last.y_2y));
+
+    const sp = last.spread_10y_2y;
+    const spPrev = prev.spread_10y_2y;
+    if (sp != null) {
+      const el = document.getElementById('val-spread');
+      el.textContent = (sp * 100).toFixed(1) + ' bps';
+      el.className = 'metric-value num-mono ' + (sp >= 0 ? 'up' : 'down');
+      if (sp < 0) {
+        document.getElementById('inversion-alert').style.display = 'flex';
+      }
+    }
+
+    if (last.butterfly_2s5s10s != null) {
+      const el = document.getElementById('val-butterfly');
+      el.textContent = (last.butterfly_2s5s10s * 100).toFixed(1) + ' bps';
+      el.className = 'metric-value num-mono neutral';
+    }
+
+    // Spread chart
+    VNBond.drawSpreadChart('spread-chart', spreadData, 'spread_10y_2y');
+    document.getElementById('btn-spread-10y2y').classList.add('btn-primary');
+
+    VNBond.onResize('spread-chart', () =>
+      VNBond.drawSpreadChart('spread-chart', spreadData, currentSpread)
+    );
+  } else {
+    drawDemoSpread();
+  }
+
+  // Recent auctions table
+  renderRecentAuctions(auctionData);
+
+  // Foreign flow chart
+  if (foreignData) {
+    drawForeignFlow(foreignData);
+  }
+
+})();
+
+// ── Spread selector ─────────────────────────────────────────────────────
+let currentSpread = 'spread_10y_2y';
+function selectSpread(col, btn) {
+  currentSpread = col;
+  document.querySelectorAll('#btn-spread-10y2y, #btn-spread-10y3m, #btn-spread-5y2y')
+    .forEach(b => b.className = 'btn btn-ghost');
+  btn.className = 'btn btn-primary';
+  VNBond.drawSpreadChart('spread-chart', VNBond.state.spreadData, col);
+}
+
+// ── Tenor table renderer ────────────────────────────────────────────────
+function renderTenorTable(curveData, date) {
+  const dayData = curveData
+    .filter(d => d.date === date)
+    .sort((a, b) => a.tenor_yr - b.tenor_yr);
+
+  if (!dayData.length) return;
+
+  const tbody = document.getElementById('tenor-table-body');
+  const html = `
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Kỳ Hạn</th>
+          <th>Lợi Suất</th>
+          <th>Biến Động</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${dayData.map(d => {
+          const label = VNBond.tenorLabel(d.tenor_yr);
+          const colorClass = label.endsWith('M') ? 't-3m'
+            : d.tenor_yr <= 1 ? 't-1y'
+            : d.tenor_yr <= 2 ? 't-2y'
+            : d.tenor_yr <= 5 ? 't-5y'
+            : d.tenor_yr <= 10 ? 't-10y' : 't-30y';
+          return `
+          <tr>
+            <td><span class="tenor-tag ${colorClass}">${label}</span></td>
+            <td class="mono text-accent">${VNBond.fmt.rate(d.yield_pct)}</td>
+            <td class="mono text-muted">—</td>
+          </tr>`;
+        }).join('')}
+      </tbody>
+    </table>
+  `;
+  tbody.innerHTML = html;
+}
+
+// ── Metric helper ────────────────────────────────────────────────────────
+function setMetric(valId, chgId, value, change) {
+  const valEl = document.getElementById(valId);
+  const chgEl = document.getElementById(chgId);
+  if (!valEl || value == null) return;
+  valEl.textContent = VNBond.fmt.rate(value);
+  valEl.className = 'metric-value num-mono ' + VNBond.signClass(change);
+  if (chgEl && change != null) {
+    const bps = (change * 100).toFixed(1);
+    chgEl.textContent = `${VNBond.signSymbol(change)} ${Math.abs(bps)} bps`;
+    chgEl.className = 'metric-change ' + VNBond.signClass(change);
+  }
+}
+
+// ── Recent auctions table ─────────────────────────────────────────────
+function renderRecentAuctions(data) {
+  const container = document.getElementById('recent-auction-table');
+  if (!data || !data.recent_auctions || !data.recent_auctions.length) {
+    container.innerHTML = `
+      <div style="text-align:center; padding: 2rem; color: var(--text-muted); font-size:0.85rem;">
+        Chưa có dữ liệu đấu thầu. Hãy chạy pipeline thu thập dữ liệu.
+      </div>`;
+    return;
+  }
+
+  const rows = data.recent_auctions.slice(0, 8);
+  container.innerHTML = `
+    <table class="data-table">
+      <thead><tr>
+        <th>Ngày</th><th>Tenor</th><th>Lãi Suất</th><th>BCR</th><th>Kết Quả</th>
+      </tr></thead>
+      <tbody>
+        ${rows.map(r => `
+        <tr>
+          <td class="mono" style="font-size:0.75rem;">${VNBond.formatDateVN(r.date)}</td>
+          <td><span class="tenor-tag t-10y">${r.tenor || '—'}</span></td>
+          <td class="mono text-accent">${r.winning_rate ? VNBond.fmt.rate(r.winning_rate) : '—'}</td>
+          <td class="mono">${r.bid_to_cover ? r.bid_to_cover.toFixed(2) + 'x' : '—'}</td>
+          <td><span class="metric-change ${r.success ? 'up' : 'down'}">${r.success ? '✓' : '✗'}</span></td>
+        </tr>`).join('')}
+      </tbody>
+    </table>
+  `;
+}
+
+// ── Foreign flow bar chart ─────────────────────────────────────────────
+function drawForeignFlow(data) {
+  const container = document.getElementById('foreign-flow-chart');
+  if (!data || !data.daily || !data.daily.length) {
+    container.innerHTML = `
+      <div style="text-align:center; padding: 2rem; color: var(--text-muted); font-size:0.85rem;">
+        Chưa có dữ liệu foreign flow. Cần file PDF thống kê từ HNX.
+      </div>`;
+    return;
+  }
+
+  const recent = data.daily.slice(-30);
+  const margin = { top: 10, right: 15, bottom: 30, left: 55 };
+  const width = container.clientWidth - margin.left - margin.right;
+  const height = container.clientHeight - margin.top - margin.bottom;
+
+  container.innerHTML = '';
+  const svg = d3.select('#foreign-flow-chart')
+    .append('svg').attr('width', '100%').attr('height', '100%')
+    .attr('viewBox', `0 0 ${width + margin.left + margin.right} ${height + margin.top + margin.bottom}`)
+    .append('g').attr('transform', `translate(${margin.left},${margin.top})`);
+
+  const x = d3.scaleBand()
+    .domain(recent.map(d => d.date))
+    .range([0, width]).padding(0.1);
+
+  const y = d3.scaleLinear()
+    .domain(d3.extent(recent, d => d.for_net_bn)).nice()
+    .range([height, 0]);
+
+  svg.selectAll('rect').data(recent).enter()
+    .append('rect')
+    .attr('x', d => x(d.date))
+    .attr('width', x.bandwidth())
+    .attr('y', d => y(Math.max(0, d.for_net_bn)))
+    .attr('height', d => Math.abs(y(d.for_net_bn) - y(0)))
+    .attr('fill', d => d.for_net_bn >= 0 ? 'rgba(34,197,94,0.7)' : 'rgba(239,68,68,0.7)')
+    .attr('rx', 2);
+
+  svg.append('line')
+    .attr('x1', 0).attr('x2', width)
+    .attr('y1', y(0)).attr('y2', y(0))
+    .attr('stroke', 'rgba(255,255,255,0.2)').attr('stroke-width', 1);
+
+  svg.append('g').attr('transform', `translate(0,${height})`)
+    .call(d3.axisBottom(x).tickValues(x.domain().filter((d,i) => i % 5 === 0)))
+    .call(g => g.selectAll('text').attr('fill', '#94a3b8').attr('font-size', '9px')
+      .attr('transform', 'rotate(-30)').attr('text-anchor', 'end'))
+    .call(g => g.select('.domain').attr('stroke', 'rgba(148,163,184,0.2)'));
+
+  svg.append('g')
+    .call(d3.axisLeft(y).ticks(4).tickFormat(v => v.toFixed(0) + ' tỷ'))
+    .call(g => g.selectAll('text').attr('fill', '#94a3b8').attr('font-size', '9px'))
+    .call(g => g.select('.domain').attr('stroke', 'rgba(148,163,184,0.2)'));
+}
+
+// ── Demo charts (khi chưa có data) ──────────────────────────────────────
+function drawDemoYieldCurve() {
+  const demoData = [
+    {tenor_yr: 0.25, yield_pct: 3.8}, {tenor_yr: 0.5, yield_pct: 3.9},
+    {tenor_yr: 1, yield_pct: 4.1}, {tenor_yr: 2, yield_pct: 4.35},
+    {tenor_yr: 3, yield_pct: 4.6}, {tenor_yr: 5, yield_pct: 4.95},
+    {tenor_yr: 7, yield_pct: 5.2}, {tenor_yr: 10, yield_pct: 5.5},
+    {tenor_yr: 15, yield_pct: 5.8}, {tenor_yr: 20, yield_pct: 6.0},
+  ];
+  const today = new Date().toISOString().substring(0, 10);
+  VNBond.drawYieldCurve('yield-curve-chart',
+    demoData.map(d => ({...d, date: today})), today);
+
+  document.getElementById('curve-date-label').textContent = 'Dữ liệu minh họa';
+  renderTenorTable(demoData.map(d => ({...d, date: today})), today);
+
+  // Demo metrics
+  setMetric('val-10y', 'chg-10y', 5.5, -0.05);
+  setMetric('val-2y', 'chg-2y', 4.35, 0.02);
+  document.getElementById('val-spread').textContent = '115.0 bps';
+  document.getElementById('val-spread').className = 'metric-value num-mono up';
+  document.getElementById('val-butterfly').textContent = '42.5 bps';
+  document.getElementById('val-butterfly').className = 'metric-value num-mono neutral';
+}
+
+function drawDemoSpread() {
+  const today = new Date();
+  const demoSpread = Array.from({length: 60}, (_, i) => {
+    const d = new Date(today);
+    d.setDate(d.getDate() - 60 + i);
+    return {
+      date: d.toISOString().substring(0, 10),
+      spread_10y_2y: 0.8 + Math.sin(i / 8) * 0.4 + (Math.random() - 0.5) * 0.2,
+    };
+  });
+  VNBond.drawSpreadChart('spread-chart', demoSpread, 'spread_10y_2y');
+  document.getElementById('btn-spread-10y2y').classList.add('btn-primary');
+  renderRecentAuctions(null);
+  document.getElementById('foreign-flow-chart').innerHTML = `
+    <div style="text-align:center; padding: 2rem; color: var(--text-muted); font-size:0.85rem;">
+      Chạy pipeline để có dữ liệu thật
+    </div>`;
+}
+</script>
+
+</body>
+</html>
