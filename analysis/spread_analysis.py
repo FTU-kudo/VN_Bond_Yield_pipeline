@@ -107,7 +107,7 @@ def compute_spreads_direct(combined_parquet: str | Path,
     Ít chính xác hơn fitting nhưng nhanh hơn và không yêu cầu scipy.
     Dùng khi chỉ cần tổng quan nhanh.
     """
-    from pipeline.common import tenor_to_years  # type: ignore
+    from analysis.yield_curve_fitting import tenor_to_years  # type: ignore
 
     df = pd.read_parquet(combined_parquet)
     df["date"] = pd.to_datetime(df["date"])

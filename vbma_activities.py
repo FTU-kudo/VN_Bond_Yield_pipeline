@@ -71,7 +71,13 @@ def _throttle() -> None:
 
 def _get(url: str) -> requests.Response:
     _throttle()
-    r = requests.get(url, timeout=30, headers={"User-Agent": "Mozilla/5.0"})
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+        "Accept-Language": "en-US,en;q=0.5,vi;q=0.3",
+        "Referer": "https://vbma.org.vn/"
+    }
+    r = requests.get(url, timeout=30, headers=headers)
     r.raise_for_status()
     return r
 
