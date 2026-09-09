@@ -241,12 +241,12 @@ body::before {
 }
 
 .page-header {
-  padding: var(--space-xl) var(--space-2xl);
+  padding: var(--space-lg) var(--space-2xl);
   border-bottom: 1px solid var(--border-subtle);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: rgba(10, 22, 40, 0.8);
+  background: var(--bg-glass);
   backdrop-filter: blur(12px);
   position: sticky;
   top: 0;
