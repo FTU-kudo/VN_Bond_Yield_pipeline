@@ -30,16 +30,17 @@ jobs:
 
       - name: Chay backfill
         run: |
-          python -c "
-          from hnx_auctions_daily import run
-          end = '${{ github.event.inputs.end_date }}' or None
-          run('${{ github.event.inputs.start_date }}', end, cache_dir='./cache')
-          "
+          if [ -z "${{ github.event.inputs.end_date }}" ]; then
+            python run_pipeline.py --mode full --start "${{ github.event.inputs.start_date }}"
+          else
+            python run_pipeline.py --mode full --start "${{ github.event.inputs.start_date }}" --end "${{ github.event.inputs.end_date }}"
+          fi
 
       - name: Commit du lieu moi neu co
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add cache/
+          git add cache/ exports/
           git diff --cached --quiet || git commit -m "Backfill TPCP: ${{ github.event.inputs.start_date }} -> ${{ github.event.inputs.end_date }}"
           git push
+

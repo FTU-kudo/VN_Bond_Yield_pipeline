@@ -25,19 +25,15 @@ jobs:
 
       - run: pip install -r requirements.txt
 
-      - name: Quet 10 ngay gan nhat (checked_dates tu bo qua ngay da co)
+      - name: Quet hang ngay
         run: |
-          python -c "
-          from datetime import date, timedelta
-          from hnx_auctions_daily import run
-          start = str(date.today() - timedelta(days=10))
-          run(start, cache_dir='./cache')
-          "
+          python run_pipeline.py --mode daily
 
       - name: Commit neu co du lieu moi
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add cache/
+          git add cache/ exports/
           git diff --cached --quiet || git commit -m "Cap nhat TPCP $(date +%F)"
           git push
+
