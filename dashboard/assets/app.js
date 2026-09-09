@@ -467,16 +467,22 @@ function createTooltipContainer() {
 
 /* ── Theme Toggle ────────────────────────────────────────────────────── */
 (function initTheme() {
-  const saved = localStorage.getItem('vnbond-theme');
-  if (saved) document.documentElement.setAttribute('data-theme', saved);
+  const saved = localStorage.getItem('vnbond-theme') || 'light';
+  document.documentElement.setAttribute('data-theme', saved);
+  window.addEventListener('DOMContentLoaded', () => {
+    const btn = document.getElementById('theme-toggle');
+    if (btn) btn.innerHTML = (saved === 'light' ? 'Light mode ' : 'Dark mode ') + '🌓';
+  });
 })();
 
 function toggleTheme() {
   const html = document.documentElement;
-  const current = html.getAttribute('data-theme') || 'dark';
+  const current = html.getAttribute('data-theme') || 'light';
   const next = current === 'dark' ? 'light' : 'dark';
   html.setAttribute('data-theme', next);
   localStorage.setItem('vnbond-theme', next);
+  const btn = document.getElementById('theme-toggle');
+  if (btn) btn.innerHTML = (next === 'light' ? 'Light mode ' : 'Dark mode ') + '🌓';
 }
 
 /* ── Export for page scripts ─────────────────────────────────────────── */

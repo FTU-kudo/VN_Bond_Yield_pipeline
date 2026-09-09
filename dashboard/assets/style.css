@@ -86,8 +86,9 @@
   --tenor-5y: #059669;
   --tenor-10y: #d97706;
   --tenor-30y: #dc2626;
+}
 
-
+:root {
   /* Spacing */
   --space-xs: 0.25rem;
   --space-sm: 0.5rem;
