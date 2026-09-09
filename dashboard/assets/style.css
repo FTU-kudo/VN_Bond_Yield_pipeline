@@ -45,6 +45,48 @@
   --tenor-5y: #34d399;
   --tenor-10y: #fbbf24;
   --tenor-30y: #ef4444;
+}
+
+:root[data-theme="light"] {
+  /* Màu nền */
+  --bg-base: #f1f5f9;
+  --bg-surface: #e2e8f0;
+  --bg-card: #ffffff;
+  --bg-card-hover: #f8fafc;
+  --bg-glass: rgba(255, 255, 255, 0.85);
+
+  /* Màu accent */
+  --accent-primary: #2563eb;
+  --accent-primary-glow: rgba(37, 99, 235, 0.15);
+  --accent-secondary: #0891b2;
+  --accent-tertiary: #7c3aed;
+
+  /* Màu status */
+  --color-up: #16a34a;
+  --color-down: #dc2626;
+  --color-neutral: #d97706;
+  --color-up-glow: rgba(22, 163, 74, 0.15);
+  --color-down-glow: rgba(220, 38, 38, 0.15);
+
+  /* Màu text */
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #94a3b8;
+  --text-accent: #0284c7;
+
+  /* Border */
+  --border-subtle: rgba(15, 23, 42, 0.1);
+  --border-card: rgba(15, 23, 42, 0.08);
+  --border-glow: rgba(15, 23, 42, 0.15);
+
+  /* Tenor colors */
+  --tenor-3m: #0284c7;
+  --tenor-1y: #4f46e5;
+  --tenor-2y: #7c3aed;
+  --tenor-5y: #059669;
+  --tenor-10y: #d97706;
+  --tenor-30y: #dc2626;
+
 
   /* Spacing */
   --space-xs: 0.25rem;
