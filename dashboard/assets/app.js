@@ -141,7 +141,7 @@ function drawYieldCurve(containerId, curveData, date) {
     .call(d3.axisLeft(y).tickSize(-width).tickFormat(''))
     .call(g => g.select('.domain').remove())
     .call(g => g.selectAll('line')
-      .attr('stroke', 'rgba(148,163,184,0.08)').attr('stroke-dasharray', '3,3'));
+      .attr('stroke', 'var(--border-subtle)').attr('stroke-dasharray', '3,3'));
 
   // Area fill
   const area = d3.area()
@@ -217,15 +217,15 @@ function drawYieldCurve(containerId, curveData, date) {
     .call(d3.axisBottom(x)
       .tickValues(tenorTicks)
       .tickFormat(t => tenorLabel(t)))
-    .call(g => g.select('.domain').attr('stroke', 'rgba(148,163,184,0.2)'))
-    .call(g => g.selectAll('text').attr('fill', '#94a3b8').attr('font-size', '11px'))
-    .call(g => g.selectAll('line').attr('stroke', 'rgba(148,163,184,0.2)'));
+    .call(g => g.select('.domain').attr('stroke', 'var(--border-subtle)'))
+    .call(g => g.selectAll('text').attr('fill', 'var(--text-secondary)').attr('font-size', '11px'))
+    .call(g => g.selectAll('line').attr('stroke', 'var(--border-subtle)'));
 
   svg.append('g')
     .call(d3.axisLeft(y).ticks(5).tickFormat(v => v.toFixed(2) + '%'))
-    .call(g => g.select('.domain').attr('stroke', 'rgba(148,163,184,0.2)'))
-    .call(g => g.selectAll('text').attr('fill', '#94a3b8').attr('font-size', '11px'))
-    .call(g => g.selectAll('line').attr('stroke', 'rgba(148,163,184,0.2)'));
+    .call(g => g.select('.domain').attr('stroke', 'var(--border-subtle)'))
+    .call(g => g.selectAll('text').attr('fill', 'var(--text-secondary)').attr('font-size', '11px'))
+    .call(g => g.selectAll('line').attr('stroke', 'var(--border-subtle)'));
 
   // X axis label
   svg.append('text')
@@ -275,7 +275,7 @@ function drawSpreadChart(containerId, spreadData, colKey = 'spread_10y_2y') {
   svg.append('g')
     .call(d3.axisLeft(y).tickSize(-width).tickFormat(''))
     .call(g => g.select('.domain').remove())
-    .call(g => g.selectAll('line').attr('stroke', 'rgba(148,163,184,0.08)'));
+    .call(g => g.selectAll('line').attr('stroke', 'var(--border-subtle)'));
 
   // Zero line
   if (y.domain()[0] < 0 && y.domain()[1] > 0) {
@@ -323,13 +323,13 @@ function drawSpreadChart(containerId, spreadData, colKey = 'spread_10y_2y') {
   // Axes
   svg.append('g').attr('transform', `translate(0,${height})`)
     .call(d3.axisBottom(x).ticks(6))
-    .call(g => g.selectAll('text').attr('fill', '#94a3b8').attr('font-size', '10px'))
-    .call(g => g.select('.domain').attr('stroke', 'rgba(148,163,184,0.2)'));
+    .call(g => g.selectAll('text').attr('fill', 'var(--text-secondary)').attr('font-size', '10px'))
+    .call(g => g.select('.domain').attr('stroke', 'var(--border-subtle)'));
 
   svg.append('g')
     .call(d3.axisLeft(y).ticks(5).tickFormat(v => v.toFixed(0) + ' bps'))
-    .call(g => g.selectAll('text').attr('fill', '#94a3b8').attr('font-size', '10px'))
-    .call(g => g.select('.domain').attr('stroke', 'rgba(148,163,184,0.2)'));
+    .call(g => g.selectAll('text').attr('fill', 'var(--text-secondary)').attr('font-size', '10px'))
+    .call(g => g.select('.domain').attr('stroke', 'var(--border-subtle)'));
 }
 
 /* ── Metric Cards ───────────────────────────────────────────────────── */
