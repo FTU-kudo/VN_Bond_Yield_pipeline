@@ -87,16 +87,15 @@ function signSymbol(v) {
 }
 
 /* ── Yield Curve Chart (D3.js) ──────────────────────────────────────── */
-function drawYieldCurve(containerId, curveData, date) {
+function drawYieldCurve(containerId, data, selectedDate, compareData = null) {
   const container = document.getElementById(containerId);
-  if (!container || !curveData) return;
+  if (!container || !data || data.length === 0) return;
 
-  // Lọc dữ liệu ngày được chọn
-  const dayData = curveData
-    .filter(d => d.date === date)
-    .sort((a, b) => a.tenor_yr - b.tenor_yr);
-
-  if (dayData.length === 0) return;
+  const dayData = data.filter(d => d.date === selectedDate).sort((a,b) => a.tenor_yr - b.tenor_yr);
+  if (!dayData.length) {
+    container.innerHTML = '<div style="padding: 2rem; color: var(--text-muted); text-align:center;">Không có dữ liệu cho ngày này</div>';
+    return;
+  }
 
   // Xóa SVG cũ
   container.innerHTML = '';
@@ -114,11 +113,12 @@ function drawYieldCurve(containerId, curveData, date) {
     .attr('transform', `translate(${margin.left},${margin.top})`);
 
   // Scales
-  const x = d3.scaleLinear()
+  const x = d3.scaleSqrt()
     .domain([0, d3.max(dayData, d => d.tenor_yr)])
     .range([0, width]);
 
-  const yExtent = d3.extent(dayData, d => d.yield_pct);
+  const allYData = compareData ? [...dayData, ...compareData] : dayData;
+  const yExtent = d3.extent(allYData, d => d.yield_pct);
   const yPad = (yExtent[1] - yExtent[0]) * 0.15 || 0.5;
   const y = d3.scaleLinear()
     .domain([yExtent[0] - yPad, yExtent[1] + yPad])
@@ -155,11 +155,55 @@ function drawYieldCurve(containerId, curveData, date) {
     .attr('fill', 'url(#curve-gradient)')
     .attr('d', area);
 
-  // Line
+  // Main Line
   const line = d3.line()
     .x(d => x(d.tenor_yr))
     .y(d => y(d.yield_pct))
     .curve(d3.curveCatmullRom.alpha(0.5));
+
+  // Compare Curve
+  if (compareData && compareData.length > 0) {
+    const compSorted = compareData.sort((a,b) => a.tenor_yr - b.tenor_yr);
+    
+    svg.append('path')
+      .datum(compSorted)
+      .attr('fill', 'none')
+      .attr('stroke', 'var(--text-muted)')
+      .attr('stroke-width', 2)
+      .attr('stroke-dasharray', '5,5')
+      .attr('d', line);
+      
+    svg.selectAll('.curve-point-comp')
+      .data(compSorted)
+      .enter().append('circle')
+      .attr('class', 'curve-point-comp')
+      .attr('cx', d => x(d.tenor_yr))
+      .attr('cy', d => y(d.yield_pct))
+      .attr('r', 3)
+      .attr('fill', 'var(--bg-card)')
+      .attr('stroke', 'var(--text-muted)')
+      .attr('stroke-width', 1.5)
+      .style('cursor', 'pointer')
+      .on('mouseover', function(event, d) {
+        d3.select(this).attr('r', 5).attr('fill', 'var(--text-muted)');
+        showTooltip(event, `
+          <div class="tooltip-title">${tenorLabel(d.tenor_yr)} (So sánh)</div>
+          <div class="tooltip-row">
+            <span>Ngày</span>
+            <span class="tooltip-value">${d.date}</span>
+          </div>
+          <div class="tooltip-row">
+            <span>Lợi suất</span>
+            <span class="tooltip-value">${fmt.rate(d.yield_pct)}</span>
+          </div>
+        `);
+      })
+      .on('mousemove', (event) => moveTooltip(event))
+      .on('mouseout', function() {
+        d3.select(this).attr('r', 3).attr('fill', 'var(--bg-card)');
+        hideTooltip();
+      });
+  }
 
   const path = svg.append('path')
     .datum(dayData)
