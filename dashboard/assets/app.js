@@ -113,8 +113,10 @@ function drawYieldCurve(containerId, data, selectedDate, compareData = null) {
     .attr('transform', `translate(${margin.left},${margin.top})`);
 
   // Scales
+  const minTenor = d3.min(dayData, d => d.tenor_yr) || 0.25;
+  const maxTenor = d3.max(dayData, d => d.tenor_yr) || 30;
   const x = d3.scaleSqrt()
-    .domain([0, d3.max(dayData, d => d.tenor_yr)])
+    .domain([minTenor * 0.6, maxTenor])
     .range([0, width]);
 
   const allYData = compareData ? [...dayData, ...compareData] : dayData;
