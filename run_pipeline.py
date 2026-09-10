@@ -98,10 +98,20 @@ def run_collection(start: str, end: str | None, cache_dir: Path, verbose: bool):
     except ImportError:
         warn("vbma_activities.py không tìm thấy trong pipeline/")
 
-    # 4. Reconcile
+    # 4. HNX Foreign Flow
+    try:
+        from pipeline.hnx_foreign_daily import run as run_foreign
+        step("HNX Foreign Flow", run_foreign, start, end,
+             cache_dir=cache_dir, verbose=verbose)
+    except ImportError:
+        warn("hnx_foreign_daily.py không tìm thấy trong pipeline/")
+
+
+    # 5. Reconcile
     try:
         from reconcile import run as run_reconcile
-        step("Reconcile", run_reconcile, cache_dir=cache_dir, verbose=verbose)
+        step("Reconcile (Yield Curve)", run_reconcile, cache_dir=cache_dir,
+             verbose=verbose)
     except ImportError:
         warn("reconcile.py không tìm thấy trong pipeline/")
 
