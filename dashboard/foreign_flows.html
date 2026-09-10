@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="vi" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dòng Vốn Ngoại — VN Bond Dashboard</title>
+  <meta name="description" content="Phân tích dòng vốn khối ngoại trên thị trường trái phiếu chính phủ Việt Nam: net buy/sell, xu hướng tích lũy, tương quan lãi suất.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌏</text></svg>">
+  <link rel="stylesheet" href="assets/style.css?v=1.3">
+</head>
+<body>
+
+<!-- ── Sidebar Navigation ─────────────────────────────────────────── -->
+<nav class="sidebar" role="navigation" aria-label="Main navigation">
+  <div class="sidebar-logo" aria-hidden="true">VN</div>
+  <ul class="nav-items">
+    <li class="nav-item"><a href="index.html" id="nav-home"><span class="nav-icon">🏛️</span><span class="nav-label">Tổng Quan</span></a></li>
+    <li class="nav-item"><a href="yield_curve.html" id="nav-curve"><span class="nav-icon">📈</span><span class="nav-label">Đường Cong Lợi Suất</span></a></li>
+    <li class="nav-item"><a href="auctions.html" id="nav-auctions"><span class="nav-icon">🏷️</span><span class="nav-label">Đấu Thầu Sơ Cấp</span></a></li>
+    <li class="nav-item"><a href="foreign_flows.html" id="nav-foreign" class="active"><span class="nav-icon">🌏</span><span class="nav-label">Dòng Vốn Ngoại</span></a></li>
+  </ul>
+</nav>
+
+<!-- ── Main Content ───────────────────────────────────────────────── -->
+<main class="main-content">
+
+  <header class="page-header">
+    <div>
+      <h1 class="page-title">Dòng Vốn Khối Ngoại TPCP</h1>
+      <p class="page-subtitle">Net buy/sell khối ngoại · Tích lũy ròng · Dữ liệu HNX thống kê</p>
+    </div>
+    <div style="display:flex; gap:1rem; align-items:center;">
+      <button id="theme-toggle" class="btn btn-ghost" aria-label="Toggle Theme"
+        style="padding: 0.25rem 0.5rem; font-size: 1.2rem; display: flex; align-items: center; gap: 0.5rem;"
+        onclick="VNBond.toggleTheme()">Light mode 🌓</button>
+      <span id="live-clock" style="font-size:0.8rem; color: var(--text-secondary); font-family: 'JetBrains Mono', monospace;"></span>
+    </div>
+  </header>
+
+  <div class="page-body">
+
+    <!-- ── KPI Cards ──────────────────────────────────────────────── -->
+    <section class="metrics-grid fade-in" aria-label="Chỉ số dòng vốn ngoại"
+             style="grid-template-columns: repeat(4, 1fr);">
+
+      <div class="metric-card fade-in fade-in-delay-1" id="card-net-30d">
+        <span class="metric-icon" aria-hidden="true">🌏</span>
+        <p class="metric-label">Net 30 ngày</p>
+        <p class="metric-value num-mono neutral" id="val-net-30d">—</p>
+        <span class="metric-change neutral" id="chg-net-30d">tỷ đồng</span>
+      </div>
+
+      <div class="metric-card fade-in fade-in-delay-2" id="card-net-ytd">
+        <span class="metric-icon" aria-hidden="true">📅</span>
+        <p class="metric-label">Net YTD</p>
+        <p class="metric-value num-mono neutral" id="val-net-ytd">—</p>
+        <span class="metric-change neutral" id="chg-net-ytd">tỷ đồng</span>
+      </div>
+
+      <div class="metric-card fade-in fade-in-delay-3" id="card-max-buy">
+        <span class="metric-icon" aria-hidden="true">📈</span>
+        <p class="metric-label">Mua ròng lớn nhất</p>
+        <p class="metric-value num-mono up" id="val-max-buy">—</p>
+        <span class="metric-change neutral" id="chg-max-buy">tỷ đồng / phiên</span>
+      </div>
+
+      <div class="metric-card fade-in fade-in-delay-4" id="card-max-sell">
+        <span class="metric-icon" aria-hidden="true">📉</span>
+        <p class="metric-label">Bán ròng lớn nhất</p>
+        <p class="metric-value num-mono down" id="val-max-sell">—</p>
+        <span class="metric-change neutral" id="chg-max-sell">tỷ đồng / phiên</span>
+      </div>
+
+    </section>
+
+    <!-- ── Main Chart: Daily Bar ──────────────────────────────────── -->
+    <div class="chart-card chart-card-full fade-in" style="margin-bottom: 1.5rem;">
+      <div class="chart-title">
+        🌏 Giao Dịch Ròng Khối Ngoại Hàng Ngày
+        <div class="btn-group" style="margin-left: auto;">
+          <button class="btn btn-primary" id="btn-30d" onclick="filterDays(30, this)">30 ngày</button>
+          <button class="btn btn-ghost" id="btn-90d" onclick="filterDays(90, this)">90 ngày</button>
+          <button class="btn btn-ghost" id="btn-all" onclick="filterDays(0, this)">Tất cả</button>
+        </div>
+      </div>
+      <p class="chart-subtitle">Net buy/sell khối ngoại theo ngày — tỷ đồng (xanh = mua ròng, đỏ = bán ròng)</p>
+      <div class="chart-body" id="foreign-daily-chart" style="min-height: 280px;"></div>
+    </div>
+
+    <!-- ── Bottom Row: Cumulative + Table ─────────────────────────── -->
+    <div class="chart-grid chart-grid-2">
+
+      <!-- Cumulative Flow -->
+      <div class="chart-card fade-in">
+        <p class="chart-title">📊 Tích Lũy Ròng Khối Ngoại</p>
+        <p class="chart-subtitle">Tổng tích lũy theo thời gian — tỷ đồng</p>
+        <div class="chart-body" id="foreign-cumul-chart" style="min-height: 220px;"></div>
+      </div>
+
+      <!-- Top sessions table -->
+      <div class="chart-card fade-in">
+        <p class="chart-title">🏆 Phiên Giao Dịch Mạnh Nhất</p>
+        <p class="chart-subtitle">Top 10 phiên mua/bán ròng lớn nhất</p>
+        <div id="foreign-top-table" style="margin-top: 0.5rem;">
+          <div class="skeleton" style="height: 220px; border-radius: 8px;"></div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ── No-data notice (hiện khi chưa có JSON) ──────────────────── -->
+    <div id="no-data-notice" class="alert alert-danger" style="display:none; margin-top: 1.5rem;">
+      <div>
+        <strong>⚠️ Chưa có dữ liệu dòng vốn ngoại</strong><br>
+        <span style="font-size:0.85rem; margin-top:0.5rem; display:block;">
+          File <code>exports/data/foreign_flow.json</code> chưa được tạo. Để có dữ liệu này, pipeline cần thu thập
+          file PDF thống kê giao dịch khối ngoại từ HNX. Chạy bước <code>python run_pipeline.py --mode full</code>
+          sau khi nguồn dữ liệu HNX được tích hợp vào <code>analysis/foreign_flow.py</code>.
+        </span>
+      </div>
+    </div>
+
+  </div><!-- end page-body -->
+</main>
+
+<!-- ── Scripts ─────────────────────────────────────────────────────── -->
+<script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+<script src="assets/app.js?v=1.3"></script>
+<script>
+// ── Page initialization ──────────────────────────────────────────────
+let allForeignData = [];
+let currentDays = 30;
+
+(async function initForeignPage() {
+  await VNBond.loadAllData();
+  const { foreignData } = VNBond.state;
+
+  if (!foreignData || !foreignData.daily || !foreignData.daily.length) {
+    // Hiện notice, ẩn skeleton
+    document.getElementById('no-data-notice').style.display = 'flex';
+    document.getElementById('foreign-top-table').innerHTML =
+      '<div style="text-align:center; padding: 2rem; color: var(--text-muted); font-size:0.85rem;">Chưa có dữ liệu</div>';
+    ['foreign-daily-chart', 'foreign-cumul-chart'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--text-muted);font-size:0.85rem;">Chưa có dữ liệu — cần thu thập từ HNX</div>';
+    });
+    return;
+  }
+
+  // Sắp xếp theo ngày tăng dần
+  allForeignData = [...foreignData.daily].sort((a, b) => a.date.localeCompare(b.date));
+
+  // Cập nhật KPI
+  updateKPIs(allForeignData);
+
+  // Vẽ biểu đồ với bộ lọc mặc định 30 ngày
+  renderCharts(30);
+  renderTopTable(allForeignData);
+
+  // Resize handlers
+  VNBond.onResize('foreign-daily-chart', () => renderDailyChart(getFilteredData(currentDays)));
+  VNBond.onResize('foreign-cumul-chart', () => renderCumulChart(getFilteredData(currentDays)));
+})();
+
+// ── Day filter ─────────────────────────────────────────────────────
+function filterDays(days, btn) {
+  currentDays = days;
+  document.querySelectorAll('#btn-30d, #btn-90d, #btn-all')
+    .forEach(b => b.className = 'btn btn-ghost');
+  btn.className = 'btn btn-primary';
+  renderCharts(days);
+}
+
+function getFilteredData(days) {
+  if (!days || days === 0) return allForeignData;
+  return allForeignData.slice(-days);
+}
+
+function renderCharts(days) {
+  const data = getFilteredData(days);
+  renderDailyChart(data);
+  renderCumulChart(data);
+}
+
+// ── KPI cards ──────────────────────────────────────────────────────
+function updateKPIs(data) {
+  const last30 = data.slice(-30);
+  const net30 = last30.reduce((s, d) => s + (d.for_net_bn || 0), 0);
+
+  const currentYear = new Date().getFullYear();
+  const ytdData = data.filter(d => d.date && d.date.startsWith(String(currentYear)));
+  const netYTD = ytdData.reduce((s, d) => s + (d.for_net_bn || 0), 0);
+
+  const maxBuy = Math.max(...data.map(d => d.for_net_bn || 0));
+  const maxSell = Math.min(...data.map(d => d.for_net_bn || 0));
+
+  setKPI('val-net-30d', 'chg-net-30d', net30, 'tỷ đồng / 30 ngày');
+  setKPI('val-net-ytd', 'chg-net-ytd', netYTD, 'tỷ đồng YTD');
+  setKPI('val-max-buy', 'chg-max-buy', maxBuy, 'tỷ đồng / phiên');
+  setKPI('val-max-sell', 'chg-max-sell', maxSell, 'tỷ đồng / phiên');
+}
+
+function setKPI(valId, chgId, value, label) {
+  const el = document.getElementById(valId);
+  const chgEl = document.getElementById(chgId);
+  if (el && value != null) {
+    el.textContent = (value >= 0 ? '+' : '') + value.toFixed(1);
+    el.className = 'metric-value num-mono ' + (value > 0 ? 'up' : value < 0 ? 'down' : 'neutral');
+  }
+  if (chgEl) chgEl.textContent = label;
+}
+
+// ── Daily bar chart ─────────────────────────────────────────────────
+function renderDailyChart(data) {
+  const container = document.getElementById('foreign-daily-chart');
+  if (!container || !data.length) return;
+
+  container.innerHTML = '';
+  const margin = { top: 15, right: 20, bottom: 45, left: 65 };
+  const W = container.clientWidth - margin.left - margin.right;
+  const H = container.clientHeight - margin.top - margin.bottom;
+  if (W <= 0 || H <= 0) return;
+
+  const svg = d3.select('#foreign-daily-chart')
+    .append('svg').attr('width', '100%').attr('height', '100%')
+    .attr('viewBox', `0 0 ${W + margin.left + margin.right} ${H + margin.top + margin.bottom}`)
+    .append('g').attr('transform', `translate(${margin.left},${margin.top})`);
+
+  const x = d3.scaleBand()
+    .domain(data.map(d => d.date))
+    .range([0, W]).padding(0.15);
+
+  const yExtent = d3.extent(data, d => d.for_net_bn);
+  const yPad = Math.abs(yExtent[1] - yExtent[0]) * 0.1 || 5;
+  const y = d3.scaleLinear()
+    .domain([yExtent[0] - yPad, yExtent[1] + yPad]).nice()
+    .range([H, 0]);
+
+  // Grid
+  svg.append('g')
+    .call(d3.axisLeft(y).tickSize(-W).tickFormat(''))
+    .call(g => g.select('.domain').remove())
+    .call(g => g.selectAll('line').attr('stroke', 'var(--border-subtle)').attr('stroke-dasharray', '3,3'));
+
+  // Zero line
+  svg.append('line')
+    .attr('x1', 0).attr('x2', W)
+    .attr('y1', y(0)).attr('y2', y(0))
+    .attr('stroke', 'rgba(148,163,184,0.4)').attr('stroke-width', 1);
+
+  // Bars
+  svg.selectAll('rect').data(data).enter()
+    .append('rect')
+    .attr('x', d => x(d.date))
+    .attr('width', x.bandwidth())
+    .attr('y', d => y(Math.max(0, d.for_net_bn)))
+    .attr('height', d => Math.abs(y(d.for_net_bn) - y(0)))
+    .attr('fill', d => d.for_net_bn >= 0 ? 'rgba(34,197,94,0.75)' : 'rgba(239,68,68,0.75)')
+    .attr('rx', 2)
+    .on('mouseover', function(event, d) {
+      d3.select(this).attr('opacity', 1).attr('fill', d.for_net_bn >= 0 ? '#22c55e' : '#ef4444');
+      VNBond.showTooltip(event, `
+        <div class="tooltip-title">${d.date}</div>
+        <div class="tooltip-row">
+          <span>Net khối ngoại</span>
+          <span class="tooltip-value ${d.for_net_bn >= 0 ? 'up' : 'down'}">
+            ${d.for_net_bn >= 0 ? '+' : ''}${d.for_net_bn.toFixed(1)} tỷ
+          </span>
+        </div>
+      `);
+    })
+    .on('mousemove', event => VNBond.moveTooltip(event))
+    .on('mouseout', function(e, d) {
+      d3.select(this).attr('opacity', 0.9)
+        .attr('fill', d.for_net_bn >= 0 ? 'rgba(34,197,94,0.75)' : 'rgba(239,68,68,0.75)');
+      VNBond.hideTooltip();
+    });
+
+  // X axis — hiện tick thưa
+  const tickEvery = Math.ceil(data.length / 8);
+  svg.append('g').attr('transform', `translate(0,${H})`)
+    .call(d3.axisBottom(x).tickValues(x.domain().filter((d, i) => i % tickEvery === 0)))
+    .call(g => g.selectAll('text').attr('fill', 'var(--text-secondary)').attr('font-size', '9px')
+      .attr('transform', 'rotate(-30)').attr('text-anchor', 'end'))
+    .call(g => g.select('.domain').attr('stroke', 'var(--border-subtle)'));
+
+  // Y axis
+  svg.append('g')
+    .call(d3.axisLeft(y).ticks(5).tickFormat(v => v.toFixed(0) + ' tỷ'))
+    .call(g => g.selectAll('text').attr('fill', 'var(--text-secondary)').attr('font-size', '10px'))
+    .call(g => g.select('.domain').attr('stroke', 'var(--border-subtle)'));
+}
+
+// ── Cumulative chart ─────────────────────────────────────────────────
+function renderCumulChart(data) {
+  const container = document.getElementById('foreign-cumul-chart');
+  if (!container || !data.length) return;
+
+  container.innerHTML = '';
+
+  // Tính tích lũy
+  let cumul = 0;
+  const cumulData = data.map(d => ({ date: new Date(d.date), value: (cumul += (d.for_net_bn || 0)) }));
+
+  const margin = { top: 15, right: 20, bottom: 40, left: 65 };
+  const W = container.clientWidth - margin.left - margin.right;
+  const H = container.clientHeight - margin.top - margin.bottom;
+  if (W <= 0 || H <= 0) return;
+
+  const svg = d3.select('#foreign-cumul-chart')
+    .append('svg').attr('width', '100%').attr('height', '100%')
+    .attr('viewBox', `0 0 ${W + margin.left + margin.right} ${H + margin.top + margin.bottom}`)
+    .append('g').attr('transform', `translate(${margin.left},${margin.top})`);
+
+  const x = d3.scaleTime().domain(d3.extent(cumulData, d => d.date)).range([0, W]);
+  const y = d3.scaleLinear().domain(d3.extent(cumulData, d => d.value)).nice().range([H, 0]);
+
+  // Grid
+  svg.append('g')
+    .call(d3.axisLeft(y).tickSize(-W).tickFormat(''))
+    .call(g => g.select('.domain').remove())
+    .call(g => g.selectAll('line').attr('stroke', 'var(--border-subtle)').attr('stroke-dasharray', '3,3'));
+
+  // Area fill
+  const lastVal = cumulData[cumulData.length - 1]?.value || 0;
+  const areaColor = lastVal >= 0 ? 'rgba(34,197,94,0.12)' : 'rgba(239,68,68,0.12)';
+  const lineColor = lastVal >= 0 ? '#22c55e' : '#ef4444';
+
+  const area = d3.area().x(d => x(d.date)).y0(H).y1(d => y(d.value)).curve(d3.curveMonotoneX);
+  svg.append('path').datum(cumulData).attr('fill', areaColor).attr('d', area);
+
+  const line = d3.line().x(d => x(d.date)).y(d => y(d.value)).curve(d3.curveMonotoneX);
+  svg.append('path').datum(cumulData).attr('fill', 'none')
+    .attr('stroke', lineColor).attr('stroke-width', 2).attr('d', line);
+
+  // Zero line nếu có
+  if (y.domain()[0] < 0 && y.domain()[1] > 0) {
+    svg.append('line').attr('x1', 0).attr('x2', W).attr('y1', y(0)).attr('y2', y(0))
+      .attr('stroke', 'rgba(148,163,184,0.4)').attr('stroke-width', 1).attr('stroke-dasharray', '4,2');
+  }
+
+  // Axes
+  svg.append('g').attr('transform', `translate(0,${H})`)
+    .call(d3.axisBottom(x).ticks(5))
+    .call(g => g.selectAll('text').attr('fill', 'var(--text-secondary)').attr('font-size', '10px'))
+    .call(g => g.select('.domain').attr('stroke', 'var(--border-subtle)'));
+
+  svg.append('g')
+    .call(d3.axisLeft(y).ticks(5).tickFormat(v => v.toFixed(0) + ' tỷ'))
+    .call(g => g.selectAll('text').attr('fill', 'var(--text-secondary)').attr('font-size', '10px'))
+    .call(g => g.select('.domain').attr('stroke', 'var(--border-subtle)'));
+}
+
+// ── Top sessions table ───────────────────────────────────────────────
+function renderTopTable(data) {
+  const container = document.getElementById('foreign-top-table');
+  if (!data || !data.length) {
+    container.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--text-muted);">Chưa có dữ liệu</div>';
+    return;
+  }
+
+  // Sắp xếp: top 5 mua + top 5 bán ròng
+  const sorted = [...data].sort((a, b) => Math.abs(b.for_net_bn) - Math.abs(a.for_net_bn));
+  const top10 = sorted.slice(0, 10);
+
+  container.innerHTML = `
+    <table class="data-table">
+      <thead><tr>
+        <th>Ngày</th><th>Net (tỷ đồng)</th><th>Hướng</th>
+      </tr></thead>
+      <tbody>
+        ${top10.map(r => `
+        <tr>
+          <td class="mono" style="font-size:0.75rem;">${VNBond.formatDateVN(r.date)}</td>
+          <td class="mono ${r.for_net_bn >= 0 ? 'text-accent' : ''}" style="color:${r.for_net_bn < 0 ? 'var(--danger)' : ''};">
+            ${r.for_net_bn >= 0 ? '+' : ''}${r.for_net_bn.toFixed(1)}
+          </td>
+          <td><span class="metric-change ${r.for_net_bn >= 0 ? 'up' : 'down'}">
+            ${r.for_net_bn >= 0 ? '▲ Mua ròng' : '▼ Bán ròng'}
+          </span></td>
+        </tr>`).join('')}
+      </tbody>
+    </table>
+  `;
+}
+</script>
+
+</body>
+</html>

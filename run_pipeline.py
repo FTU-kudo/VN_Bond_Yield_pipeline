@@ -202,6 +202,11 @@ def export_json(cache_dir: Path, exports_dir: Path, verbose: bool):
             auction_summary[key] = df.to_dict(orient="records")
 
     if auction_summary:
+        # Thêm alias "recent_auctions" để frontend JS có thể đọc được
+        # (tên gốc là "recent_90d" từ auction_recent_90d.parquet)
+        if "recent_90d" in auction_summary and "recent_auctions" not in auction_summary:
+            auction_summary["recent_auctions"] = auction_summary["recent_90d"]
+
         out_path = data_dir / "auction_stats.json"
         with open(out_path, "w", encoding="utf-8") as f:
             json.dump(auction_summary, f, ensure_ascii=False, default=str)

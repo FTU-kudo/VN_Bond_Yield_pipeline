@@ -43,7 +43,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add cache/ exports/
+          git add cache/ exports/ dashboard/
           git diff --cached --quiet || git commit -m "Backfill TPCP: ${{ github.event.inputs.start_date }} -> ${{ github.event.inputs.end_date }}"
           git pull --rebase origin main || true
           git push

@@ -304,7 +304,10 @@ function setMetric(valId, chgId, value, change) {
 // ── Recent auctions table ─────────────────────────────────────────────
 function renderRecentAuctions(data) {
   const container = document.getElementById('recent-auction-table');
-  if (!data || !data.recent_auctions || !data.recent_auctions.length) {
+  // auction_stats.json xuất key "recent_90d" (từ auction_recent_90d.parquet)
+  // Hỗ trợ cả hai key để tương thích ngược
+  const auctions = data && (data.recent_auctions || data.recent_90d);
+  if (!auctions || !auctions.length) {
     container.innerHTML = `
       <div style="text-align:center; padding: 2rem; color: var(--text-muted); font-size:0.85rem;">
         Chưa có dữ liệu đấu thầu. Hãy chạy pipeline thu thập dữ liệu.
@@ -312,7 +315,7 @@ function renderRecentAuctions(data) {
     return;
   }
 
-  const rows = data.recent_auctions.slice(0, 8);
+  const rows = auctions.slice(0, 8);
   container.innerHTML = `
     <table class="data-table">
       <thead><tr>
