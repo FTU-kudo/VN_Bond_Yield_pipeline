@@ -409,7 +409,11 @@ function loadSpreadSeries() {
         curveData,
         spreadState.customA,
         spreadState.customB
-      );
+      ).map(d => ({
+        ...d,
+        date: d.dateObj instanceof Date ? d.dateObj : new Date(d.date),
+        dateStr: d.dateStr || (typeof d.date === 'string' ? d.date.substring(0, 10) : ''),
+      }));
     }
   }
 

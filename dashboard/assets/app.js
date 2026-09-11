@@ -318,6 +318,7 @@ function calculateCustomSpread(curveData, tenorA, tenorB) {
     if (yA != null && yB != null) {
       result.push({
         date: dateStr,
+        dateStr: dateStr,
         dateObj: new Date(dateStr),
         value: (yA - yB) * 100, // spread in basis points (bps)
         yA: yA,
