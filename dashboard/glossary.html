@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="vi" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Giải Thích Thuật Ngữ & Công Thức — VN Bond Pipeline</title>
+  <link rel="stylesheet" href="assets/style.css?v=1.3">
+  <!-- KaTeX for beautiful math formula rendering -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+    onload="renderMathInElement(document.body, {delimiters: [{left: '$$', right: '$$', display: true}, {left: '$', right: '$', display: false}]});"></script>
+</head>
+<body>
+
+<!-- ── Sidebar Navigation ─────────────────────────────────────────── -->
+<nav class="sidebar" role="navigation" aria-label="Main navigation">
+  <div class="sidebar-logo" aria-hidden="true">VN</div>
+  <ul class="nav-items">
+    <li class="nav-item">
+      <a href="index.html" id="nav-home">
+        <span class="nav-icon">🏛️</span>
+        <span class="nav-label">Tổng Quan</span>
+      </a>
+    </li>
+    <li class="nav-item">
+      <a href="yield_curve.html" id="nav-curve">
+        <span class="nav-icon">📈</span>
+        <span class="nav-label">Đường Cong Lợi Suất</span>
+      </a>
+    </li>
+    <li class="nav-item">
+      <a href="auctions.html" id="nav-auctions">
+        <span class="nav-icon">🏷️</span>
+        <span class="nav-label">Đấu Thầu Sơ Cấp</span>
+      </a>
+    </li>
+    <li class="nav-item">
+      <a href="foreign_flows.html" id="nav-foreign">
+        <span class="nav-icon">🌏</span>
+        <span class="nav-label">Dòng Vốn Ngoại</span>
+      </a>
+    </li>
+    <li class="nav-item">
+      <a href="glossary.html" class="active" id="nav-glossary">
+        <span class="nav-icon">📖</span>
+        <span class="nav-label">Giải Thích Thuật Ngữ</span>
+      </a>
+    </li>
+  </ul>
+</nav>
+
+<!-- ── Main Content ───────────────────────────────────────────────── -->
+<main class="main-content">
+
+  <!-- Header -->
+  <header class="page-header">
+    <div>
+      <h1 class="page-title">Cẩm Nang Thuật Ngữ & Phương Pháp Định Lượng</h1>
+      <p class="page-subtitle">Giải thích chi tiết các mô hình toán học, chỉ số tài chính và cơ chế vận hành thị trường TPCP Việt Nam</p>
+    </div>
+    <div style="display: flex; align-items: center; gap: 1rem;">
+      <span class="status-badge live">Knowledge Base</span>
+      <button id="theme-toggle" class="theme-toggle-btn" aria-label="Toggle Theme" onclick="VNBond.toggleTheme()">Light mode 🌓</button>
+      <span id="live-clock" style="font-size:0.8rem; color: var(--text-secondary); font-family: 'JetBrains Mono', monospace;"></span>
+    </div>
+  </header>
+
+  <!-- Page Body -->
+  <div class="page-body">
+
+    <!-- Hero banner with live search -->
+    <div class="glossary-hero fade-in">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem;">
+        <div>
+          <h2 style="font-size: 1.35rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.35rem;">
+            📚 Tra Cứu Toàn Diện Kiến Thức Trái Phiếu
+          </h2>
+          <p style="font-size: 0.85rem; color: var(--text-secondary); max-width: 680px;">
+            Hệ thống cung cấp đầy đủ định nghĩa, công thức toán học, bản chất tài chính và ứng dụng thực tiễn trong giao dịch (trading & portfolio management) trên thị trường TPCP Việt Nam.
+          </p>
+        </div>
+      </div>
+
+      <!-- Quick Search Input -->
+      <div class="glossary-search-wrap">
+        <span class="glossary-search-icon">🔍</span>
+        <input type="text" id="glossary-search" class="glossary-search-input"
+          placeholder="Tìm nhanh thuật ngữ (ví dụ: Nelson-Siegel, BCR, Tail, Butterfly, SBV, Stop-out...)"
+          oninput="filterGlossary(this.value)">
+      </div>
+    </div>
+
+    <!-- Quick Navigation Pills -->
+    <div class="glossary-nav-pills fade-in">
+      <a href="#sec-curve" class="glossary-pill active">📈 Mô Hình Nelson-Siegel & Svensson</a>
+      <a href="#sec-spread" class="glossary-pill">↕️ Term Spread & Butterfly</a>
+      <a href="#sec-auction" class="glossary-pill">🏷️ Đấu Thầu Sơ Cấp (BCR, Tail, Stop-out)</a>
+      <a href="#sec-foreign" class="glossary-pill">🌏 Dòng Vốn Khối Ngoại (Foreign Flow)</a>
+      <a href="#sec-macro" class="glossary-pill">🏦 Tương Quan Vĩ Mô (SBV, USD/VND)</a>
+      <a href="#sec-table" class="glossary-pill">📋 Bảng Tra Cứu Nhanh</a>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- SECTION 1: MÔ HÌNH ĐƯỜNG CONG LỢI SUẤT                        -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <section id="sec-curve">
+      <div class="glossary-section-title">
+        <span>📈 1. Mô Hình Nội Suy Đường Cong Lợi Suất (Yield Curve Fitting)</span>
+      </div>
+
+      <div class="glossary-grid">
+
+        <!-- Card: Nelson-Siegel -->
+        <div class="glossary-card" data-keywords="nelson siegel ns duong cong loi suat yield curve beta0 beta1 beta2 lambda noi suy">
+          <div class="glossary-card-header">
+            <div>
+              <div class="glossary-term-name">Mô Hình Nelson-Siegel (NS)</div>
+              <div class="glossary-term-en">Nelson-Siegel 4-Parameter Model (1987)</div>
+            </div>
+            <span class="glossary-tag curve">Mô Hình Định Lượng</span>
+          </div>
+          <div class="glossary-body">
+            <p>
+              Mô hình toán học tham số được phát triển bởi Charles Nelson và Andrew Siegel (1987), là tiêu chuẩn toàn cầu được <strong>Cục Dự trữ Liên bang Mỹ (Fed)</strong>, <strong>Ngân hàng Trung ương châu Âu (ECB)</strong> và <strong>Ngân hàng Thanh toán Quốc tế (BIS)</strong> sử dụng để nội suy đường cong lợi suất giao ngay (spot yield curve) từ các điểm kỳ hạn rời rạc.
+            </p>
+
+            <div class="formula-box">
+              <div class="formula-label">Công thức toán học:</div>
+              $$y(m) = \beta_0 + \beta_1 \left(\frac{1 - e^{-m/\lambda}}{m/\lambda}\right) + \beta_2 \left(\frac{1 - e^{-m/\lambda}}{m/\lambda} - e^{-m/\lambda}\right)$$
+            </div>
+
+            <p><strong>Ý nghĩa kinh tế của các tham số:</strong></p>
+            <ul style="padding-left: 1.25rem; margin-bottom: 0.75rem;">
+              <li><strong>$\beta_0$ (Mức độ - Level):</strong> Đại diện cho mức lợi suất dài hạn khi kỳ hạn $m \to \infty$. Khi toàn bộ đường cong dịch chuyển song song (parallel shift), $\beta_0$ sẽ thay đổi.</li>
+              <li><strong>$\beta_1$ (Độ dốc - Slope):</strong> Trọng số ngắn hạn. Vì khi $m \to 0$, $y(0) = \beta_0 + \beta_1$, nên $\beta_1$ quyết định độ nghiêng của đường cong. Khi $\beta_1 < 0$, đường cong dốc lên (bình thường); khi $\beta_1 > 0$, đường cong dốc xuống (đảo ngược).</li>
+              <li><strong>$\beta_2$ (Độ cong/Bướu - Curvature):</strong> Trọng số trung hạn, tạo ra độ lồi hoặc lõm (hump/trough) ở khoảng kỳ hạn 2Y – 7Y.</li>
+              <li><strong>$\lambda$ (Hệ số suy giảm - Decay factor):</strong> Quyết định tốc độ phân rã của trọng số ngắn hạn và vị trí kỳ hạn mà tại đó độ cong $\beta_2$ đạt cực trị.</li>
+            </ul>
+
+            <div class="interpretation-box">
+              <div class="interpretation-title">💡 Tại sao không dùng đa thức bậc cao (Polynomials)?</div>
+              Đa thức bậc cao (bậc 4, bậc 5) dễ bị hiện tượng <em>Runge's phenomenon</em> (dao động hoang dã ở hai đầu biên kỳ hạn ngắn và siêu dài). Nelson-Siegel đảm bảo đường cong luôn trơn mượt, tiệm cận thực tế kinh tế và có lời giải ổn định.
+            </div>
+          </div>
+        </div>
+
+        <!-- Card: Svensson Extension -->
+        <div class="glossary-card" data-keywords="svensson nss mo rong svensson 6 tham so beta3 lambda2 2 buou">
+          <div class="glossary-card-header">
+            <div>
+              <div class="glossary-term-name">Mô Hình Mở Rộng Svensson (NSS)</div>
+              <div class="glossary-term-en">Nelson-Siegel-Svensson 6-Parameter Model (1994)</div>
+            </div>
+            <span class="glossary-tag curve">Mô Hình Nâng Cao</span>
+          </div>
+          <div class="glossary-body">
+            <p>
+              Lars Svensson (1994) bổ sung thêm thành phần thứ tư vào mô hình Nelson-Siegel nhằm cho phép đường cong có <strong>hai bướu (two humps/troughs)</strong> độc lập. Điều này cực kỳ hữu ích tại các thị trường mới nổi như Việt Nam, nơi thanh khoản tập trung không đều giữa các kỳ hạn 5Y và 10Y–15Y.
+            </p>
+
+            <div class="formula-box">
+              <div class="formula-label">Công thức toán học:</div>
+              $$y(m) = \text{NS}(m) + \beta_3 \left(\frac{1 - e^{-m/\lambda_2}}{m/\lambda_2} - e^{-m/\lambda_2}\right)$$
+            </div>
+
+            <p><strong>Cải tiến so với NS:</strong></p>
+            <ul style="padding-left: 1.25rem; margin-bottom: 0.75rem;">
+              <li>Bổ sung thêm tham số $\beta_3$ và $\lambda_2$, tạo thêm một đỉnh lồi/lõm thứ hai ở vùng kỳ hạn dài (15Y – 30Y).</li>
+              <li>Giảm thiểu sai số bình phương trung bình (RMSE) khi thị trường xuất hiện cấu trúc kỳ hạn phức tạp do chính sách phát hành trái phiếu theo đợt.</li>
+            </ul>
+
+            <div class="interpretation-box">
+              <div class="interpretation-title">🎯 Tối ưu hóa trong Pipeline</div>
+              Pipeline sử dụng thuật toán <code>scipy.optimize.curve_fit</code> với thuật toán Levenberg-Marquardt / Trust Region Reflective, có ràng buộc biên (bounds) $\beta_0 > 0, \lambda > 0$ để loại bỏ nghiệm phi thực tế.
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- SECTION 2: PHÂN TÍCH TERM SPREAD & BUTTERFLY                   -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <section id="sec-spread">
+      <div class="glossary-section-title">
+        <span>↕️ 2. Phân Tích Term Spread & Cấu Trúc Kỳ Hạn (Term Structure Analytics)</span>
+      </div>
+
+      <div class="glossary-grid">
+
+        <!-- Card: Term Spread -->
+        <div class="glossary-card" data-keywords="term spread chênh lệch lợi suất 10y-2y 10y-3m dao nguoc inversion recession suy thoai">
+          <div class="glossary-card-header">
+            <div>
+              <div class="glossary-term-name">Chênh Lệch Lợi Suất (Term Spread)</div>
+              <div class="glossary-term-en">Yield Curve Spread / Slope Indicator</div>
+            </div>
+            <span class="glossary-tag macro">Chỉ Số Vĩ Mô</span>
+          </div>
+          <div class="glossary-body">
+            <p>
+              Term Spread là mức chênh lệch giữa lợi suất trái phiếu kỳ hạn dài và kỳ hạn ngắn, thường tính bằng đơn vị <strong>bps (basis points: $1\% = 100\text{ bps}$)</strong>. Đây là "hàn thử biểu" số một về kỳ vọng tăng trưởng kinh tế, lạm phát và chu kỳ chính sách tiền tệ.
+            </p>
+
+            <div class="formula-box">
+              <div class="formula-label">Công thức chuẩn:</div>
+              $$\text{Spread}(T_2, T_1) = Y_{T_2} - Y_{T_1} \quad (T_2 > T_1)$$
+              $$\text{Spread 10Y-2Y (bps)} = (Y_{10Y} - Y_{2Y}) \times 100$$
+            </div>
+
+            <p><strong>Các cặp Spread chuẩn trong tài chính:</strong></p>
+            <ul style="padding-left: 1.25rem; margin-bottom: 0.75rem;">
+              <li><strong>10Y - 2Y (Spread kinh điển):</strong> Đo lường độ dốc tổng thể của nền kinh tế. Khi Spread này âm (đảo ngược), lịch sử tài chính cho thấy 85% trường hợp xảy ra suy thoái kinh tế trong vòng 6–18 tháng tới.</li>
+              <li><strong>10Y - 3M (Thước đo NHTW):</strong> Đo lường áp lực thanh khoản ngắn hạn so với triển vọng dài hạn; được Cục Dự trữ Liên bang Mỹ (Fed) đánh giá là chỉ số dự báo suy thoái chính xác nhất.</li>
+              <li><strong>5Y - 2Y:</strong> Đo lường chính sách tiền tệ trung hạn và giai đoạn bắt đầu đảo chiều lãi suất điều hành.</li>
+              <li><strong>30Y - 10Y:</strong> Đo lường phần bù rủi ro kỳ hạn siêu dài (Ultra-long Term Premium) và nhu cầu đầu tư của các quỹ bảo hiểm, quỹ hưu trí.</li>
+            </ul>
+
+            <div class="interpretation-box">
+              <div class="interpretation-title">⚠️ Hiện tượng Đảo Ngược Đường Cong (Curve Inversion)</div>
+              Xảy ra khi lợi suất ngắn hạn cao hơn dài hạn ($Y_{10Y} < Y_{2Y} \implies \text{Spread} < 0$). Điều này phản ánh thị trường kỳ vọng NHTW sẽ buộc phải hạ mạnh lãi suất trong tương lai để cứu nền kinh tế suy giảm.
+            </div>
+          </div>
+        </div>
+
+        <!-- Card: Butterfly -->
+        <div class="glossary-card" data-keywords="butterfly canh buom 2s5s10s hump do cong curvature trading">
+          <div class="glossary-card-header">
+            <div>
+              <div class="glossary-term-name">Chỉ Số Cánh Bướm (Butterfly Spread)</div>
+              <div class="glossary-term-en">Butterfly Curvature (2s5s10s)</div>
+            </div>
+            <span class="glossary-tag curve">Chiến Lược Trading</span>
+          </div>
+          <div class="glossary-body">
+            <p>
+              Chỉ số Cánh bướm (Butterfly Spread) đo lường <strong>độ cong (curvature/hump)</strong> của đường cong lợi suất bằng cách so sánh kỳ hạn "thân" (Body) với hai kỳ hạn "cánh" (Wings).
+            </p>
+
+            <div class="formula-box">
+              <div class="formula-label">Công thức Butterfly 2s-5s-10s:</div>
+              $$\text{Butterfly}_{2s5s10s} = 2 \times Y_{5Y} - (Y_{2Y} + Y_{10Y})$$
+            </div>
+
+            <p><strong>Cơ chế phân tích:</strong></p>
+            <ul style="padding-left: 1.25rem; margin-bottom: 0.75rem;">
+              <li><strong>Butterfly tăng cao ($> 0$):</strong> Đường cong gồ lên ở giữa (5Y tăng nhanh hơn 2Y và 10Y). Điều này thường xảy ra khi áp lực phát hành tập trung lớn ở kỳ hạn 5 năm hoặc áp lực lạm phát trung hạn gia tăng.</li>
+              <li><strong>Butterfly giảm sâu ($< 0$):</strong> Đường cong lõm xuống ở giữa (5Y giảm mạnh hơn hai đầu), báo hiệu thanh khoản dồi dào ở phân khúc trung hạn.</li>
+            </ul>
+
+            <div class="interpretation-box">
+              <div class="interpretation-title">🦋 Ứng dụng trong Giao Dịch Trái Phiếu</div>
+              Các tổ chức kinh doanh trái phiếu (Bond Desks) dùng chiến lược <em>Butterfly Trade</em> để kiếm lợi nhuận trung hòa thời lượng (Duration-neutral): Mua cánh (Long 2Y & 10Y) và Bán thân (Short 5Y) khi dự đoán độ cong sẽ hạ nhiệt mà không phụ thuộc vào việc toàn bộ mặt bằng lãi suất tăng hay giảm.
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- SECTION 3: THỐNG KÊ ĐẤU THẦU SƠ CẤP                            -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <section id="sec-auction">
+      <div class="glossary-section-title">
+        <span>🏷️ 3. Thống Kê Đấu Thầu Sơ Cấp (Primary Market Auction Analytics)</span>
+      </div>
+
+      <div class="glossary-grid">
+
+        <!-- Card: BCR & Stop-out -->
+        <div class="glossary-card" data-keywords="bcr bid to cover ratio ty le bao phu stop out cut off lai suat trung thau">
+          <div class="glossary-card-header">
+            <div>
+              <div class="glossary-term-name">Tỷ Lệ Đặt Thầu (Bid-to-Cover Ratio) & Lãi Suất Trúng</div>
+              <div class="glossary-term-en">Bid-to-Cover Ratio (BCR) & Stop-out Yield</div>
+            </div>
+            <span class="glossary-tag auction">Đấu Thầu HNX</span>
+          </div>
+          <div class="glossary-body">
+            <p>
+              Kho bạc Nhà nước (KBNN) định kỳ tổ chức đấu thầu trái phiếu qua Sở Giao dịch Chứng khoán Hà Nội (HNX). <strong>Bid-to-Cover Ratio (BCR)</strong> là thước đo trực tiếp phản ánh mức độ quan tâm và sức cầu của các thành viên đấu thầu sơ cấp (Primary Dealers).
+            </p>
+
+            <div class="formula-box">
+              <div class="formula-label">Công thức tính BCR:</div>
+              $$\text{BCR} = \frac{\text{Tổng Khối Lượng Dự Thầu (Total Bids)}}{\text{Khối Lượng Gọi Thầu (Offering Volume)}}$$
+            </div>
+
+            <p><strong>Thang đánh giá sức cầu thị trường (BCR):</strong></p>
+            <ul style="padding-left: 1.25rem; margin-bottom: 0.75rem;">
+              <li><strong>BCR $\ge 2.5x$:</strong> Nhu cầu thị trường cực kỳ mạnh mẽ, phiên thầu thường trúng toàn bộ 100% với lãi suất thấp.</li>
+              <li><strong>$1.5x \le \text{BCR} < 2.5x$:</strong> Sức cầu ổn định, cân bằng giữa người mua và người bán.</li>
+              <li><strong>$\text{BCR} < 1.0x$:</strong> Sức cầu yếu ớt, giá trị đặt mua không đủ lượng gọi thầu $\implies$ Nguy cơ cao phiên thầu bị hủy một phần hoặc thất bại toàn bộ.</li>
+            </ul>
+
+            <div class="formula-box">
+              <div class="formula-label">Lãi suất trúng thầu (Stop-out / Cut-off Yield):</div>
+              Mức lãi suất cao nhất trong số các mức lãi suất đặt thầu được Kho bạc Nhà nước chấp nhận. Toàn bộ các nhà đầu tư đặt mức lãi suất bằng hoặc thấp hơn mức này đều được phân bổ mua trái phiếu.
+            </div>
+          </div>
+        </div>
+
+        <!-- Card: Auction Tail -->
+        <div class="glossary-card" data-keywords="tail auction tail do tre do le lai suat stop out weighted average primary secondary spread">
+          <div class="glossary-card-header">
+            <div>
+              <div class="glossary-term-name">Độ Trễ Lãi Suất Đấu Thầu (Auction Tail)</div>
+              <div class="glossary-term-en">Auction Tail / Stop-out Spread</div>
+            </div>
+            <span class="glossary-tag auction">Đấu Thầu Nâng Cao</span>
+          </div>
+          <div class="glossary-body">
+            <p>
+              <strong>Auction Tail (Đuôi đấu thầu)</strong> là khoảng cách giữa <em>Lãi suất trúng thầu cao nhất (Stop-out Rate)</em> và <em>Lãi suất bình quân gia quyền (Weighted Average Rate)</em> hoặc lợi suất thứ cấp giao dịch cùng kỳ hạn ngay trước thời điểm đấu thầu.
+            </p>
+
+            <div class="formula-box">
+              <div class="formula-label">Công thức xác định:</div>
+              $$\text{Tail} = \text{Lãi suất trúng thầu (Stop-out)} - \text{Lãi suất bình quân (Weighted Avg)}$$
+              hoặc:
+              $$\text{When-Issued Tail} = \text{Lãi suất trúng thầu} - \text{Lợi suất thứ cấp tham chiếu}$$
+            </div>
+
+            <p><strong>Ý nghĩa trong quản trị định lượng:</strong></p>
+            <ul style="padding-left: 1.25rem; margin-bottom: 0.75rem;">
+              <li><strong>Tail bằng 0 hoặc rất nhỏ ($\le 1\text{ bps}$):</strong> Phiên thầu "chặt chẽ" (Tight Auction), các thành viên đấu thầu đồng thuận cao về mức định giá hợp lý của trái phiếu.</li>
+              <li><strong>Tail lớn ($> 3–5\text{ bps}$):</strong> Cho thấy KBNN phải chấp nhận hạ giá (tăng lãi suất) ở những lô thầu cuối cùng để hoàn thành hạn mức gọi thầu, báo hiệu sự e ngại của các ngân hàng thương mại.</li>
+            </ul>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- SECTION 4: DÒNG VỐN KHỐI NGOẠI                                 -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <section id="sec-foreign">
+      <div class="glossary-section-title">
+        <span>🌏 4. Phân Tích Dòng Vốn Khối Ngoại (Foreign Investor Flow)</span>
+      </div>
+
+      <div class="glossary-grid">
+
+        <!-- Card: Foreign Net Flow -->
+        <div class="glossary-card" data-keywords="foreign flow dong von khoi ngoai net buy net sell mua ban rong ndtnn pdf hnx">
+          <div class="glossary-card-header">
+            <div>
+              <div class="glossary-term-name">Dòng Vốn Ngoại Ròng (Foreign Net Flow)</div>
+              <div class="glossary-term-en">Foreign Institutional Net Buying/Selling Flow</div>
+            </div>
+            <span class="glossary-tag curve">Thị Trường Thứ Cấp</span>
+          </div>
+          <div class="glossary-body">
+            <p>
+              Dòng vốn Nhà đầu tư nước ngoài (NĐTNN) trên thị trường TPCP Việt Nam chủ yếu là các quỹ đầu tư quốc tế, ngân hàng thương mại quốc tế (HSBC, Standard Chartered, Citibank, v.v.). Đây là dòng tiền mang tính chất chiến lược trung - dài hạn.
+            </p>
+
+            <div class="formula-box">
+              <div class="formula-label">Công thức tính Net Flow hàng ngày:</div>
+              $$\text{Net Flow (tỷ VNĐ)} = \frac{\text{Giá Trị Mua (VND)} - \text{Giá Trị Bán (VND)}}{1.000.000.000}$$
+            </div>
+
+            <p><strong>Cơ chế tác động tới thị trường:</strong></p>
+            <ul style="padding-left: 1.25rem; margin-bottom: 0.75rem;">
+              <li><strong>Mua ròng liên tục ($\text{Net} > 0$):</strong> Tạo thêm lực cầu hấp thụ trên thị trường thứ cấp, góp phần nén lợi suất TPCP đi xuống (đẩy giá trái phiếu tăng), đồng thời thể hiện niềm tin vào sự ổn định của tiền đồng (VND).</li>
+              <li><strong>Bán ròng đột biến ($\text{Net} < 0$):</strong> Thường liên quan đến áp lực tỷ giá căng thẳng, chênh lệch lãi suất USD-VND nới rộng khiến dòng vốn ngoại có xu hướng rút về tài sản định danh bằng USD.</li>
+            </ul>
+
+            <div class="interpretation-box">
+              <div class="interpretation-title">📑 Quy trình bóc tách dữ liệu HNX</div>
+              Dữ liệu giao dịch khối ngoại không có API công khai mà được HNX công bố dưới dạng file PDF hàng ngày trên FTP server <code>owa.hnx.vn</code>. Pipeline sử dụng module <code>pipeline/hnx_foreign_daily.py</code> với engine <code>pdfplumber</code> để tự động tải, bóc tách bảng số liệu và khử nhiễu tự động.
+            </div>
+          </div>
+        </div>
+
+        <!-- Card: Foreign Yield Correlation -->
+        <div class="glossary-card" data-keywords="tuong quan loi suat ngoai yield correlation foreign bond demand">
+          <div class="glossary-card-header">
+            <div>
+              <div class="glossary-term-name">Tương Quan Dòng Vốn & Lợi Suất</div>
+              <div class="glossary-term-en">Flow-Yield Dynamics & Market Impact</div>
+            </div>
+            <span class="glossary-tag macro">Phân Tích Định Lượng</span>
+          </div>
+          <div class="glossary-body">
+            <p>
+              Mô hình định lượng đo lường độ trễ (lead-lag effect) và hệ số tương quan Pearson/Spearman giữa dòng vốn mua/bán ròng của khối ngoại với mức biến thiên $\Delta Y$ của lợi suất TPCP kỳ hạn 5Y và 10Y.
+            </p>
+
+            <div class="formula-box">
+              <div class="formula-label">Hệ số tương quan biến thiên lợi suất:</div>
+              $$\rho = \text{Corr}\left(\text{Net Flow}_{t}, \Delta Y_{10Y, t+k}\right)$$
+            </div>
+
+            <p>
+              Theo kết quả thực nghiệm tại Việt Nam: Hệ số $\rho$ mang giá trị âm có ý nghĩa thống kê ở độ trễ $k=1$ đến $k=3$ ngày. Khi khối ngoại mua ròng quy mô lớn ($> 500$ tỷ/phiên), lợi suất 10Y có xu hướng hạ trung bình $2 - 4\text{ bps}$ trong 3 phiên tiếp theo.
+            </p>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- SECTION 5: TƯƠNG QUAN VĨ MÔ (SBV, USD/VND, OMO)               -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <section id="sec-macro">
+      <div class="glossary-section-title">
+        <span>🏦 5. Tương Quan Vĩ Mô (Macro Dynamics: SBV & USD/VND)</span>
+      </div>
+
+      <div class="glossary-grid">
+
+        <!-- Card: SBV Policy Rates & OMO -->
+        <div class="glossary-card" data-keywords="sbv ngan hang nha nuoc lai suat dieu hanh omo tin phieu bills repo">
+          <div class="glossary-card-header">
+            <div>
+              <div class="glossary-term-name">Lãi Suất Điều Hành & Nghiệp Vụ OMO</div>
+              <div class="glossary-term-en">SBV Policy Rates & Open Market Operations</div>
+            </div>
+            <span class="glossary-tag macro">Chính Sách Tiền Tệ</span>
+          </div>
+          <div class="glossary-body">
+            <p>
+              Ngân hàng Nhà nước Việt Nam (SBV) điều tiết thanh khoản hệ thống ngân hàng thương mại thông qua <strong>Nghiệp vụ thị trường mở (OMO)</strong> và khung lãi suất điều hành:
+            </p>
+
+            <ul style="padding-left: 1.25rem; margin-bottom: 0.75rem;">
+              <li><strong>Lãi suất Tái cấp vốn (Refinancing Rate) & Tái chiết khấu (Discount Rate):</strong> Đóng vai trò là trần/sàn hành lang lãi suất của nền kinh tế.</li>
+              <li><strong>Phát hành Tín phiếu NHNN (SBV Bills):</strong> Hút bớt thanh khoản VND dư thừa khỏi hệ thống liên ngân hàng nhằm nâng lãi suất VND ngắn hạn (qua đêm - 1 tuần), kiềm chế tỷ giá USD/VND.</li>
+              <li><strong>Mua kỳ hạn (Reverse Repo / Bơm thanh khoản):</strong> Cung ứng vốn ngắn hạn cho các ngân hàng khi thanh khoản gặp căng thẳng mùa cao điểm (cuối năm, Tết).</li>
+            </ul>
+
+            <div class="interpretation-box">
+              <div class="interpretation-title">⚡ Cơ chế truyền dẫn tới TPCP</div>
+              Khi SBV phát hành tín phiếu với lãi suất cao hơn, chi phí vốn liên ngân hàng tăng lên $\implies$ Lợi suất TPCP kỳ hạn ngắn (1M – 1Y) sẽ tăng trước tiên, làm cho đường cong lợi suất phẳng ra (Bear Flattening).
+            </div>
+          </div>
+        </div>
+
+        <!-- Card: USD/VND & FX Pressure -->
+        <div class="glossary-card" data-keywords="ty gia usd/vnd interest rate differential chenh lech lai suat ap luc ty gia">
+          <div class="glossary-card-header">
+            <div>
+              <div class="glossary-term-name">Tỷ Giá USD/VND & Chênh Lệch Lãi Suất</div>
+              <div class="glossary-term-en">FX Pressure & USD-VND Interest Rate Differential</div>
+            </div>
+            <span class="glossary-tag macro">Kinh Tế Vĩ Mô</span>
+          </div>
+          <div class="glossary-body">
+            <p>
+              Chênh lệch giữa lãi suất VND liên ngân hàng và lãi suất USD (SOFR/Fed Funds Rate) là yếu tố chi phối hàng đầu đối với dòng tiền đầu cơ tỷ giá (Carry Trade) và định giá TPCP.
+            </p>
+
+            <div class="formula-box">
+              <div class="formula-label">Chênh lệch lãi suất liên ngân hàng:</div>
+              $$\Delta r = r_{\text{VND, ON}} - r_{\text{USD, SOFR}}$$
+            </div>
+
+            <p><strong>Quy luật vận động:</strong></p>
+            <ul style="padding-left: 1.25rem; margin-bottom: 0.75rem;">
+              <li>Khi $\Delta r < 0$ (Lãi suất VND thấp hơn USD): Các tổ chức tín dụng có động cơ găm giữ USD $\implies$ Tỷ giá USD/VND leo thang $\implies$ SBV buộc phải can thiệp hút tiền hoặc bán ngoại tệ.</li>
+              <li>Lợi suất TPCP Việt Nam có mối tương quan dương mật thiết với tỷ giá USD/VND: Khi tỷ giá chịu áp lực mất giá mạnh, lợi suất trái phiếu thường tăng theo để bù đắp rủi ro tiền tệ.</li>
+            </ul>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- SECTION 6: BẢNG TRA CỨU NHANH THUẬT NGỮ                         -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <section id="sec-table" style="margin-top: 1rem;">
+      <div class="glossary-section-title">
+        <span>📋 6. Bảng Tra Cứu Nhanh Thuật Ngữ (Quick Reference Table)</span>
+      </div>
+
+      <div class="table-scroll-container" style="max-height: 480px;">
+        <table class="data-table" id="glossary-table">
+          <thead>
+            <tr>
+              <th style="min-width: 140px;">Thuật ngữ</th>
+              <th style="min-width: 130px;">Tên tiếng Anh</th>
+              <th style="min-width: 90px;">Phân loại</th>
+              <th>Ý nghĩa & Ứng dụng tóm tắt</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr data-keywords="nelson siegel ns yield curve noi suy">
+              <td><strong>Mô hình Nelson-Siegel</strong></td>
+              <td class="mono">Nelson-Siegel Model</td>
+              <td><span class="glossary-tag curve">Định lượng</span></td>
+              <td>Mô hình 4 tham số ($\beta_0, \beta_1, \beta_2, \lambda$) nội suy đường cong lợi suất liên tục từ các điểm kỳ hạn rời rạc.</td>
+            </tr>
+            <tr data-keywords="svensson nss model mo rong 6 tham so">
+              <td><strong>Mô hình Svensson</strong></td>
+              <td class="mono">Nelson-Siegel-Svensson</td>
+              <td><span class="glossary-tag curve">Định lượng</span></td>
+              <td>Mở rộng của NS với 6 tham số, cho phép tạo 2 bướu (two humps) để biểu diễn các biến động phức tạp ở kỳ hạn dài.</td>
+            </tr>
+            <tr data-keywords="term spread 10y 2y 10y 3m chenh lech do doc">
+              <td><strong>Term Spread</strong></td>
+              <td class="mono">Yield Curve Spread</td>
+              <td><span class="glossary-tag macro">Vĩ mô</span></td>
+              <td>Chênh lệch lợi suất kỳ hạn dài trừ ngắn (như 10Y - 2Y). Dùng để phát hiện nguy cơ suy thoái kinh tế và đảo ngược đường cong.</td>
+            </tr>
+            <tr data-keywords="butterfly spread 2s5s10s do cong canh buom">
+              <td><strong>Butterfly Spread</strong></td>
+              <td class="mono">Curvature (2s5s10s)</td>
+              <td><span class="glossary-tag curve">Trading</span></td>
+              <td>Đo độ cong/bướu của đường cong lợi suất: $2 \times Y_{5Y} - (Y_{2Y} + Y_{10Y})$. Ứng dụng trong giao dịch trung hòa thời lượng (Duration-neutral).</td>
+            </tr>
+            <tr data-keywords="bcr bid to cover ratio ty le bao phu dau thau">
+              <td><strong>Bid-to-Cover (BCR)</strong></td>
+              <td class="mono">Bid-to-Cover Ratio</td>
+              <td><span class="glossary-tag auction">Sơ cấp</span></td>
+              <td>Tỷ lệ giữa khối lượng đặt thầu và khối lượng gọi thầu tại HNX. Thể hiện sức cầu thị trường đối với từng kỳ hạn trái phiếu.</td>
+            </tr>
+            <tr data-keywords="stop out cut off rate lai suat trung thau">
+              <td><strong>Lãi suất Trúng thầu</strong></td>
+              <td class="mono">Stop-out / Cut-off Rate</td>
+              <td><span class="glossary-tag auction">Sơ cấp</span></td>
+              <td>Mức lãi suất trần cao nhất được Kho bạc Nhà nước chấp thuận để phân bổ trái phiếu trong phiên đấu thầu sơ cấp.</td>
+            </tr>
+            <tr data-keywords="auction tail do tre do le lai suat stop out">
+              <td><strong>Auction Tail</strong></td>
+              <td class="mono">Auction Tail Spread</td>
+              <td><span class="glossary-tag auction">Sơ cấp</span></td>
+              <td>Chênh lệch giữa lãi suất trúng thầu cao nhất và lãi suất bình quân gia quyền. Tail lớn báo hiệu nhà đầu tư thận trọng.</td>
+            </tr>
+            <tr data-keywords="foreign net flow dong von ngoai rong ndtnn">
+              <td><strong>Dòng vốn Ngoại ròng</strong></td>
+              <td class="mono">Foreign Net Flow</td>
+              <td><span class="glossary-tag curve">Thứ cấp</span></td>
+              <td>Giá trị mua trừ bán của nhà đầu tư nước ngoài. Phản ánh niềm tin vào tỷ giá VND và nhu cầu tài sản an toàn của dòng tiền quốc tế.</td>
+            </tr>
+            <tr data-keywords="sbv omo nghiep vu thi truong mo tin phieu bills">
+              <td><strong>Nghiệp vụ OMO</strong></td>
+              <td class="mono">Open Market Operations</td>
+              <td><span class="glossary-tag macro">Chính sách</span></td>
+              <td>Công cụ của SBV mua/bán tín phiếu hoặc repo để điều tiết cung tiền và lãi suất trên thị trường liên ngân hàng.</td>
+            </tr>
+            <tr data-keywords="inversion duong cong dao nguoc inverted yield curve">
+              <td><strong>Đường cong Đảo ngược</strong></td>
+              <td class="mono">Inverted Yield Curve</td>
+              <td><span class="glossary-tag macro">Cảnh báo</span></td>
+              <td>Hiện tượng lãi suất ngắn hạn cao hơn dài hạn ($Y_{10Y} < Y_{2Y}$), là tín hiệu cảnh báo suy thoái kinh tế kinh điển.</td>
+            </tr>
+            <tr data-keywords="basis point bps diem co ban">
+              <td><strong>Điểm cơ bản (bps)</strong></td>
+              <td class="mono">Basis Point (bps)</td>
+              <td><span class="glossary-tag curve">Đo lường</span></td>
+              <td>Đơn vị đo lường biến động lãi suất tài chính: $1\text{ bps} = 0.01\% = 0.0001$. Ví dụ: Lãi suất tăng từ $4.50\%$ lên $4.75\%$ là tăng $25\text{ bps}$.</td>
+            </tr>
+            <tr data-keywords="primary dealer thanh vien tao lap thi truong">
+              <td><strong>Nhà tạo lập thị trường</strong></td>
+              <td class="mono">Primary Dealer (PD)</td>
+              <td><span class="glossary-tag auction">Tổ chức</span></td>
+              <td>Các ngân hàng thương mại và công ty chứng khoán được Bộ Tài chính công nhận có quyền và nghĩa vụ tham gia đấu thầu trực tiếp tại HNX.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+  </div><!-- end page-body -->
+</main>
+
+<script src="assets/app.js?v=1.3"></script>
+<script>
+// ── Live Clock ─────────────────────────────────────────────────────────
+function updateClock() {
+  const now = new Date();
+  const str = now.toTimeString().substring(0, 8) + ' ICT';
+  const el = document.getElementById('live-clock');
+  if (el) el.textContent = str;
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// ── Instant Search Filter ──────────────────────────────────────────────
+function filterGlossary(query) {
+  const q = (query || '').toLowerCase().trim();
+
+  // Lọc cards
+  const cards = document.querySelectorAll('.glossary-card');
+  cards.forEach(card => {
+    const text = (card.textContent + ' ' + (card.getAttribute('data-keywords') || '')).toLowerCase();
+    card.style.display = (q === '' || text.includes(q)) ? 'flex' : 'none';
+  });
+
+  // Lọc bảng
+  const tableRows = document.querySelectorAll('#glossary-table tbody tr');
+  tableRows.forEach(row => {
+    const text = (row.textContent + ' ' + (row.getAttribute('data-keywords') || '')).toLowerCase();
+    row.style.display = (q === '' || text.includes(q)) ? '' : 'none';
+  });
+}
+
+// ── Smooth Scroll & Active Nav Pills ────────────────────────────────────
+document.querySelectorAll('.glossary-pill').forEach(pill => {
+  pill.addEventListener('click', function(e) {
+    document.querySelectorAll('.glossary-pill').forEach(p => p.classList.remove('active'));
+    this.classList.add('active');
+  });
+});
+</script>
+
+</body>
+</html>
