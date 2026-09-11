@@ -128,12 +128,16 @@ html {
 }
 
 body {
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   background-color: var(--bg-base);
   color: var(--text-primary);
   line-height: 1.6;
   min-height: 100vh;
   overflow-x: hidden;
+}
+
+button, input, select, textarea {
+  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
 /* Background gradient mesh */
@@ -382,6 +386,19 @@ body::before {
   overflow: hidden;
 }
 
+.chart-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg);
+  box-shadow: var(--shadow-card);
+  backdrop-filter: blur(8px);
+  transition: border-color var(--transition-med);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
 .chart-card:hover {
   border-color: rgba(59, 130, 246, 0.25);
 }
@@ -398,6 +415,7 @@ body::before {
   display: flex;
   align-items: center;
   gap: var(--space-sm);
+  flex-wrap: wrap;
 }
 
 .chart-subtitle {
@@ -409,9 +427,44 @@ body::before {
 .chart-body {
   min-height: 280px;
   position: relative;
+  flex: 1;
 }
 
-.chart-body-tall { min-height: 400px; }
+.chart-body-tall { min-height: 380px; height: 380px; }
+
+/* Cố định chiều cao và loại bỏ khoảng trống thừa */
+#yield-curve-chart {
+  height: 380px;
+  min-height: 380px;
+  width: 100%;
+}
+
+#tenor-table-body {
+  max-height: 380px;
+  overflow-y: auto;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-subtle);
+}
+
+#tenor-table-body thead th,
+#recent-auction-table thead th {
+  position: sticky;
+  top: 0;
+  background: var(--bg-card);
+  z-index: 2;
+  box-shadow: 0 1px 0 var(--border-subtle);
+}
+
+#foreign-flow-chart {
+  height: 320px;
+  min-height: 320px;
+  width: 100%;
+}
+
+#recent-auction-table {
+  max-height: 320px;
+  overflow-y: auto;
+}
 
 /* ── Yield Curve Visualization ────────────────────────────── */
 .yield-curve-svg {
@@ -626,6 +679,92 @@ input[type="range"]::-webkit-slider-thumb:hover {
   display: flex;
   gap: var(--space-xs);
   flex-wrap: wrap;
+  align-items: center;
+}
+
+/* ── Theme Toggle Button (Sans-Serif) ─────────────────────── */
+.theme-toggle-btn {
+  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+  font-size: 0.8rem;
+  font-weight: 500;
+  padding: 0.35rem 0.85rem;
+  border-radius: var(--radius-full);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-subtle);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  line-height: 1.2;
+}
+
+.theme-toggle-btn:hover {
+  background: var(--bg-card-hover);
+  color: var(--text-primary);
+  border-color: var(--border-glow);
+  box-shadow: var(--shadow-glow-sm);
+}
+
+/* ── Spread Analysis Interactive Controls ─────────────────── */
+.spread-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.spread-custom-selector {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: var(--bg-surface);
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-subtle);
+  font-size: 0.75rem;
+}
+
+.spread-custom-selector select {
+  padding: 0.25rem 0.4rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: var(--radius-sm);
+}
+
+.spread-timeline-panel {
+  margin-top: 0.75rem;
+  padding: 0.6rem 1rem;
+  background: var(--bg-surface);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-subtle);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.spread-slider-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.spread-stat-pill {
+  font-size: 0.725rem;
+  font-family: 'JetBrains Mono', monospace;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  background: rgba(59, 130, 246, 0.12);
+  color: var(--text-accent);
+  border: 1px solid rgba(59, 130, 246, 0.25);
 }
 
 /* ── Select / Dropdown ────────────────────────────────────── */

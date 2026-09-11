@@ -52,7 +52,7 @@
     </div>
     <div style="display: flex; align-items: center; gap: 1rem;">
       <span class="status-badge live">Cập nhật hôm nay</span>
-      <button id="theme-toggle" class="btn btn-ghost" aria-label="Toggle Theme" style="padding: 0.25rem 0.5rem; font-size: 1.2rem; display: flex; align-items: center; gap: 0.5rem;" onclick="VNBond.toggleTheme()">Light mode 🌓</button>
+      <button id="theme-toggle" class="theme-toggle-btn" aria-label="Toggle Theme" onclick="VNBond.toggleTheme()">Light mode 🌓</button>
       <span id="live-clock" style="font-size:0.8rem; color: var(--text-secondary); font-family: 'JetBrains Mono', monospace;"></span>
     </div>
   </header>
@@ -114,7 +114,7 @@
       <!-- Term Spread Gauge + bảng tenor -->
       <div class="chart-card fade-in">
         <p class="chart-title">📋 Bảng Lợi Suất Hiện Tại</p>
-        <p class="chart-subtitle">Đường cong ngày gần nhất (% năm)</p>
+        <p class="chart-subtitle">Đường cong ngày gần nhất (% năm) · Cuộn để xem tất cả kỳ hạn</p>
         <div id="tenor-table-body" style="margin-top: 0.5rem;">
           <div class="skeleton" style="height: 200px; border-radius: 8px;"></div>
         </div>
@@ -125,15 +125,112 @@
     <!-- ── Spread History Chart ──────────────────────────────────── -->
     <div class="chart-card chart-card-full fade-in" style="margin-bottom: 1.5rem;">
       <div class="chart-title">
-        ↕️ Lịch Sử Term Spread
-        <div class="btn-group" style="margin-left: auto;">
-          <button class="btn btn-ghost" id="btn-spread-10y2y" onclick="selectSpread('spread_10y_2y', this)">10Y-2Y</button>
-          <button class="btn btn-ghost" id="btn-spread-10y3m" onclick="selectSpread('spread_10y_3m', this)">10Y-3M</button>
-          <button class="btn btn-ghost" id="btn-spread-5y2y" onclick="selectSpread('spread_5y_2y', this)">5Y-2Y</button>
+        <span>↕️ Lịch Sử Term Spread</span>
+        <span id="spread-current-badge" class="spread-stat-pill" style="margin-left: 0.5rem;">10Y - 2Y</span>
+        <span id="spread-regime-header" class="metric-change up" style="font-size: 0.75rem; margin-left: 0.5rem;">—</span>
+      </div>
+      <p class="chart-subtitle" id="spread-chart-desc">
+        Chênh lệch lợi suất (bps) — Ngưỡng 0 = đảo ngược đường cong (Inversion). Kéo thanh trượt hoặc chọn các mốc thời gian/kỳ hạn để phân tích.
+      </p>
+
+      <!-- Spread Toolbar: Presets, Custom Tenor Comparison & Range Filter -->
+      <div class="spread-toolbar">
+        <!-- Presets -->
+        <div class="btn-group" id="spread-preset-group">
+          <span style="font-size: 0.75rem; color: var(--text-secondary); font-weight: 600;">Chuẩn:</span>
+          <button class="btn btn-primary" id="btn-spread-10y2y" onclick="selectPresetSpread('spread_10y_2y', '10Y - 2Y', this)">10Y-2Y</button>
+          <button class="btn btn-ghost" id="btn-spread-10y3m" onclick="selectPresetSpread('spread_10y_3m', '10Y - 3M', this)">10Y-3M</button>
+          <button class="btn btn-ghost" id="btn-spread-5y2y" onclick="selectPresetSpread('spread_5y_2y', '5Y - 2Y', this)">5Y-2Y</button>
+          <button class="btn btn-ghost" id="btn-spread-10y1y" onclick="selectPresetSpread('spread_10y_1y', '10Y - 1Y', this)">10Y-1Y</button>
+          <button class="btn btn-ghost" id="btn-spread-30y10y" onclick="selectPresetSpread('spread_30y_10y', '30Y - 10Y', this)">30Y-10Y</button>
+          <button class="btn btn-ghost" id="btn-spread-bf" onclick="selectPresetSpread('butterfly_2s5s10s', 'Butterfly 2s5s10s', this)">2s5s10s 🦋</button>
+        </div>
+
+        <!-- Custom Tenor Pair Selector -->
+        <div class="spread-custom-selector">
+          <span style="color: var(--text-secondary); font-weight: 600;">So sánh tùy ý:</span>
+          <select id="custom-tenor-a" onchange="applyCustomSpread()" aria-label="Kỳ hạn 1">
+            <option value="0.08">1M</option>
+            <option value="0.17">2M</option>
+            <option value="0.25">3M</option>
+            <option value="0.5">6M</option>
+            <option value="0.75">9M</option>
+            <option value="1">1Y</option>
+            <option value="1.5">18M</option>
+            <option value="2">2Y</option>
+            <option value="3">3Y</option>
+            <option value="4">4Y</option>
+            <option value="5">5Y</option>
+            <option value="6">6Y</option>
+            <option value="7">7Y</option>
+            <option value="8">8Y</option>
+            <option value="9">9Y</option>
+            <option value="10" selected>10Y</option>
+            <option value="12">12Y</option>
+            <option value="15">15Y</option>
+            <option value="20">20Y</option>
+            <option value="30">30Y</option>
+          </select>
+          <span style="font-weight: 700; color: var(--accent-primary);">-</span>
+          <select id="custom-tenor-b" onchange="applyCustomSpread()" aria-label="Kỳ hạn 2">
+            <option value="0.08">1M</option>
+            <option value="0.17">2M</option>
+            <option value="0.25">3M</option>
+            <option value="0.5">6M</option>
+            <option value="0.75">9M</option>
+            <option value="1">1Y</option>
+            <option value="1.5">18M</option>
+            <option value="2" selected>2Y</option>
+            <option value="3">3Y</option>
+            <option value="4">4Y</option>
+            <option value="5">5Y</option>
+            <option value="6">6Y</option>
+            <option value="7">7Y</option>
+            <option value="8">8Y</option>
+            <option value="9">9Y</option>
+            <option value="10">10Y</option>
+            <option value="12">12Y</option>
+            <option value="15">15Y</option>
+            <option value="20">20Y</option>
+            <option value="30">30Y</option>
+          </select>
+          <button class="btn btn-ghost" id="btn-apply-custom" style="padding: 0.25rem 0.6rem; font-size: 0.75rem;" onclick="applyCustomSpread()">Áp dụng</button>
+        </div>
+
+        <!-- Quick Time Range Filter -->
+        <div class="btn-group" id="spread-range-group">
+          <span style="font-size: 0.75rem; color: var(--text-secondary); font-weight: 600;">Khoảng:</span>
+          <button class="btn btn-ghost" onclick="setSpreadRange(90, this)">3T</button>
+          <button class="btn btn-ghost" onclick="setSpreadRange(180, this)">6T</button>
+          <button class="btn btn-ghost" onclick="setSpreadRange(365, this)">1N</button>
+          <button class="btn btn-ghost" onclick="setSpreadRange(1095, this)">3N</button>
+          <button class="btn btn-ghost" onclick="setSpreadRange(1825, this)">5N</button>
+          <button class="btn btn-primary" id="btn-range-all" onclick="setSpreadRange(0, this)">Tất cả</button>
         </div>
       </div>
-      <p class="chart-subtitle">Basis points (bps) — Đường 0 = ngưỡng đảo ngược đường cong</p>
-      <div class="chart-body" id="spread-chart" style="min-height: 220px;"></div>
+
+      <!-- Time Series Chart -->
+      <div class="chart-body" id="spread-chart" style="height: 320px; min-height: 320px;"></div>
+
+      <!-- Interactive Date Scrubber / Slider Panel -->
+      <div class="spread-timeline-panel">
+        <div class="spread-slider-header">
+          <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
+            <span>📅 Ngày theo dõi: <strong id="spread-scrub-date" style="color: var(--text-accent);">—</strong></span>
+            <span>Spread: <strong id="spread-scrub-val" class="num-mono">—</strong></span>
+            <span id="spread-scrub-regime" class="spread-stat-pill">—</span>
+            <span id="spread-scrub-details" style="font-size: 0.75rem; color: var(--text-secondary);">—</span>
+          </div>
+          <div style="display: flex; gap: 0.35rem;">
+            <button class="btn btn-ghost" style="padding: 0.2rem 0.5rem; font-size: 0.75rem;" onclick="stepSpreadDate(-1)" aria-label="Ngày trước">◀ Ngày trước</button>
+            <button class="btn btn-ghost" style="padding: 0.2rem 0.5rem; font-size: 0.75rem;" onclick="stepSpreadDate(1)" aria-label="Ngày sau">Ngày sau ▶</button>
+            <button class="btn btn-ghost" style="padding: 0.2rem 0.5rem; font-size: 0.75rem;" onclick="resetSpreadSlider()" aria-label="Hôm nay">Mới nhất</button>
+          </div>
+        </div>
+        <div class="slider-container" style="padding: 0.2rem 0;">
+          <input type="range" id="spread-slider" min="0" max="100" value="100" aria-label="Thanh trượt theo dõi spread theo ngày" oninput="onSpreadSliderInput(this.value)">
+        </div>
+      </div>
     </div>
 
     <!-- ── Bottom Row: Auction + Foreign ──────────────────────────── -->
@@ -217,13 +314,12 @@
       el.className = 'metric-value num-mono neutral';
     }
 
-    // Spread chart
-    VNBond.drawSpreadChart('spread-chart', spreadData, 'spread_10y_2y');
-    document.getElementById('btn-spread-10y2y').classList.add('btn-primary');
+    // Khởi tạo Spread Manager tương tác
+    initSpreadManager(spreadData, curveData);
 
-    VNBond.onResize('spread-chart', () =>
-      VNBond.drawSpreadChart('spread-chart', spreadData, currentSpread)
-    );
+    VNBond.onResize('spread-chart', () => {
+      refreshSpreadView();
+    });
   } else {
     drawDemoSpread();
   }
@@ -234,18 +330,239 @@
   // Foreign flow chart
   if (foreignData) {
     drawForeignFlow(foreignData);
+    VNBond.onResize('foreign-flow-chart', () => {
+      drawForeignFlow(foreignData);
+    });
   }
 
 })();
 
-// ── Spread selector ─────────────────────────────────────────────────────
-let currentSpread = 'spread_10y_2y';
-function selectSpread(col, btn) {
-  currentSpread = col;
-  document.querySelectorAll('#btn-spread-10y2y, #btn-spread-10y3m, #btn-spread-5y2y')
-    .forEach(b => b.className = 'btn btn-ghost');
-  btn.className = 'btn btn-primary';
-  VNBond.drawSpreadChart('spread-chart', VNBond.state.spreadData, col);
+// ── Spread Manager (Interactive Presets, Custom Pairs, Range & Slider) ──
+let spreadState = {
+  mode: 'preset',          // 'preset' | 'custom'
+  presetKey: 'spread_10y_2y',
+  presetLabel: '10Y - 2Y',
+  customA: 10.0,
+  customB: 2.0,
+  rangeDays: 0,            // 0 = All
+  activeSeries: [],        // [{date, dateStr, value, yA, yB}]
+  filteredSeries: [],
+  currentIndex: -1,
+  activeDateStr: null,
+};
+
+function initSpreadManager(spreadData, curveData) {
+  loadSpreadSeries();
+  updateSpreadUI();
+}
+
+function loadSpreadSeries() {
+  const { spreadData, curveData } = VNBond.state;
+  if (spreadState.mode === 'preset') {
+    const colKey = spreadState.presetKey;
+    if (spreadData && spreadData.length) {
+      spreadState.activeSeries = spreadData
+        .filter(d => d[colKey] != null)
+        .map(d => ({
+          date: new Date(d.date),
+          dateStr: (d.date || '').toString().substring(0, 10),
+          value: d[colKey] * 100, // bps
+          yA: d.y_10y,
+          yB: d.y_2y,
+        }))
+        .sort((a, b) => a.date - b.date);
+    }
+  } else {
+    // Custom pair
+    if (curveData && curveData.length) {
+      spreadState.activeSeries = VNBond.calculateCustomSpread(
+        curveData,
+        spreadState.customA,
+        spreadState.customB
+      );
+    }
+  }
+
+  // Áp dụng bộ lọc khoảng thời gian (Range)
+  if (spreadState.rangeDays > 0 && spreadState.activeSeries.length > 0) {
+    const latestTime = spreadState.activeSeries[spreadState.activeSeries.length - 1].date.getTime();
+    const cutoffTime = latestTime - (spreadState.rangeDays * 24 * 3600 * 1000);
+    spreadState.filteredSeries = spreadState.activeSeries.filter(d => d.date.getTime() >= cutoffTime);
+  } else {
+    spreadState.filteredSeries = [...spreadState.activeSeries];
+  }
+
+  if (spreadState.filteredSeries.length > 0) {
+    spreadState.currentIndex = spreadState.filteredSeries.length - 1;
+    spreadState.activeDateStr = spreadState.filteredSeries[spreadState.currentIndex].dateStr;
+  }
+}
+
+function updateSpreadUI() {
+  const series = spreadState.filteredSeries;
+  const slider = document.getElementById('spread-slider');
+  const badge = document.getElementById('spread-current-badge');
+  const regimeHeader = document.getElementById('spread-regime-header');
+
+  if (badge) {
+    if (spreadState.mode === 'preset') {
+      badge.textContent = spreadState.presetLabel;
+    } else {
+      const labelA = VNBond.tenorLabel(spreadState.customA);
+      const labelB = VNBond.tenorLabel(spreadState.customB);
+      badge.textContent = `${labelA} - ${labelB} (Tùy chọn)`;
+    }
+  }
+
+  if (!series || !series.length) {
+    document.getElementById('spread-chart').innerHTML = `
+      <div style="text-align:center; padding: 3rem; color: var(--text-muted); font-size:0.85rem;">
+        Không có dữ liệu cho lựa chọn này.
+      </div>`;
+    return;
+  }
+
+  // Cập nhật thanh trượt slider
+  if (slider) {
+    slider.min = 0;
+    slider.max = series.length - 1;
+    slider.value = spreadState.currentIndex;
+  }
+
+  // Cập nhật thông số ngày đang chọn
+  updateScrubberReadout(series[spreadState.currentIndex]);
+
+  // Cập nhật regime header theo điểm cuối cùng
+  const latestItem = series[series.length - 1];
+  if (regimeHeader && latestItem) {
+    const isInv = latestItem.value < 0;
+    regimeHeader.textContent = isInv ? 'Đảo ngược' : 'Bình thường';
+    regimeHeader.className = 'metric-change ' + (isInv ? 'down' : 'up');
+  }
+
+  // Vẽ biểu đồ
+  refreshSpreadView();
+}
+
+function refreshSpreadView() {
+  const series = spreadState.filteredSeries;
+  if (!series || !series.length) return;
+
+  VNBond.drawSpreadChart('spread-chart', series, {
+    activeDate: spreadState.activeDateStr,
+    onDateSelect: (d, isClick) => {
+      spreadState.activeDateStr = d.dateStr;
+      const idx = series.findIndex(item => item.dateStr === d.dateStr);
+      if (idx !== -1) {
+        spreadState.currentIndex = idx;
+        const slider = document.getElementById('spread-slider');
+        if (slider) slider.value = idx;
+      }
+      updateScrubberReadout(d);
+    }
+  });
+}
+
+function updateScrubberReadout(item) {
+  if (!item) return;
+  const dateEl = document.getElementById('spread-scrub-date');
+  const valEl = document.getElementById('spread-scrub-val');
+  const regimeEl = document.getElementById('spread-scrub-regime');
+  const detailsEl = document.getElementById('spread-scrub-details');
+
+  if (dateEl) dateEl.textContent = VNBond.formatDateVN(item.dateStr);
+  if (valEl) {
+    valEl.textContent = (item.value >= 0 ? '+' : '') + item.value.toFixed(1) + ' bps';
+    valEl.style.color = item.value >= 0 ? 'var(--color-up)' : 'var(--color-down)';
+  }
+  if (regimeEl) {
+    const isInv = item.value < 0;
+    regimeEl.textContent = isInv ? '⚠️ Đảo ngược' : '✓ Dốc lên (Normal)';
+    regimeEl.style.borderColor = isInv ? 'rgba(239, 68, 68, 0.4)' : 'rgba(34, 197, 94, 0.4)';
+    regimeEl.style.color = isInv ? 'var(--color-down)' : 'var(--color-up)';
+  }
+  if (detailsEl) {
+    if (item.yA != null && item.yB != null) {
+      detailsEl.textContent = `Lợi suất: ${item.yA.toFixed(2)}% vs ${item.yB.toFixed(2)}%`;
+    } else {
+      detailsEl.textContent = '';
+    }
+  }
+}
+
+function selectPresetSpread(colKey, label, btn) {
+  spreadState.mode = 'preset';
+  spreadState.presetKey = colKey;
+  spreadState.presetLabel = label;
+
+  document.querySelectorAll('#spread-preset-group button').forEach(b => b.className = 'btn btn-ghost');
+  if (btn) btn.className = 'btn btn-primary';
+
+  loadSpreadSeries();
+  updateSpreadUI();
+}
+
+function applyCustomSpread() {
+  const selA = document.getElementById('custom-tenor-a');
+  const selB = document.getElementById('custom-tenor-b');
+  if (!selA || !selB) return;
+
+  spreadState.mode = 'custom';
+  spreadState.customA = parseFloat(selA.value);
+  spreadState.customB = parseFloat(selB.value);
+
+  // Bỏ active nút preset
+  document.querySelectorAll('#spread-preset-group button').forEach(b => b.className = 'btn btn-ghost');
+  const applyBtn = document.getElementById('btn-apply-custom');
+  if (applyBtn) {
+    applyBtn.className = 'btn btn-primary';
+    setTimeout(() => { applyBtn.className = 'btn btn-ghost'; }, 1200);
+  }
+
+  loadSpreadSeries();
+  updateSpreadUI();
+}
+
+function setSpreadRange(days, btn) {
+  spreadState.rangeDays = days;
+  document.querySelectorAll('#spread-range-group button').forEach(b => b.className = 'btn btn-ghost');
+  if (btn) btn.className = 'btn btn-primary';
+
+  loadSpreadSeries();
+  updateSpreadUI();
+}
+
+function onSpreadSliderInput(val) {
+  const idx = parseInt(val, 10);
+  const series = spreadState.filteredSeries;
+  if (!series || !series[idx]) return;
+
+  spreadState.currentIndex = idx;
+  spreadState.activeDateStr = series[idx].dateStr;
+  updateScrubberReadout(series[idx]);
+  refreshSpreadView();
+}
+
+function stepSpreadDate(delta) {
+  const series = spreadState.filteredSeries;
+  if (!series || !series.length) return;
+
+  let newIdx = spreadState.currentIndex + delta;
+  if (newIdx < 0) newIdx = 0;
+  if (newIdx >= series.length) newIdx = series.length - 1;
+
+  const slider = document.getElementById('spread-slider');
+  if (slider) slider.value = newIdx;
+  onSpreadSliderInput(newIdx);
+}
+
+function resetSpreadSlider() {
+  const series = spreadState.filteredSeries;
+  if (!series || !series.length) return;
+  const newIdx = series.length - 1;
+  const slider = document.getElementById('spread-slider');
+  if (slider) slider.value = newIdx;
+  onSpreadSliderInput(newIdx);
 }
 
 // ── Tenor table renderer ────────────────────────────────────────────────
@@ -304,8 +621,6 @@ function setMetric(valId, chgId, value, change) {
 // ── Recent auctions table ─────────────────────────────────────────────
 function renderRecentAuctions(data) {
   const container = document.getElementById('recent-auction-table');
-  // auction_stats.json xuất key "recent_90d" (từ auction_recent_90d.parquet)
-  // Hỗ trợ cả hai key để tương thích ngược
   const auctions = data && (data.recent_auctions || data.recent_90d);
   if (!auctions || !auctions.length) {
     container.innerHTML = `
@@ -323,7 +638,6 @@ function renderRecentAuctions(data) {
       </tr></thead>
       <tbody>
         ${rows.map(r => {
-          // JSON thực tế dùng: trade_date, tenor_yr (số), winning_rate_pct, auction_successful
           const dateStr = (r.trade_date || r.date || '').toString().substring(0, 10);
           const tenorLabel = r.tenor_yr != null
             ? (r.tenor_yr < 1 ? Math.round(r.tenor_yr * 12) + 'M' : r.tenor_yr + 'Y')
@@ -346,11 +660,9 @@ function renderRecentAuctions(data) {
   `;
 }
 
-// ── Foreign flow bar chart ─────────────────────────────────────────────
+// ── Foreign flow bar chart (Enhanced layout, no empty space, tooltips) ───
 function drawForeignFlow(data) {
   const container = document.getElementById('foreign-flow-chart');
-  // Sau khi fix pipeline: data = {daily:[{date, for_net_bn,...}]}
-  // Hỗ trợ cả flat array (cũ) lẫn {daily:[...]} (mới)
   const daily = Array.isArray(data) ? data : (data && data.daily);
   if (!daily || !daily.length) {
     container.innerHTML = `
@@ -360,55 +672,97 @@ function drawForeignFlow(data) {
     return;
   }
 
-  // Trường "date" sau khi pipeline đã rename từ "trade_date"
   const recent = daily.slice(-30);
-  const margin = { top: 10, right: 15, bottom: 30, left: 55 };
+  const margin = { top: 15, right: 20, bottom: 45, left: 60 };
   const width = container.clientWidth - margin.left - margin.right;
-  const height = container.clientHeight - margin.top - margin.bottom;
+  const height = (container.clientHeight || 320) - margin.top - margin.bottom;
+
+  // Tính tổng net 30 ngày để hiển thị thông tin
+  const totalNet = recent.reduce((sum, d) => sum + (d.for_net_bn || 0), 0);
+  const totalBuy = recent.reduce((sum, d) => sum + (d.for_buy_vnd || 0), 0) / 1e9;
+  const totalSell = recent.reduce((sum, d) => sum + (d.for_sell_vnd || 0), 0) / 1e9;
 
   container.innerHTML = '';
+
   const svg = d3.select('#foreign-flow-chart')
     .append('svg').attr('width', '100%').attr('height', '100%')
     .attr('viewBox', `0 0 ${width + margin.left + margin.right} ${height + margin.top + margin.bottom}`)
     .append('g').attr('transform', `translate(${margin.left},${margin.top})`);
 
-  // Dùng d.date (mới) hoặc fallback d.trade_date (cũ)
   const getDate = d => d.date || (d.trade_date || '').toString().substring(0, 10);
 
   const x = d3.scaleBand()
     .domain(recent.map(d => getDate(d)))
-    .range([0, width]).padding(0.1);
+    .range([0, width]).padding(0.2);
 
   const yExtent = d3.extent(recent, d => d.for_net_bn);
-  const yPad = Math.abs((yExtent[1] || 0) - (yExtent[0] || 0)) * 0.1 || 1;
+  const yMaxVal = Math.max(Math.abs(yExtent[0] || 0), Math.abs(yExtent[1] || 0), 100);
   const y = d3.scaleLinear()
-    .domain([(yExtent[0] || 0) - yPad, (yExtent[1] || 0) + yPad]).nice()
+    .domain([-yMaxVal * 1.15, yMaxVal * 1.15]).nice()
     .range([height, 0]);
 
+  // Grid lines
+  svg.append('g')
+    .call(d3.axisLeft(y).ticks(5).tickSize(-width).tickFormat(''))
+    .call(g => g.select('.domain').remove())
+    .call(g => g.selectAll('line').attr('stroke', 'var(--border-subtle)').attr('stroke-dasharray', '3,3'));
+
+  // Đường 0 tỷ - rõ nét ở cả hai theme
+  svg.append('line')
+    .attr('x1', 0).attr('x2', width)
+    .attr('y1', y(0)).attr('y2', y(0))
+    .attr('stroke', 'var(--border-glow)')
+    .attr('stroke-width', 1.5)
+    .attr('stroke-dasharray', '3,2');
+
+  // Cột Bar
   svg.selectAll('rect').data(recent).enter()
     .append('rect')
     .attr('x', d => x(getDate(d)))
     .attr('width', x.bandwidth())
-    .attr('y', d => y(Math.max(0, d.for_net_bn)))
-    .attr('height', d => Math.abs(y(d.for_net_bn) - y(0)))
-    .attr('fill', d => d.for_net_bn >= 0 ? 'rgba(34,197,94,0.7)' : 'rgba(239,68,68,0.7)')
-    .attr('rx', 2);
+    .attr('y', d => y(Math.max(0, d.for_net_bn || 0)))
+    .attr('height', d => Math.max(2, Math.abs(y(d.for_net_bn || 0) - y(0))))
+    .attr('fill', d => (d.for_net_bn || 0) >= 0 ? 'rgba(34, 197, 94, 0.85)' : 'rgba(239, 68, 68, 0.85)')
+    .attr('rx', 3)
+    .style('cursor', 'pointer')
+    .on('mouseover', function(event, d) {
+      d3.select(this).attr('opacity', 0.8);
+      const isNetBuy = (d.for_net_bn || 0) >= 0;
+      const netColor = isNetBuy ? 'var(--color-up)' : 'var(--color-down)';
+      VNBond.showTooltip(event, `
+        <div class="tooltip-title">📅 ${VNBond.formatDateVN(getDate(d))}</div>
+        <div class="tooltip-row">
+          <span>Net Khối Ngoại:</span>
+          <span class="tooltip-value" style="color:${netColor}">${(d.for_net_bn || 0).toFixed(1)} tỷ</span>
+        </div>
+        <div class="tooltip-row">
+          <span>Mua:</span>
+          <span class="tooltip-value" style="color:var(--color-up)">${((d.for_buy_vnd || 0)/1e9).toFixed(1)} tỷ</span>
+        </div>
+        <div class="tooltip-row">
+          <span>Bán:</span>
+          <span class="tooltip-value" style="color:var(--color-down)">${((d.for_sell_vnd || 0)/1e9).toFixed(1)} tỷ</span>
+        </div>
+      `);
+    })
+    .on('mousemove', event => VNBond.moveTooltip(event))
+    .on('mouseout', function() {
+      d3.select(this).attr('opacity', 1);
+      VNBond.hideTooltip();
+    });
 
-  svg.append('line')
-    .attr('x1', 0).attr('x2', width)
-    .attr('y1', y(0)).attr('y2', y(0))
-    .attr('stroke', 'rgba(255,255,255,0.2)').attr('stroke-width', 1);
-
+  // Trục X (Ngày)
   svg.append('g').attr('transform', `translate(0,${height})`)
-    .call(d3.axisBottom(x).tickValues(x.domain().filter((d,i) => i % 5 === 0)))
-    .call(g => g.selectAll('text').attr('fill', '#94a3b8').attr('font-size', '9px')
-      .attr('transform', 'rotate(-30)').attr('text-anchor', 'end'))
-    .call(g => g.select('.domain').attr('stroke', 'rgba(148,163,184,0.2)'));
+    .call(d3.axisBottom(x).tickValues(x.domain().filter((d, i) => i % 4 === 0 || i === x.domain().length - 1)))
+    .call(g => g.selectAll('text').attr('fill', 'var(--text-secondary)').attr('font-size', '10px')
+      .attr('transform', 'rotate(-25)').attr('text-anchor', 'end'))
+    .call(g => g.select('.domain').attr('stroke', 'var(--border-subtle)'));
 
+  // Trục Y (Tỷ đồng)
   svg.append('g')
-    .call(d3.axisLeft(y).ticks(4).tickFormat(v => v.toFixed(0) + ' tỷ'))
-    .call(g => g.selectAll('text').attr('fill', '#94a3b8').attr('font-size', '9px'))
-    .call(g => g.select('.domain').attr('stroke', 'rgba(148,163,184,0.2)'));
+    .call(d3.axisLeft(y).ticks(5).tickFormat(v => v.toFixed(0) + ' tỷ'))
+    .call(g => g.selectAll('text').attr('fill', 'var(--text-secondary)').attr('font-size', '10px'))
+    .call(g => g.select('.domain').attr('stroke', 'var(--border-subtle)'));
 }
 
 // ── Demo charts (khi chưa có data) ──────────────────────────────────────
@@ -427,7 +781,6 @@ function drawDemoYieldCurve() {
   document.getElementById('curve-date-label').textContent = 'Dữ liệu minh họa';
   renderTenorTable(demoData.map(d => ({...d, date: today})), today);
 
-  // Demo metrics
   setMetric('val-10y', 'chg-10y', 5.5, -0.05);
   setMetric('val-2y', 'chg-2y', 4.35, 0.02);
   document.getElementById('val-spread').textContent = '115.0 bps';
@@ -444,15 +797,12 @@ function drawDemoSpread() {
     return {
       date: d.toISOString().substring(0, 10),
       spread_10y_2y: 0.8 + Math.sin(i / 8) * 0.4 + (Math.random() - 0.5) * 0.2,
+      y_10y: 4.5,
+      y_2y: 3.7,
     };
   });
-  VNBond.drawSpreadChart('spread-chart', demoSpread, 'spread_10y_2y');
-  document.getElementById('btn-spread-10y2y').classList.add('btn-primary');
+  initSpreadManager(demoSpread, []);
   renderRecentAuctions(null);
-  document.getElementById('foreign-flow-chart').innerHTML = `
-    <div style="text-align:center; padding: 2rem; color: var(--text-muted); font-size:0.85rem;">
-      Chạy pipeline để có dữ liệu thật
-    </div>`;
 }
 </script>
 

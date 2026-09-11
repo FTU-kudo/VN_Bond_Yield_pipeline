@@ -291,23 +291,105 @@ function tenorLabel(yr) {
   return map[yr] || (yr < 1 ? `${Math.round(yr * 12)}M` : `${yr}Y`);
 }
 
+/* ── Spread Calculation for Any Custom Tenor Pair ───────────────────── */
+let _curveIndexCache = null;
+function getCurveIndex(curveData) {
+  if (_curveIndexCache) return _curveIndexCache;
+  _curveIndexCache = new Map();
+  for (let i = 0; i < curveData.length; i++) {
+    const row = curveData[i];
+    let dayMap = _curveIndexCache.get(row.date);
+    if (!dayMap) {
+      dayMap = {};
+      _curveIndexCache.set(row.date, dayMap);
+    }
+    dayMap[row.tenor_yr] = row.yield_pct;
+  }
+  return _curveIndexCache;
+}
+
+function calculateCustomSpread(curveData, tenorA, tenorB) {
+  if (!curveData || !curveData.length) return [];
+  const idx = getCurveIndex(curveData);
+  const result = [];
+  for (const [dateStr, yields] of idx.entries()) {
+    const yA = yields[tenorA];
+    const yB = yields[tenorB];
+    if (yA != null && yB != null) {
+      result.push({
+        date: dateStr,
+        dateObj: new Date(dateStr),
+        value: (yA - yB) * 100, // spread in basis points (bps)
+        yA: yA,
+        yB: yB,
+      });
+    }
+  }
+  result.sort((a, b) => a.dateObj - b.dateObj);
+  return result;
+}
+
 /* ── Spread Line Chart ──────────────────────────────────────────────── */
-function drawSpreadChart(containerId, spreadData, colKey = 'spread_10y_2y') {
+function drawSpreadChart(containerId, inputData, options = {}) {
   const container = document.getElementById(containerId);
-  if (!container || !spreadData) return;
+  if (!container || !inputData) return;
 
-  const data = spreadData
-    .filter(d => d[colKey] != null)
-    .map(d => ({ date: new Date(d.date), value: d[colKey] * 100 }))
-    .sort((a, b) => a.date - b.date);
+  const colKey = typeof options === 'string' ? options : (options.colKey || 'spread_10y_2y');
+  const activeDateStr = options.activeDate || null;
+  const onDateSelect = options.onDateSelect || null;
 
-  if (data.length === 0) return;
+  // Chuẩn hóa dữ liệu đầu vào:
+  // Hỗ trợ cả mảng custom [{date, value, yA, yB}] lẫn spreadData gốc có colKey
+  let data = [];
+  if (Array.isArray(inputData) && inputData.length > 0) {
+    if (inputData[0].value !== undefined) {
+      // Custom series đã có value
+      data = inputData.map(d => ({
+        date: d.dateObj || new Date(d.date),
+        dateStr: (d.date && typeof d.date === 'string') ? d.date.substring(0, 10) : (d.dateObj ? d.dateObj.toISOString().substring(0, 10) : ''),
+        value: d.value,
+        yA: d.yA,
+        yB: d.yB,
+      }));
+    } else {
+      // spreadData gốc có colKey
+      data = inputData
+        .filter(d => d[colKey] != null)
+        .map(d => ({
+          date: new Date(d.date),
+          dateStr: (d.date || '').toString().substring(0, 10),
+          value: d[colKey] * 100,
+          yA: d.y_10y,
+          yB: d.y_2y,
+        }));
+    }
+  }
+
+  data.sort((a, b) => a.date - b.date);
+
+  // Lọc theo range nếu có
+  if (options.startDate) {
+    const sTime = new Date(options.startDate).getTime();
+    data = data.filter(d => d.date.getTime() >= sTime);
+  }
+  if (options.endDate) {
+    const eTime = new Date(options.endDate).getTime();
+    data = data.filter(d => d.date.getTime() <= eTime);
+  }
+
+  if (data.length === 0) {
+    container.innerHTML = `
+      <div style="text-align:center; padding: 3rem; color: var(--text-muted); font-size:0.85rem;">
+        Không có dữ liệu spread cho khoảng thời gian này.
+      </div>`;
+    return;
+  }
 
   container.innerHTML = '';
 
-  const margin = { top: 15, right: 20, bottom: 40, left: 55 };
+  const margin = { top: 20, right: 25, bottom: 40, left: 60 };
   const width = container.clientWidth - margin.left - margin.right;
-  const height = container.clientHeight - margin.top - margin.bottom;
+  const height = (container.clientHeight || 300) - margin.top - margin.bottom;
 
   const svg = d3.select(`#${containerId}`)
     .append('svg').attr('width', '100%').attr('height', '100%')
@@ -315,46 +397,60 @@ function drawSpreadChart(containerId, spreadData, colKey = 'spread_10y_2y') {
     .append('g').attr('transform', `translate(${margin.left},${margin.top})`);
 
   const x = d3.scaleTime().domain(d3.extent(data, d => d.date)).range([0, width]);
-  const y = d3.scaleLinear().domain(d3.extent(data, d => d.value)).nice().range([height, 0]);
+  const yExtent = d3.extent(data, d => d.value);
+  const yPad = Math.abs(yExtent[1] - yExtent[0]) * 0.1 || 10;
+  const yMin = Math.min(yExtent[0] - yPad, 0);
+  const yMax = Math.max(yExtent[1] + yPad, 0);
+  const y = d3.scaleLinear().domain([yMin, yMax]).nice().range([height, 0]);
 
-  // Grid
+  // Grid lines
   svg.append('g')
     .call(d3.axisLeft(y).tickSize(-width).tickFormat(''))
     .call(g => g.select('.domain').remove())
-    .call(g => g.selectAll('line').attr('stroke', 'var(--border-subtle)'));
+    .call(g => g.selectAll('line').attr('stroke', 'var(--border-subtle)').attr('stroke-dasharray', '3,3'));
 
-  // Zero line
-  if (y.domain()[0] < 0 && y.domain()[1] > 0) {
+  // Đường 0 bps (Ngưỡng đảo ngược đường cong) - hiển thị rõ cả Light & Dark mode
+  if (yMin <= 0 && yMax >= 0) {
     svg.append('line')
       .attr('x1', 0).attr('x2', width)
       .attr('y1', y(0)).attr('y2', y(0))
-      .attr('stroke', 'rgba(255,255,255,0.25)')
-      .attr('stroke-width', 1)
-      .attr('stroke-dasharray', '4,2');
+      .attr('stroke', 'var(--border-glow)')
+      .attr('stroke-width', 1.5)
+      .attr('stroke-dasharray', '4,3');
+
+    // Nhãn "0 bps" bên phải
+    svg.append('text')
+      .attr('x', width + 5).attr('y', y(0) + 3)
+      .attr('fill', 'var(--text-muted)').attr('font-size', '9px')
+      .attr('font-family', 'JetBrains Mono, monospace')
+      .text('0');
   }
 
-  // Colored area: green above 0, red below 0
+  // Vùng màu xanh dương/xanh lá khi spread > 0, đỏ khi spread < 0 (Inversion)
   const area = d3.area()
     .x(d => x(d.date))
     .y0(y(0))
     .y1(d => y(d.value))
     .curve(d3.curveMonotoneX);
 
-  svg.append('clipPath').attr('id', 'clip-above')
+  svg.append('clipPath').attr('id', `clip-spread-${containerId}`)
     .append('rect').attr('width', width).attr('height', height);
 
+  // Vùng dương (Dốc lên bình thường)
   svg.append('path')
-    .datum(data.filter(d => d.value >= 0))
-    .attr('fill', 'rgba(34,197,94,0.12)')
-    .attr('clip-path', 'url(#clip-above)')
-    .attr('d', area);
+    .datum(data)
+    .attr('fill', 'rgba(34, 197, 94, 0.15)')
+    .attr('clip-path', `url(#clip-spread-${containerId})`)
+    .attr('d', d3.area().x(d => x(d.date)).y0(y(0)).y1(d => y(Math.max(0, d.value))).curve(d3.curveMonotoneX));
 
+  // Vùng âm (Đảo ngược)
   svg.append('path')
-    .datum(data.filter(d => d.value < 0))
-    .attr('fill', 'rgba(239,68,68,0.15)')
-    .attr('d', area);
+    .datum(data)
+    .attr('fill', 'rgba(239, 68, 68, 0.22)')
+    .attr('clip-path', `url(#clip-spread-${containerId})`)
+    .attr('d', d3.area().x(d => x(d.date)).y0(y(0)).y1(d => y(Math.min(0, d.value))).curve(d3.curveMonotoneX));
 
-  // Line
+  // Đường line chính
   const line = d3.line()
     .x(d => x(d.date)).y(d => y(d.value))
     .curve(d3.curveMonotoneX);
@@ -362,8 +458,8 @@ function drawSpreadChart(containerId, spreadData, colKey = 'spread_10y_2y') {
   svg.append('path')
     .datum(data)
     .attr('fill', 'none')
-    .attr('stroke', d3.extent(data, d => d.value)[1] > 0 ? '#22c55e' : '#ef4444')
-    .attr('stroke-width', 1.5)
+    .attr('stroke', '#3b82f6')
+    .attr('stroke-width', 1.8)
     .attr('d', line);
 
   // Axes
@@ -376,6 +472,111 @@ function drawSpreadChart(containerId, spreadData, colKey = 'spread_10y_2y') {
     .call(d3.axisLeft(y).ticks(5).tickFormat(v => v.toFixed(0) + ' bps'))
     .call(g => g.selectAll('text').attr('fill', 'var(--text-secondary)').attr('font-size', '10px'))
     .call(g => g.select('.domain').attr('stroke', 'var(--border-subtle)'));
+
+  // ── Điểm Active / Scrubber Indicator (khi người dùng kéo slider) ─────────
+  const trackerG = svg.append('g').attr('class', 'spread-tracker');
+  const vLine = trackerG.append('line')
+    .attr('stroke', 'var(--accent-primary)')
+    .attr('stroke-width', 1.2)
+    .attr('stroke-dasharray', '3,3')
+    .attr('y1', 0).attr('y2', height)
+    .style('display', 'none');
+
+  const focusDot = trackerG.append('circle')
+    .attr('r', 5.5)
+    .attr('fill', 'var(--accent-primary)')
+    .attr('stroke', 'var(--bg-card)')
+    .attr('stroke-width', 2)
+    .style('display', 'none');
+
+  // Đánh dấu active date nếu có
+  if (activeDateStr) {
+    const activeItem = data.find(d => d.dateStr === activeDateStr) || data[data.length - 1];
+    if (activeItem) {
+      const px = x(activeItem.date);
+      const py = y(activeItem.value);
+      vLine.attr('x1', px).attr('x2', px).style('display', 'block');
+      focusDot.attr('cx', px).attr('cy', py).style('display', 'block');
+    }
+  }
+
+  // ── Interactive Hover Overlay ──────────────────────────────────────────
+  const bisectDate = d3.bisector(d => d.date).left;
+  const overlay = svg.append('rect')
+    .attr('width', width).attr('height', height)
+    .attr('fill', 'none').attr('pointer-events', 'all');
+
+  overlay.on('mousemove', function(event) {
+    const [mx] = d3.pointer(event, this);
+    const x0 = x.invert(mx);
+    const i = bisectDate(data, x0, 1);
+    const d0 = data[i - 1];
+    const d1 = data[i];
+    if (!d0) return;
+    const d = (!d1 || (x0 - d0.date < d1.date - x0)) ? d0 : d1;
+
+    const px = x(d.date);
+    const py = y(d.value);
+    vLine.attr('x1', px).attr('x2', px).style('display', 'block');
+    focusDot.attr('cx', px).attr('cy', py).style('display', 'block');
+
+    const isInverted = d.value < 0;
+    const regime = isInverted ? '⚠️ Đảo ngược' : '✓ Bình thường';
+    const regimeColor = isInverted ? 'var(--color-down)' : 'var(--color-up)';
+
+    let extraYield = '';
+    if (d.yA != null && d.yB != null) {
+      extraYield = `
+        <div class="tooltip-row" style="margin-top:4px; font-size:0.75rem;">
+          <span>Lợi suất thành phần:</span>
+          <span class="tooltip-value">${d.yA.toFixed(2)}% vs ${d.yB.toFixed(2)}%</span>
+        </div>`;
+    }
+
+    showTooltip(event, `
+      <div class="tooltip-title">📅 ${formatDateVN(d.dateStr)}</div>
+      <div class="tooltip-row">
+        <span>Spread:</span>
+        <span class="tooltip-value" style="color:${regimeColor}">${d.value.toFixed(1)} bps</span>
+      </div>
+      <div class="tooltip-row">
+        <span>Trạng thái:</span>
+        <span class="tooltip-value" style="color:${regimeColor}">${regime}</span>
+      </div>
+      ${extraYield}
+    `);
+
+    if (onDateSelect) {
+      onDateSelect(d);
+    }
+  })
+  .on('mouseout', function() {
+    hideTooltip();
+    if (!activeDateStr) {
+      vLine.style('display', 'none');
+      focusDot.style('display', 'none');
+    } else {
+      const activeItem = data.find(d => d.dateStr === activeDateStr);
+      if (activeItem) {
+        const px = x(activeItem.date);
+        const py = y(activeItem.value);
+        vLine.attr('x1', px).attr('x2', px).style('display', 'block');
+        focusDot.attr('cx', px).attr('cy', py).style('display', 'block');
+      }
+    }
+  })
+  .on('click', function(event) {
+    const [mx] = d3.pointer(event, this);
+    const x0 = x.invert(mx);
+    const i = bisectDate(data, x0, 1);
+    const d0 = data[i - 1];
+    const d1 = data[i];
+    if (!d0) return;
+    const d = (!d1 || (x0 - d0.date < d1.date - x0)) ? d0 : d1;
+    if (onDateSelect) {
+      onDateSelect(d, true); // true = click lock
+    }
+  });
 }
 
 /* ── Metric Cards ───────────────────────────────────────────────────── */
@@ -517,7 +718,10 @@ function createTooltipContainer() {
   document.documentElement.setAttribute('data-theme', saved);
   window.addEventListener('DOMContentLoaded', () => {
     const btn = document.getElementById('theme-toggle');
-    if (btn) btn.innerHTML = (saved === 'light' ? 'Light mode ' : 'Dark mode ') + '🌓';
+    if (btn) {
+      const modeText = saved === 'light' ? 'Light mode' : 'Dark mode';
+      btn.innerHTML = `<span>${modeText}</span> <span>🌓</span>`;
+    }
   });
 })();
 
@@ -528,7 +732,10 @@ function toggleTheme() {
   html.setAttribute('data-theme', next);
   localStorage.setItem('vnbond-theme', next);
   const btn = document.getElementById('theme-toggle');
-  if (btn) btn.innerHTML = (next === 'light' ? 'Light mode ' : 'Dark mode ') + '🌓';
+  if (btn) {
+    const modeText = next === 'light' ? 'Light mode' : 'Dark mode';
+    btn.innerHTML = `<span>${modeText}</span> <span>🌓</span>`;
+  }
 }
 
 /* ── Export for page scripts ─────────────────────────────────────────── */
@@ -537,6 +744,7 @@ window.VNBond = {
   loadJSON,
   drawYieldCurve,
   drawSpreadChart,
+  calculateCustomSpread,
   updateMetricCard,
   initDateSlider,
   formatDateVN,
