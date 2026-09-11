@@ -249,6 +249,16 @@ def export_json(cache_dir: Path, exports_dir: Path, verbose: bool):
                             df[col] = df[col].astype(str).str[:10]
                         except Exception:
                             pass
+            # ⚠️ QUAN TRỌNG: Chuyển NaN → None trước khi to_dict()
+            # Python json.dump serializes float('nan') thành NaN literal (KHÔNG phải JSON hợp lệ)
+            # → JSON.parse() trong JavaScript sẽ throw SyntaxError → toàn bộ auction data bị mất
+            # NOTE: df.where(notna(), None) KHÔNG hoạt động trên float64 (vì float64 không chứa None)
+            # → Phải ép cột float → object dtype trước, rồi mới fill None
+            float_cols = df.select_dtypes(include="float").columns
+            if len(float_cols):
+                df[float_cols] = df[float_cols].astype(object).where(
+                    df[float_cols].notna(), other=None
+                )
             auction_summary[key] = df.to_dict(orient="records")
 
     if auction_summary:
@@ -259,7 +269,8 @@ def export_json(cache_dir: Path, exports_dir: Path, verbose: bool):
 
         out_path = data_dir / "auction_stats.json"
         with open(out_path, "w", encoding="utf-8") as f:
-            json.dump(auction_summary, f, ensure_ascii=False, default=str)
+            # allow_nan=False: đảm bảo lỗi ngay nếu còn NaN sót lại, không sinh file JSON lỗi
+            json.dump(auction_summary, f, ensure_ascii=False, allow_nan=False)
         if verbose:
             ok(f"auction_stats.json → {out_path}")
 
