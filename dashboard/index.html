@@ -249,7 +249,7 @@
       <div class="chart-card fade-in">
         <p class="chart-title">🌏 Dòng Vốn Khối Ngoại (30 ngày)</p>
         <p class="chart-subtitle">Net buy/sell khối ngoại — tỷ đồng</p>
-        <div class="chart-body" id="foreign-flow-chart" style="min-height: 180px;"></div>
+        <div class="chart-body" id="foreign-flow-chart"></div>
       </div>
 
     </div>
@@ -675,7 +675,7 @@ function drawForeignFlow(data) {
   const recent = daily.slice(-30);
   const margin = { top: 15, right: 20, bottom: 45, left: 60 };
   const width = container.clientWidth - margin.left - margin.right;
-  const height = (container.clientHeight || 320) - margin.top - margin.bottom;
+  const height = 320 - margin.top - margin.bottom;
 
   // Tính tổng net 30 ngày để hiển thị thông tin
   const totalNet = recent.reduce((sum, d) => sum + (d.for_net_bn || 0), 0);

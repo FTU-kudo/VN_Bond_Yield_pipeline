@@ -692,7 +692,23 @@ function downloadJSON(data, filename) {
 function onResize(elementId, callback) {
   const el = document.getElementById(elementId);
   if (!el) return;
-  const observer = new ResizeObserver(() => callback());
+  let lastWidth = Math.round(el.clientWidth);
+  let timer = null;
+  const observer = new ResizeObserver(entries => {
+    for (const entry of entries) {
+      const newWidth = Math.round(entry.contentRect.width);
+      // CHỈ kích hoạt khi chiều rộng thực tế thay đổi (ví dụ co dãn cửa sổ),
+      // TUYỆT ĐỐI không kích hoạt khi height thay đổi khi vẽ lại SVG,
+      // nhằm triệt tiêu vòng lặp vô hạn (infinite resize feedback loop).
+      if (newWidth > 0 && Math.abs(newWidth - lastWidth) >= 4) {
+        lastWidth = newWidth;
+        clearTimeout(timer);
+        timer = setTimeout(() => {
+          callback();
+        }, 120);
+      }
+    }
+  });
   observer.observe(el);
 }
 

@@ -436,7 +436,17 @@ body::before {
 #yield-curve-chart {
   height: 380px;
   min-height: 380px;
+  max-height: 380px;
   width: 100%;
+  overflow: hidden;
+}
+
+#spread-chart {
+  height: 320px;
+  min-height: 320px;
+  max-height: 320px;
+  width: 100%;
+  overflow: hidden;
 }
 
 #tenor-table-body {
@@ -458,7 +468,9 @@ body::before {
 #foreign-flow-chart {
   height: 320px;
   min-height: 320px;
+  max-height: 320px;
   width: 100%;
+  overflow: hidden;
 }
 
 #recent-auction-table {
