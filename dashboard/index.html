@@ -322,14 +322,25 @@ function renderRecentAuctions(data) {
         <th>Ngày</th><th>Tenor</th><th>Lãi Suất</th><th>BCR</th><th>Kết Quả</th>
       </tr></thead>
       <tbody>
-        ${rows.map(r => `
-        <tr>
-          <td class="mono" style="font-size:0.75rem;">${VNBond.formatDateVN(r.date)}</td>
-          <td><span class="tenor-tag t-10y">${r.tenor || '—'}</span></td>
-          <td class="mono text-accent">${r.winning_rate ? VNBond.fmt.rate(r.winning_rate) : '—'}</td>
-          <td class="mono">${r.bid_to_cover ? r.bid_to_cover.toFixed(2) + 'x' : '—'}</td>
-          <td><span class="metric-change ${r.success ? 'up' : 'down'}">${r.success ? '✓' : '✗'}</span></td>
-        </tr>`).join('')}
+        ${rows.map(r => {
+          // JSON thực tế dùng: trade_date, tenor_yr (số), winning_rate_pct, auction_successful
+          const dateStr = (r.trade_date || r.date || '').toString().substring(0, 10);
+          const tenorLabel = r.tenor_yr != null
+            ? (r.tenor_yr < 1 ? Math.round(r.tenor_yr * 12) + 'M' : r.tenor_yr + 'Y')
+            : (r.tenor || '—');
+          const rate = r.winning_rate_pct != null ? r.winning_rate_pct
+            : (r.winning_rate != null ? r.winning_rate : null);
+          const bcr = r.bid_to_cover;
+          const success = r.auction_successful != null ? r.auction_successful : r.success;
+          return `
+          <tr>
+            <td class="mono" style="font-size:0.75rem;">${VNBond.formatDateVN(dateStr)}</td>
+            <td><span class="tenor-tag t-10y">${tenorLabel}</span></td>
+            <td class="mono text-accent">${rate != null ? VNBond.fmt.rate(rate) : '—'}</td>
+            <td class="mono">${bcr != null ? bcr.toFixed(2) + 'x' : '—'}</td>
+            <td><span class="metric-change ${success ? 'up' : 'down'}">${success ? '✓' : '✗'}</span></td>
+          </tr>`;
+        }).join('')}
       </tbody>
     </table>
   `;
@@ -338,7 +349,10 @@ function renderRecentAuctions(data) {
 // ── Foreign flow bar chart ─────────────────────────────────────────────
 function drawForeignFlow(data) {
   const container = document.getElementById('foreign-flow-chart');
-  if (!data || !data.daily || !data.daily.length) {
+  // Sau khi fix pipeline: data = {daily:[{date, for_net_bn,...}]}
+  // Hỗ trợ cả flat array (cũ) lẫn {daily:[...]} (mới)
+  const daily = Array.isArray(data) ? data : (data && data.daily);
+  if (!daily || !daily.length) {
     container.innerHTML = `
       <div style="text-align:center; padding: 2rem; color: var(--text-muted); font-size:0.85rem;">
         Chưa có dữ liệu foreign flow. Cần file PDF thống kê từ HNX.
@@ -346,7 +360,8 @@ function drawForeignFlow(data) {
     return;
   }
 
-  const recent = data.daily.slice(-30);
+  // Trường "date" sau khi pipeline đã rename từ "trade_date"
+  const recent = daily.slice(-30);
   const margin = { top: 10, right: 15, bottom: 30, left: 55 };
   const width = container.clientWidth - margin.left - margin.right;
   const height = container.clientHeight - margin.top - margin.bottom;
@@ -357,17 +372,22 @@ function drawForeignFlow(data) {
     .attr('viewBox', `0 0 ${width + margin.left + margin.right} ${height + margin.top + margin.bottom}`)
     .append('g').attr('transform', `translate(${margin.left},${margin.top})`);
 
+  // Dùng d.date (mới) hoặc fallback d.trade_date (cũ)
+  const getDate = d => d.date || (d.trade_date || '').toString().substring(0, 10);
+
   const x = d3.scaleBand()
-    .domain(recent.map(d => d.date))
+    .domain(recent.map(d => getDate(d)))
     .range([0, width]).padding(0.1);
 
+  const yExtent = d3.extent(recent, d => d.for_net_bn);
+  const yPad = Math.abs((yExtent[1] || 0) - (yExtent[0] || 0)) * 0.1 || 1;
   const y = d3.scaleLinear()
-    .domain(d3.extent(recent, d => d.for_net_bn)).nice()
+    .domain([(yExtent[0] || 0) - yPad, (yExtent[1] || 0) + yPad]).nice()
     .range([height, 0]);
 
   svg.selectAll('rect').data(recent).enter()
     .append('rect')
-    .attr('x', d => x(d.date))
+    .attr('x', d => x(getDate(d)))
     .attr('width', x.bandwidth())
     .attr('y', d => y(Math.max(0, d.for_net_bn)))
     .attr('height', d => Math.abs(y(d.for_net_bn) - y(0)))

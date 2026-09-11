@@ -113,10 +113,9 @@ def prepare_auction_df(df: pd.DataFrame) -> pd.DataFrame:
             df[COL_WIN_VOL_PARSED].fillna(0) > 0
         ) & df[COL_WIN_RATE_PARSED].notna()
 
-    # Tenor chuẩn hoá
+    # Tenor chuẩn hoá — hỗ trợ cả dạng tiếng Anh ("10Y", "3M") lẫn tiếng Việt ("2 Năm", "5 Năm")
     if COL_TENOR in df.columns:
-        from analysis.yield_curve_fitting import tenor_to_years
-        df["tenor_yr"] = df[COL_TENOR].map(tenor_to_years)
+        df["tenor_yr"] = df[COL_TENOR].map(_tenor_to_years_vn)
 
     # Kỳ (quý)
     if COL_DATE in df.columns:
@@ -124,6 +123,50 @@ def prepare_auction_df(df: pd.DataFrame) -> pd.DataFrame:
         df["quarter"] = df[COL_DATE].dt.to_period("Q").astype(str)
 
     return df
+
+
+def _tenor_to_years_vn(tenor) -> float | None:
+    """Chuyển tenor sang số năm, hỗ trợ cả định dạng VN lẫn EN.
+
+    Ví dụ:
+        '2 Năm'  → 2.0
+        '5 Năm'  → 5.0
+        '10Y'    → 10.0
+        '6M'     → 0.5
+        '3 năm'  → 3.0
+    """
+    import re
+    if tenor is None or (isinstance(tenor, float) and np.isnan(tenor)):
+        return None
+    s = str(tenor).strip()
+
+    # Dạng tiếng Việt: "2 Năm", "5 năm", "10 Năm"
+    m = re.match(r"^(\d+(?:[.,]\d+)?)\s*n[aă]m$", s, re.IGNORECASE)
+    if m:
+        return float(m.group(1).replace(",", "."))
+
+    # Dạng tháng tiếng Việt: "6 tháng", "3 Tháng"
+    m = re.match(r"^(\d+(?:[.,]\d+)?)\s*th[aá]ng$", s, re.IGNORECASE)
+    if m:
+        return float(m.group(1).replace(",", ".")) / 12
+
+    # Dạng tiếng Anh: "10Y", "3M", "2Y"
+    try:
+        from analysis.yield_curve_fitting import tenor_to_years
+        result = tenor_to_years(s)
+        if result is not None:
+            return result
+    except Exception:
+        pass
+
+    # Fallback regex EN
+    m = re.match(r"^(\d+(?:\.\d+)?)(Y|M)$", s.upper())
+    if m:
+        v, unit = float(m.group(1)), m.group(2)
+        return v if unit == "Y" else v / 12
+
+    return None
+
 
 
 # ── Thống kê tổng hợp ─────────────────────────────────────────────────────────

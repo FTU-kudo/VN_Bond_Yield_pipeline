@@ -135,7 +135,12 @@ let currentDays = 30;
   await VNBond.loadAllData();
   const { foreignData } = VNBond.state;
 
-  if (!foreignData || !foreignData.daily || !foreignData.daily.length) {
+  // Hỗ trợ cả {daily:[...]} (mới, sau khi pipeline fix) lẫn flat array (cũ)
+  const dailyArr = foreignData && (Array.isArray(foreignData)
+    ? foreignData
+    : foreignData.daily);
+
+  if (!dailyArr || !dailyArr.length) {
     // Hiện notice, ẩn skeleton
     document.getElementById('no-data-notice').style.display = 'flex';
     document.getElementById('foreign-top-table').innerHTML =
@@ -147,8 +152,14 @@ let currentDays = 30;
     return;
   }
 
+  // Normalize: đảm bảo mỗi record có trường "date" (pipeline mới rename từ trade_date)
+  const normalized = dailyArr.map(d => ({
+    ...d,
+    date: d.date || (d.trade_date ? d.trade_date.toString().substring(0, 10) : ''),
+  }));
+
   // Sắp xếp theo ngày tăng dần
-  allForeignData = [...foreignData.daily].sort((a, b) => a.date.localeCompare(b.date));
+  allForeignData = normalized.sort((a, b) => a.date.localeCompare(b.date));
 
   // Cập nhật KPI
   updateKPIs(allForeignData);

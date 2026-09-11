@@ -166,13 +166,13 @@ def export_json(cache_dir: Path, exports_dir: Path, verbose: bool):
     data_dir = exports_dir / "data"
     data_dir.mkdir(exist_ok=True)
 
-    files = {
+    # Export fitted curve và spread (flat array) — frontend dùng trực tiếp
+    simple_files = {
         "fitted_curve_ns.parquet": "fitted_curve_ns.json",
         "spread_analysis.parquet": "spread_analysis.json",
-        "foreign_daily_flow.parquet": "foreign_flow.json",
     }
 
-    for parquet_name, json_name in files.items():
+    for parquet_name, json_name in simple_files.items():
         parquet_path = cache_dir / parquet_name
         if not parquet_path.exists():
             warn(f"Bỏ qua {parquet_name} (chưa có file)")
@@ -195,6 +195,37 @@ def export_json(cache_dir: Path, exports_dir: Path, verbose: bool):
         if verbose:
             ok(f"{json_name}: {len(data)} records → {out_path}")
 
+    # Export foreign_flow.json — cần wrap thành {daily:[...]} và đổi tên cột
+    # Frontend (index.html + foreign_flows.html) đều kỳ vọng: data.daily[i].date
+    foreign_path = cache_dir / "foreign_daily_flow.parquet"
+    if foreign_path.exists():
+        df_f = pd.read_parquet(foreign_path)
+        # Rename trade_date → date để khớp với frontend JS
+        if "trade_date" in df_f.columns:
+            df_f = df_f.rename(columns={"trade_date": "date"})
+        # Chuyển Timestamp → string ISO ngắn (YYYY-MM-DD)
+        for col in df_f.columns:
+            if df_f[col].dtype == "datetime64[ns]" or (hasattr(df_f[col], "dt") and df_f[col].dtype.kind == "M"):
+                try:
+                    df_f[col] = df_f[col].dt.strftime("%Y-%m-%d")
+                except Exception:
+                    try:
+                        df_f[col] = df_f[col].astype(str).str[:10]
+                    except Exception:
+                        pass
+        # Sắp xếp theo ngày tăng dần
+        if "date" in df_f.columns:
+            df_f = df_f.sort_values("date").reset_index(drop=True)
+        daily_records = df_f.to_dict(orient="records")
+        foreign_out = {"daily": daily_records}
+        out_path = data_dir / "foreign_flow.json"
+        with open(out_path, "w", encoding="utf-8") as f:
+            json.dump(foreign_out, f, ensure_ascii=False, default=str, indent=None)
+        if verbose:
+            ok(f"foreign_flow.json: {{daily: [{len(daily_records)} records]}} → {out_path}")
+    else:
+        warn("Bỏ qua foreign_daily_flow.parquet (chưa có file)")
+
     # Export auction stats tổng hợp
     auction_summary = {}
     for fname in ["auction_bcr_by_tenor.parquet", "auction_success_rate.parquet",
@@ -204,11 +235,15 @@ def export_json(cache_dir: Path, exports_dir: Path, verbose: bool):
             df = pd.read_parquet(p)
             key = fname.replace("auction_", "").replace(".parquet", "")
             for col in df.columns:
-                if df[col].dtype == "datetime64[ns]":
+                if df[col].dtype == "datetime64[ns]" or (hasattr(df[col], "dt") and df[col].dtype.kind == "M"):
                     try:
-                        df[col] = df[col].astype(str)
+                        # Dùng strftime để ra "YYYY-MM-DD", không phải "YYYY-MM-DD HH:MM:SS"
+                        df[col] = df[col].dt.strftime("%Y-%m-%d")
                     except Exception:
-                        pass
+                        try:
+                            df[col] = df[col].astype(str).str[:10]
+                        except Exception:
+                            pass
             auction_summary[key] = df.to_dict(orient="records")
 
     if auction_summary:
