@@ -336,7 +336,6 @@ function drawSpreadChart(containerId, inputData, options = {}) {
   if (!container || !inputData) return;
 
   const colKey = typeof options === 'string' ? options : (options.colKey || 'spread_10y_2y');
-  const activeDateStr = options.activeDate || null;
   const onDateSelect = options.onDateSelect || null;
 
   // Chuẩn hóa dữ liệu đầu vào:
@@ -474,92 +473,88 @@ function drawSpreadChart(containerId, inputData, options = {}) {
     .call(g => g.selectAll('text').attr('fill', 'var(--text-secondary)').attr('font-size', '10px'))
     .call(g => g.select('.domain').attr('stroke', 'var(--border-subtle)'));
 
-  // ── Điểm Active / Dual Scrubber Indicator (2 Mốc ngày riêng biệt) ───
+  // ── Điểm Active / Scrubber Indicator (Vạch chỉ thị mốc ngày đang chọn) ───
   const trackerG = svg.append('g').attr('class', 'spread-tracker');
 
-  const dateAStr = options.activeDateA || options.activeDate || null;
-  const dateBStr = options.activeDateB || null;
+  const activeDateStr = options.activeDate || options.activeDateA || null;
+  const activeItem = activeDateStr ? (data.find(d => d.dateStr === activeDateStr) || null) : null;
 
-  const itemA = dateAStr ? (data.find(d => d.dateStr === dateAStr) || null) : null;
-  const itemB = dateBStr ? (data.find(d => d.dateStr === dateBStr) || null) : null;
+  if (activeItem) {
+    const px = x(activeItem.date);
+    const py = y(activeItem.value);
 
-  // Tô bóng dải thời gian giữa 2 mốc A và B
-  if (itemA && itemB) {
-    const pxA = x(itemA.date);
-    const pxB = x(itemB.date);
-    const xMin = Math.min(pxA, pxB);
-    const xMax = Math.max(pxA, pxB);
-    trackerG.append('rect')
-      .attr('x', xMin)
-      .attr('y', 0)
-      .attr('width', Math.max(2, xMax - xMin))
-      .attr('height', height)
-      .attr('fill', 'rgba(59, 130, 246, 0.1)')
-      .attr('stroke', 'rgba(59, 130, 246, 0.25)')
-      .attr('stroke-dasharray', '2,2');
-  }
-
-  // Hàm vẽ vạch mốc ngày có nhãn
-  function drawMarkerLine(item, color, labelText) {
-    if (!item) return;
-    const px = x(item.date);
-    const py = y(item.value);
-
+    // Vạch đứng nét đứt màu xanh
     trackerG.append('line')
-      .attr('stroke', color)
+      .attr('stroke', 'var(--accent-primary)')
       .attr('stroke-width', 1.5)
       .attr('stroke-dasharray', '3,2')
       .attr('x1', px).attr('x2', px)
       .attr('y1', 0).attr('y2', height);
 
+    // Chấm tròn trên đường curve
     trackerG.append('circle')
       .attr('cx', px).attr('cy', py)
-      .attr('r', 5)
-      .attr('fill', color)
+      .attr('r', 5.5)
+      .attr('fill', 'var(--accent-primary)')
       .attr('stroke', 'var(--bg-card)')
       .attr('stroke-width', 2);
 
-    // Nhãn ngày bám vạch
-    const textG = trackerG.append('g').attr('transform', `translate(${px}, 12)`);
-    const isRightEdge = px > width - 80;
+    // Nhãn ngày bám trên đỉnh vạch
+    const textG = trackerG.append('g').attr('transform', `translate(${px}, 14)`);
+    const isRightEdge = px > width - 90;
     textG.append('rect')
-      .attr('x', isRightEdge ? -76 : -4)
-      .attr('y', -10)
-      .attr('width', 80)
-      .attr('height', 16)
-      .attr('rx', 3)
+      .attr('x', isRightEdge ? -86 : -4)
+      .attr('y', -11)
+      .attr('width', 90)
+      .attr('height', 18)
+      .attr('rx', 4)
       .attr('fill', 'var(--bg-card)')
-      .attr('stroke', color)
+      .attr('stroke', 'var(--accent-primary)')
       .attr('stroke-width', 1);
 
     textG.append('text')
-      .attr('x', isRightEdge ? -36 : 36)
+      .attr('x', isRightEdge ? -41 : 41)
       .attr('y', 2)
       .attr('text-anchor', 'middle')
-      .attr('font-size', '9px')
+      .attr('font-size', '10px')
       .attr('font-family', 'JetBrains Mono, monospace')
       .attr('font-weight', '600')
-      .attr('fill', color)
-      .text(labelText);
+      .attr('fill', 'var(--accent-primary)')
+      .text('📍 ' + formatDateVN(activeItem.dateStr));
   }
-
-  if (itemA) drawMarkerLine(itemA, '#06b6d4', '🔵 ' + formatDateVN(itemA.dateStr).substring(0, 5));
-  if (itemB) drawMarkerLine(itemB, '#f59e0b', '🟠 ' + formatDateVN(itemB.dateStr).substring(0, 5));
 
   // Vạch hover động khi rê chuột
   const hoverLine = trackerG.append('line')
-    .attr('stroke', 'var(--text-accent)')
-    .attr('stroke-width', 1)
+    .attr('stroke', 'var(--accent-secondary)')
+    .attr('stroke-width', 1.2)
     .attr('stroke-dasharray', '2,2')
     .attr('y1', 0).attr('y2', height)
     .style('display', 'none');
 
   const hoverDot = trackerG.append('circle')
-    .attr('r', 4.5)
-    .attr('fill', 'var(--text-accent)')
+    .attr('r', 5)
+    .attr('fill', 'var(--accent-secondary)')
     .attr('stroke', 'var(--bg-card)')
     .attr('stroke-width', 1.5)
     .style('display', 'none');
+
+  // Nhãn ngày bám chân trục X khi di chuột (X-Axis Date Badge)
+  const hoverAxisG = trackerG.append('g').style('display', 'none');
+  const hoverAxisRect = hoverAxisG.append('rect')
+    .attr('y', height + 2)
+    .attr('width', 76)
+    .attr('height', 17)
+    .attr('rx', 3)
+    .attr('fill', 'var(--bg-card)')
+    .attr('stroke', 'var(--accent-secondary)')
+    .attr('stroke-width', 1);
+  const hoverAxisText = hoverAxisG.append('text')
+    .attr('y', height + 14)
+    .attr('text-anchor', 'middle')
+    .attr('font-size', '9.5px')
+    .attr('font-family', 'JetBrains Mono, monospace')
+    .attr('font-weight', '600')
+    .attr('fill', 'var(--accent-secondary)');
 
   // ── Interactive Hover Overlay ──────────────────────────────────────────
   const bisectDate = d3.bisector(d => d.date).left;
@@ -581,6 +576,13 @@ function drawSpreadChart(containerId, inputData, options = {}) {
     hoverLine.attr('x1', px).attr('x2', px).style('display', 'block');
     hoverDot.attr('cx', px).attr('cy', py).style('display', 'block');
 
+    // Cập nhật nhãn ngày ở chân trục X
+    const dateFormatted = formatDateVN(d.dateStr || d.date);
+    const badgeX = Math.max(38, Math.min(width - 38, px));
+    hoverAxisRect.attr('x', badgeX - 38);
+    hoverAxisText.attr('x', badgeX).text(dateFormatted);
+    hoverAxisG.style('display', 'block');
+
     const isInverted = d.value < 0;
     const regime = isInverted ? '⚠️ Đảo ngược' : '✓ Bình thường';
     const regimeColor = isInverted ? 'var(--color-down)' : 'var(--color-up)';
@@ -595,7 +597,10 @@ function drawSpreadChart(containerId, inputData, options = {}) {
     }
 
     showTooltip(event, `
-      <div class="tooltip-title">📅 ${formatDateVN(d.dateStr)}</div>
+      <div class="tooltip-title">
+        <span>📅</span>
+        <span style="letter-spacing:0.3px;">${dateFormatted}</span>
+      </div>
       <div class="tooltip-row">
         <span>Spread:</span>
         <span class="tooltip-value" style="color:${regimeColor}">${(d.value >= 0 ? '+' : '') + d.value.toFixed(1)} bps</span>
@@ -611,6 +616,7 @@ function drawSpreadChart(containerId, inputData, options = {}) {
     hideTooltip();
     hoverLine.style('display', 'none');
     hoverDot.style('display', 'none');
+    hoverAxisG.style('display', 'none');
   })
   .on('click', function(event) {
     const [mx] = d3.pointer(event, this);
@@ -701,9 +707,22 @@ function setActiveNav() {
 }
 
 /* ── Format date for display ─────────────────────────────────────────── */
-function formatDateVN(dateStr) {
-  if (!dateStr) return '';
-  const d = new Date(dateStr);
+function formatDateVN(dateVal) {
+  if (!dateVal) return '';
+  if (dateVal instanceof Date) {
+    if (isNaN(dateVal.getTime())) return '';
+    return dateVal.toLocaleDateString('vi-VN', {
+      day: '2-digit', month: '2-digit', year: 'numeric'
+    });
+  }
+  const str = String(dateVal).trim();
+  if (/^\d{2}\/\d{2}\/\d{4}$/.test(str)) return str;
+  const parts = str.substring(0, 10).split('-');
+  if (parts.length === 3 && parts[0].length === 4) {
+    return `${parts[2]}/${parts[1]}/${parts[0]}`;
+  }
+  const d = new Date(str);
+  if (isNaN(d.getTime())) return str;
   return d.toLocaleDateString('vi-VN', {
     day: '2-digit', month: '2-digit', year: 'numeric'
   });
