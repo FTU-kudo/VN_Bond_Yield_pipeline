@@ -218,24 +218,72 @@
       <!-- Time Series Chart -->
       <div class="chart-body" id="spread-chart" style="height: 320px; min-height: 320px;"></div>
 
-      <!-- Interactive Date Scrubber / Slider Panel -->
+      <!-- Interactive Dual Date Slider Panel (2 Thanh Trượt Tách Biệt Nhau) -->
       <div class="spread-timeline-panel">
-        <div class="spread-slider-header">
+        
+        <!-- Thanh 1: Mốc ngày 1 (Từ ngày) -->
+        <div class="slider-row">
+          <div class="slider-row-header">
+            <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+              <span class="slider-tag slider-tag-start">🔵 Mốc 1 (Từ ngày):</span>
+              <strong id="spread-scrub-date-a" class="slider-date-display">—</strong>
+              <span id="spread-val-badge-a" class="spread-stat-pill num-mono">—</span>
+              <span id="spread-regime-a" class="spread-stat-pill">—</span>
+              <span id="spread-yields-a" style="font-size: 0.75rem; color: var(--text-secondary);">—</span>
+            </div>
+            <div style="display: flex; gap: 0.35rem; align-items: center;">
+              <input type="date" id="spread-date-picker-a" class="date-input" style="padding: 0.18rem 0.45rem; font-size: 0.72rem;" onchange="onSpreadDatePickerChange('A', this.value)" aria-label="Chọn ngày mốc 1">
+              <button class="btn btn-ghost" style="padding: 0.18rem 0.45rem; font-size: 0.72rem;" onclick="stepSpreadDate('A', -1)" aria-label="Mốc 1 ngày trước">◀</button>
+              <button class="btn btn-ghost" style="padding: 0.18rem 0.45rem; font-size: 0.72rem;" onclick="stepSpreadDate('A', 1)" aria-label="Mốc 1 ngày sau">▶</button>
+            </div>
+          </div>
+          <div class="slider-track-wrap">
+            <span id="slider-min-date-a" class="slider-boundary-date">—</span>
+            <div style="position: relative; flex: 1; display: flex; align-items: center;">
+              <input type="range" id="spread-slider-a" min="0" max="100" value="0" aria-label="Thanh trượt mốc 1 (Từ ngày)" oninput="onSpreadSliderInput('A', this.value)">
+            </div>
+            <span id="slider-max-date-a" class="slider-boundary-date">—</span>
+          </div>
+        </div>
+
+        <!-- Thanh 2: Mốc ngày 2 (Đến ngày) -->
+        <div class="slider-row">
+          <div class="slider-row-header">
+            <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+              <span class="slider-tag slider-tag-end">🟠 Mốc 2 (Đến ngày):</span>
+              <strong id="spread-scrub-date-b" class="slider-date-display">—</strong>
+              <span id="spread-val-badge-b" class="spread-stat-pill num-mono">—</span>
+              <span id="spread-regime-b" class="spread-stat-pill">—</span>
+              <span id="spread-yields-b" style="font-size: 0.75rem; color: var(--text-secondary);">—</span>
+            </div>
+            <div style="display: flex; gap: 0.35rem; align-items: center;">
+              <input type="date" id="spread-date-picker-b" class="date-input" style="padding: 0.18rem 0.45rem; font-size: 0.72rem;" onchange="onSpreadDatePickerChange('B', this.value)" aria-label="Chọn ngày mốc 2">
+              <button class="btn btn-ghost" style="padding: 0.18rem 0.45rem; font-size: 0.72rem;" onclick="stepSpreadDate('B', -1)" aria-label="Mốc 2 ngày trước">◀</button>
+              <button class="btn btn-ghost" style="padding: 0.18rem 0.45rem; font-size: 0.72rem;" onclick="stepSpreadDate('B', 1)" aria-label="Mốc 2 ngày sau">▶</button>
+              <button class="btn btn-ghost" style="padding: 0.18rem 0.55rem; font-size: 0.72rem;" onclick="resetSpreadSlider('B')" aria-label="Mới nhất">Mới nhất</button>
+            </div>
+          </div>
+          <div class="slider-track-wrap">
+            <span id="slider-min-date-b" class="slider-boundary-date">—</span>
+            <div style="position: relative; flex: 1; display: flex; align-items: center;">
+              <input type="range" id="spread-slider-b" min="0" max="100" value="100" aria-label="Thanh trượt mốc 2 (Đến ngày)" oninput="onSpreadSliderInput('B', this.value)">
+            </div>
+            <span id="slider-max-date-b" class="slider-boundary-date">—</span>
+          </div>
+        </div>
+
+        <!-- Thanh tóm tắt so sánh giữa 2 mốc -->
+        <div class="spread-compare-summary">
           <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
-            <span>📅 Ngày theo dõi: <strong id="spread-scrub-date" style="color: var(--text-accent);">—</strong></span>
-            <span>Spread: <strong id="spread-scrub-val" class="num-mono">—</strong></span>
-            <span id="spread-scrub-regime" class="spread-stat-pill">—</span>
-            <span id="spread-scrub-details" style="font-size: 0.75rem; color: var(--text-secondary);">—</span>
+            <span>📊 <strong>So sánh biến động:</strong></span>
+            <span>Khoảng thời gian: <strong id="spread-compare-duration" style="color:var(--text-primary); font-family:'JetBrains Mono',monospace;">—</strong></span>
+            <span>Thay đổi Spread: <strong id="spread-compare-delta" class="num-mono">—</strong></span>
           </div>
-          <div style="display: flex; gap: 0.35rem;">
-            <button class="btn btn-ghost" style="padding: 0.2rem 0.5rem; font-size: 0.75rem;" onclick="stepSpreadDate(-1)" aria-label="Ngày trước">◀ Ngày trước</button>
-            <button class="btn btn-ghost" style="padding: 0.2rem 0.5rem; font-size: 0.75rem;" onclick="stepSpreadDate(1)" aria-label="Ngày sau">Ngày sau ▶</button>
-            <button class="btn btn-ghost" style="padding: 0.2rem 0.5rem; font-size: 0.75rem;" onclick="resetSpreadSlider()" aria-label="Hôm nay">Mới nhất</button>
+          <div style="display: flex; gap: 0.4rem;">
+            <button class="btn btn-ghost" id="btn-zoom-range" style="padding: 0.22rem 0.65rem; font-size: 0.72rem;" onclick="toggleZoomRange()">🔍 Phóng to khoảng này</button>
           </div>
         </div>
-        <div class="slider-container" style="padding: 0.2rem 0;">
-          <input type="range" id="spread-slider" min="0" max="100" value="100" aria-label="Thanh trượt theo dõi spread theo ngày" oninput="onSpreadSliderInput(this.value)">
-        </div>
+
       </div>
     </div>
 
@@ -367,7 +415,7 @@
 
 })();
 
-// ── Spread Manager (Interactive Presets, Custom Pairs, Range & Slider) ──
+// ── Spread Manager (Interactive Presets, Custom Pairs, Range & Dual Sliders) ──
 let spreadState = {
   mode: 'preset',          // 'preset' | 'custom'
   presetKey: 'spread_10y_2y',
@@ -377,8 +425,12 @@ let spreadState = {
   rangeDays: 0,            // 0 = All
   activeSeries: [],        // [{date, dateStr, value, yA, yB}]
   filteredSeries: [],
-  currentIndex: -1,
-  activeDateStr: null,
+  // ── 2 Mốc ngày riêng biệt (Thanh A: Mốc 1, Thanh B: Mốc 2) ──
+  indexA: 0,               // Mốc 1 (Từ ngày)
+  dateStrA: '',
+  indexB: -1,              // Mốc 2 (Đến ngày)
+  dateStrB: '',
+  zoomRange: false,        // true nếu đang phóng to khoảng A-B
 };
 
 function initSpreadManager(spreadData, curveData) {
@@ -426,15 +478,22 @@ function loadSpreadSeries() {
     spreadState.filteredSeries = [...spreadState.activeSeries];
   }
 
-  if (spreadState.filteredSeries.length > 0) {
-    spreadState.currentIndex = spreadState.filteredSeries.length - 1;
-    spreadState.activeDateStr = spreadState.filteredSeries[spreadState.currentIndex].dateStr;
+  const series = spreadState.filteredSeries;
+  if (series.length > 0) {
+    // Mặc định Mốc 1: đầu series (hoặc 1 năm trước nếu series dài hơn 250 ngày)
+    if (spreadState.indexA < 0 || spreadState.indexA >= series.length) {
+      spreadState.indexA = series.length > 250 ? series.length - 250 : 0;
+    }
+    // Mặc định Mốc 2: cuối series (ngày mới nhất)
+    spreadState.indexB = series.length - 1;
+
+    spreadState.dateStrA = series[spreadState.indexA].dateStr;
+    spreadState.dateStrB = series[spreadState.indexB].dateStr;
   }
 }
 
 function updateSpreadUI() {
   const series = spreadState.filteredSeries;
-  const slider = document.getElementById('spread-slider');
   const badge = document.getElementById('spread-current-badge');
   const regimeHeader = document.getElementById('spread-regime-header');
 
@@ -456,15 +515,37 @@ function updateSpreadUI() {
     return;
   }
 
-  // Cập nhật thanh trượt slider
-  if (slider) {
-    slider.min = 0;
-    slider.max = series.length - 1;
-    slider.value = spreadState.currentIndex;
+  // Cập nhật giá trị min/max trên 2 thanh trượt
+  const sliderA = document.getElementById('spread-slider-a');
+  const sliderB = document.getElementById('spread-slider-b');
+  const minDateStr = VNBond.formatDateVN(series[0].dateStr);
+  const maxDateStr = VNBond.formatDateVN(series[series.length - 1].dateStr);
+
+  const minA = document.getElementById('slider-min-date-a');
+  const maxA = document.getElementById('slider-max-date-a');
+  const minB = document.getElementById('slider-min-date-b');
+  const maxB = document.getElementById('slider-max-date-b');
+
+  if (minA) minA.textContent = minDateStr;
+  if (maxA) maxA.textContent = maxDateStr;
+  if (minB) minB.textContent = minDateStr;
+  if (maxB) maxB.textContent = maxDateStr;
+
+  if (sliderA) {
+    sliderA.min = 0;
+    sliderA.max = series.length - 1;
+    sliderA.value = spreadState.indexA;
+  }
+  if (sliderB) {
+    sliderB.min = 0;
+    sliderB.max = series.length - 1;
+    sliderB.value = spreadState.indexB;
   }
 
-  // Cập nhật thông số ngày đang chọn
-  updateScrubberReadout(series[spreadState.currentIndex]);
+  // Cập nhật thông số hiển thị cho cả 2 mốc
+  updateSliderReadout('A', series[spreadState.indexA]);
+  updateSliderReadout('B', series[spreadState.indexB]);
+  updateComparisonSummary();
 
   // Cập nhật regime header theo điểm cuối cùng
   const latestItem = series[series.length - 1];
@@ -478,50 +559,163 @@ function updateSpreadUI() {
   refreshSpreadView();
 }
 
-function refreshSpreadView() {
-  const series = spreadState.filteredSeries;
-  if (!series || !series.length) return;
-
-  VNBond.drawSpreadChart('spread-chart', series, {
-    activeDate: spreadState.activeDateStr,
-    onDateSelect: (d, isClick) => {
-      spreadState.activeDateStr = d.dateStr;
-      const idx = series.findIndex(item => item.dateStr === d.dateStr);
-      if (idx !== -1) {
-        spreadState.currentIndex = idx;
-        const slider = document.getElementById('spread-slider');
-        if (slider) slider.value = idx;
-      }
-      updateScrubberReadout(d);
-    }
-  });
-}
-
-function updateScrubberReadout(item) {
+function updateSliderReadout(target, item) {
   if (!item) return;
-  const dateEl = document.getElementById('spread-scrub-date');
-  const valEl = document.getElementById('spread-scrub-val');
-  const regimeEl = document.getElementById('spread-scrub-regime');
-  const detailsEl = document.getElementById('spread-scrub-details');
+  const suffix = target.toLowerCase();
+  const dateEl = document.getElementById('spread-scrub-date-' + suffix);
+  const valEl = document.getElementById('spread-val-badge-' + suffix);
+  const regimeEl = document.getElementById('spread-regime-' + suffix);
+  const yieldsEl = document.getElementById('spread-yields-' + suffix);
+  const pickerEl = document.getElementById('spread-date-picker-' + suffix);
 
   if (dateEl) dateEl.textContent = VNBond.formatDateVN(item.dateStr);
+  if (pickerEl) pickerEl.value = (item.dateStr || '').substring(0, 10);
+
   if (valEl) {
     valEl.textContent = (item.value >= 0 ? '+' : '') + item.value.toFixed(1) + ' bps';
     valEl.style.color = item.value >= 0 ? 'var(--color-up)' : 'var(--color-down)';
   }
   if (regimeEl) {
     const isInv = item.value < 0;
-    regimeEl.textContent = isInv ? '⚠️ Đảo ngược' : '✓ Dốc lên (Normal)';
+    regimeEl.textContent = isInv ? '⚠️ Đảo ngược' : '✓ Dốc lên';
     regimeEl.style.borderColor = isInv ? 'rgba(239, 68, 68, 0.4)' : 'rgba(34, 197, 94, 0.4)';
     regimeEl.style.color = isInv ? 'var(--color-down)' : 'var(--color-up)';
   }
-  if (detailsEl) {
+  if (yieldsEl) {
     if (item.yA != null && item.yB != null) {
-      detailsEl.textContent = `Lợi suất: ${item.yA.toFixed(2)}% vs ${item.yB.toFixed(2)}%`;
+      yieldsEl.textContent = `Lợi suất: ${item.yA.toFixed(2)}% vs ${item.yB.toFixed(2)}%`;
     } else {
-      detailsEl.textContent = '';
+      yieldsEl.textContent = '';
     }
   }
+}
+
+function updateComparisonSummary() {
+  const series = spreadState.filteredSeries;
+  if (!series || !series.length) return;
+
+  const itemA = series[spreadState.indexA];
+  const itemB = series[spreadState.indexB];
+  if (!itemA || !itemB) return;
+
+  const durEl = document.getElementById('spread-compare-duration');
+  const deltaEl = document.getElementById('spread-compare-delta');
+
+  const diffMs = Math.abs(itemB.date.getTime() - itemA.date.getTime());
+  const diffDays = Math.round(diffMs / (24 * 3600 * 1000));
+  const diffYears = (diffDays / 365.25).toFixed(1);
+
+  if (durEl) {
+    durEl.textContent = `${diffDays.toLocaleString('vi-VN')} ngày (${diffYears} năm)`;
+  }
+
+  const delta = itemB.value - itemA.value;
+  const deltaSign = delta >= 0 ? '+' : '';
+  const deltaColor = delta >= 0 ? 'var(--color-up)' : 'var(--color-down)';
+
+  if (deltaEl) {
+    const spreadAStr = (itemA.value >= 0 ? '+' : '') + itemA.value.toFixed(1) + ' bps';
+    const spreadBStr = (itemB.value >= 0 ? '+' : '') + itemB.value.toFixed(1) + ' bps';
+    deltaEl.innerHTML = `<span style="color:${deltaColor}">${deltaSign}${delta.toFixed(1)} bps</span> <span style="font-size:0.72rem; color:var(--text-secondary); font-weight:normal;">(từ ${spreadAStr} $\\to$ ${spreadBStr})</span>`;
+  }
+}
+
+function refreshSpreadView() {
+  const series = spreadState.filteredSeries;
+  if (!series || !series.length) return;
+
+  let drawData = series;
+  if (spreadState.zoomRange) {
+    const minIdx = Math.min(spreadState.indexA, spreadState.indexB);
+    const maxIdx = Math.max(spreadState.indexA, spreadState.indexB);
+    drawData = series.slice(minIdx, maxIdx + 1);
+  }
+
+  VNBond.drawSpreadChart('spread-chart', drawData, {
+    activeDateA: spreadState.dateStrA,
+    activeDateB: spreadState.dateStrB,
+    onDateSelect: (d, isClick) => {
+      const idx = series.findIndex(item => item.dateStr === d.dateStr);
+      if (idx !== -1) {
+        // Cập nhật mốc gần nhất với vị trí click
+        const distA = Math.abs(idx - spreadState.indexA);
+        const distB = Math.abs(idx - spreadState.indexB);
+        if (distA <= distB) {
+          updateSliderPoint('A', idx);
+        } else {
+          updateSliderPoint('B', idx);
+        }
+      }
+    }
+  });
+}
+
+function updateSliderPoint(target, idx) {
+  const series = spreadState.filteredSeries;
+  if (!series || !series[idx]) return;
+
+  spreadState['index' + target] = idx;
+  spreadState['dateStr' + target] = series[idx].dateStr;
+
+  const slider = document.getElementById('spread-slider-' + target.toLowerCase());
+  if (slider) slider.value = idx;
+
+  updateSliderReadout(target, series[idx]);
+  updateComparisonSummary();
+  refreshSpreadView();
+}
+
+function onSpreadSliderInput(target, val) {
+  const idx = parseInt(val, 10);
+  updateSliderPoint(target, idx);
+}
+
+function onSpreadDatePickerChange(target, dateVal) {
+  if (!dateVal) return;
+  const series = spreadState.filteredSeries;
+  if (!series || !series.length) return;
+
+  // Tìm điểm gần nhất với ngày được chọn
+  let closestIdx = 0;
+  let minDiff = Infinity;
+  const targetTime = new Date(dateVal).getTime();
+
+  for (let i = 0; i < series.length; i++) {
+    const diff = Math.abs(series[i].date.getTime() - targetTime);
+    if (diff < minDiff) {
+      minDiff = diff;
+      closestIdx = i;
+    }
+  }
+
+  updateSliderPoint(target, closestIdx);
+}
+
+function stepSpreadDate(target, delta) {
+  const series = spreadState.filteredSeries;
+  if (!series || !series.length) return;
+
+  let newIdx = spreadState['index' + target] + delta;
+  if (newIdx < 0) newIdx = 0;
+  if (newIdx >= series.length) newIdx = series.length - 1;
+
+  updateSliderPoint(target, newIdx);
+}
+
+function resetSpreadSlider(target) {
+  const series = spreadState.filteredSeries;
+  if (!series || !series.length) return;
+  updateSliderPoint(target, series.length - 1);
+}
+
+function toggleZoomRange() {
+  spreadState.zoomRange = !spreadState.zoomRange;
+  const btn = document.getElementById('btn-zoom-range');
+  if (btn) {
+    btn.innerHTML = spreadState.zoomRange ? '↺ Khôi phục biểu đồ' : '🔍 Phóng to khoảng này';
+    btn.className = spreadState.zoomRange ? 'btn btn-primary' : 'btn btn-ghost';
+  }
+  refreshSpreadView();
 }
 
 function selectPresetSpread(colKey, label, btn) {
@@ -545,7 +739,6 @@ function applyCustomSpread() {
   spreadState.customA = parseFloat(selA.value);
   spreadState.customB = parseFloat(selB.value);
 
-  // Bỏ active nút preset
   document.querySelectorAll('#spread-preset-group button').forEach(b => b.className = 'btn btn-ghost');
   const applyBtn = document.getElementById('btn-apply-custom');
   if (applyBtn) {
@@ -564,39 +757,6 @@ function setSpreadRange(days, btn) {
 
   loadSpreadSeries();
   updateSpreadUI();
-}
-
-function onSpreadSliderInput(val) {
-  const idx = parseInt(val, 10);
-  const series = spreadState.filteredSeries;
-  if (!series || !series[idx]) return;
-
-  spreadState.currentIndex = idx;
-  spreadState.activeDateStr = series[idx].dateStr;
-  updateScrubberReadout(series[idx]);
-  refreshSpreadView();
-}
-
-function stepSpreadDate(delta) {
-  const series = spreadState.filteredSeries;
-  if (!series || !series.length) return;
-
-  let newIdx = spreadState.currentIndex + delta;
-  if (newIdx < 0) newIdx = 0;
-  if (newIdx >= series.length) newIdx = series.length - 1;
-
-  const slider = document.getElementById('spread-slider');
-  if (slider) slider.value = newIdx;
-  onSpreadSliderInput(newIdx);
-}
-
-function resetSpreadSlider() {
-  const series = spreadState.filteredSeries;
-  if (!series || !series.length) return;
-  const newIdx = series.length - 1;
-  const slider = document.getElementById('spread-slider');
-  if (slider) slider.value = newIdx;
-  onSpreadSliderInput(newIdx);
 }
 
 // ── Tenor table renderer ────────────────────────────────────────────────

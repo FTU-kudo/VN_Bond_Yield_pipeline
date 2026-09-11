@@ -474,32 +474,92 @@ function drawSpreadChart(containerId, inputData, options = {}) {
     .call(g => g.selectAll('text').attr('fill', 'var(--text-secondary)').attr('font-size', '10px'))
     .call(g => g.select('.domain').attr('stroke', 'var(--border-subtle)'));
 
-  // ── Điểm Active / Scrubber Indicator (khi người dùng kéo slider) ─────────
+  // ── Điểm Active / Dual Scrubber Indicator (2 Mốc ngày riêng biệt) ───
   const trackerG = svg.append('g').attr('class', 'spread-tracker');
-  const vLine = trackerG.append('line')
-    .attr('stroke', 'var(--accent-primary)')
-    .attr('stroke-width', 1.2)
-    .attr('stroke-dasharray', '3,3')
+
+  const dateAStr = options.activeDateA || options.activeDate || null;
+  const dateBStr = options.activeDateB || null;
+
+  const itemA = dateAStr ? (data.find(d => d.dateStr === dateAStr) || null) : null;
+  const itemB = dateBStr ? (data.find(d => d.dateStr === dateBStr) || null) : null;
+
+  // Tô bóng dải thời gian giữa 2 mốc A và B
+  if (itemA && itemB) {
+    const pxA = x(itemA.date);
+    const pxB = x(itemB.date);
+    const xMin = Math.min(pxA, pxB);
+    const xMax = Math.max(pxA, pxB);
+    trackerG.append('rect')
+      .attr('x', xMin)
+      .attr('y', 0)
+      .attr('width', Math.max(2, xMax - xMin))
+      .attr('height', height)
+      .attr('fill', 'rgba(59, 130, 246, 0.1)')
+      .attr('stroke', 'rgba(59, 130, 246, 0.25)')
+      .attr('stroke-dasharray', '2,2');
+  }
+
+  // Hàm vẽ vạch mốc ngày có nhãn
+  function drawMarkerLine(item, color, labelText) {
+    if (!item) return;
+    const px = x(item.date);
+    const py = y(item.value);
+
+    trackerG.append('line')
+      .attr('stroke', color)
+      .attr('stroke-width', 1.5)
+      .attr('stroke-dasharray', '3,2')
+      .attr('x1', px).attr('x2', px)
+      .attr('y1', 0).attr('y2', height);
+
+    trackerG.append('circle')
+      .attr('cx', px).attr('cy', py)
+      .attr('r', 5)
+      .attr('fill', color)
+      .attr('stroke', 'var(--bg-card)')
+      .attr('stroke-width', 2);
+
+    // Nhãn ngày bám vạch
+    const textG = trackerG.append('g').attr('transform', `translate(${px}, 12)`);
+    const isRightEdge = px > width - 80;
+    textG.append('rect')
+      .attr('x', isRightEdge ? -76 : -4)
+      .attr('y', -10)
+      .attr('width', 80)
+      .attr('height', 16)
+      .attr('rx', 3)
+      .attr('fill', 'var(--bg-card)')
+      .attr('stroke', color)
+      .attr('stroke-width', 1);
+
+    textG.append('text')
+      .attr('x', isRightEdge ? -36 : 36)
+      .attr('y', 2)
+      .attr('text-anchor', 'middle')
+      .attr('font-size', '9px')
+      .attr('font-family', 'JetBrains Mono, monospace')
+      .attr('font-weight', '600')
+      .attr('fill', color)
+      .text(labelText);
+  }
+
+  if (itemA) drawMarkerLine(itemA, '#06b6d4', '🔵 ' + formatDateVN(itemA.dateStr).substring(0, 5));
+  if (itemB) drawMarkerLine(itemB, '#f59e0b', '🟠 ' + formatDateVN(itemB.dateStr).substring(0, 5));
+
+  // Vạch hover động khi rê chuột
+  const hoverLine = trackerG.append('line')
+    .attr('stroke', 'var(--text-accent)')
+    .attr('stroke-width', 1)
+    .attr('stroke-dasharray', '2,2')
     .attr('y1', 0).attr('y2', height)
     .style('display', 'none');
 
-  const focusDot = trackerG.append('circle')
-    .attr('r', 5.5)
-    .attr('fill', 'var(--accent-primary)')
+  const hoverDot = trackerG.append('circle')
+    .attr('r', 4.5)
+    .attr('fill', 'var(--text-accent)')
     .attr('stroke', 'var(--bg-card)')
-    .attr('stroke-width', 2)
+    .attr('stroke-width', 1.5)
     .style('display', 'none');
-
-  // Đánh dấu active date nếu có
-  if (activeDateStr) {
-    const activeItem = data.find(d => d.dateStr === activeDateStr) || data[data.length - 1];
-    if (activeItem) {
-      const px = x(activeItem.date);
-      const py = y(activeItem.value);
-      vLine.attr('x1', px).attr('x2', px).style('display', 'block');
-      focusDot.attr('cx', px).attr('cy', py).style('display', 'block');
-    }
-  }
 
   // ── Interactive Hover Overlay ──────────────────────────────────────────
   const bisectDate = d3.bisector(d => d.date).left;
@@ -518,8 +578,8 @@ function drawSpreadChart(containerId, inputData, options = {}) {
 
     const px = x(d.date);
     const py = y(d.value);
-    vLine.attr('x1', px).attr('x2', px).style('display', 'block');
-    focusDot.attr('cx', px).attr('cy', py).style('display', 'block');
+    hoverLine.attr('x1', px).attr('x2', px).style('display', 'block');
+    hoverDot.attr('cx', px).attr('cy', py).style('display', 'block');
 
     const isInverted = d.value < 0;
     const regime = isInverted ? '⚠️ Đảo ngược' : '✓ Bình thường';
@@ -538,7 +598,7 @@ function drawSpreadChart(containerId, inputData, options = {}) {
       <div class="tooltip-title">📅 ${formatDateVN(d.dateStr)}</div>
       <div class="tooltip-row">
         <span>Spread:</span>
-        <span class="tooltip-value" style="color:${regimeColor}">${d.value.toFixed(1)} bps</span>
+        <span class="tooltip-value" style="color:${regimeColor}">${(d.value >= 0 ? '+' : '') + d.value.toFixed(1)} bps</span>
       </div>
       <div class="tooltip-row">
         <span>Trạng thái:</span>
@@ -546,25 +606,11 @@ function drawSpreadChart(containerId, inputData, options = {}) {
       </div>
       ${extraYield}
     `);
-
-    if (onDateSelect) {
-      onDateSelect(d);
-    }
   })
   .on('mouseout', function() {
     hideTooltip();
-    if (!activeDateStr) {
-      vLine.style('display', 'none');
-      focusDot.style('display', 'none');
-    } else {
-      const activeItem = data.find(d => d.dateStr === activeDateStr);
-      if (activeItem) {
-        const px = x(activeItem.date);
-        const py = y(activeItem.value);
-        vLine.attr('x1', px).attr('x2', px).style('display', 'block');
-        focusDot.attr('cx', px).attr('cy', py).style('display', 'block');
-      }
-    }
+    hoverLine.style('display', 'none');
+    hoverDot.style('display', 'none');
   })
   .on('click', function(event) {
     const [mx] = d3.pointer(event, this);
@@ -575,7 +621,7 @@ function drawSpreadChart(containerId, inputData, options = {}) {
     if (!d0) return;
     const d = (!d1 || (x0 - d0.date < d1.date - x0)) ? d0 : d1;
     if (onDateSelect) {
-      onDateSelect(d, true); // true = click lock
+      onDateSelect(d, true);
     }
   });
 }
