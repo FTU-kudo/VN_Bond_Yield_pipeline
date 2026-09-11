@@ -233,13 +233,38 @@
       </div>
     </div>
 
+    <!-- ── Filter Bar: Mốc thời gian Đấu thầu & Khối ngoại ───────────── -->
+    <div class="date-filter-bar fade-in">
+      <div class="date-filter-group">
+        <span style="font-size: 0.85rem; font-weight: 600; color: var(--text-primary);">📅 Mốc thời gian:</span>
+        <div class="btn-group" id="bottom-range-presets">
+          <button class="btn btn-primary" id="btn-bottom-30" onclick="setBottomRangeDays(30, this)">30 Ngày</button>
+          <button class="btn btn-ghost" id="btn-bottom-60" onclick="setBottomRangeDays(60, this)">60 Ngày</button>
+          <button class="btn btn-ghost" id="btn-bottom-90" onclick="setBottomRangeDays(90, this)">90 Ngày</button>
+          <button class="btn btn-ghost" id="btn-bottom-180" onclick="setBottomRangeDays(180, this)">6 Tháng</button>
+          <button class="btn btn-ghost" id="btn-bottom-365" onclick="setBottomRangeDays(365, this)">1 Năm</button>
+          <button class="btn btn-ghost" id="btn-bottom-all" onclick="setBottomRangeDays(0, this)">Tất cả</button>
+        </div>
+      </div>
+      <div class="date-filter-group">
+        <label for="bottom-date-start" style="font-size: 0.8rem; color: var(--text-secondary); font-weight: 500;">Từ:</label>
+        <input type="date" id="bottom-date-start" class="date-input" onchange="applyCustomBottomDates()" aria-label="Từ ngày">
+        <label for="bottom-date-end" style="font-size: 0.8rem; color: var(--text-secondary); font-weight: 500;">Đến:</label>
+        <input type="date" id="bottom-date-end" class="date-input" onchange="applyCustomBottomDates()" aria-label="Đến ngày">
+        <button class="btn btn-ghost" style="padding: 0.3rem 0.65rem; font-size: 0.75rem;" onclick="applyCustomBottomDates()">Lọc</button>
+      </div>
+    </div>
+
     <!-- ── Bottom Row: Auction + Foreign ──────────────────────────── -->
     <div class="chart-grid chart-grid-2">
 
       <!-- Recent Auction Summary -->
       <div class="chart-card fade-in">
-        <p class="chart-title">🏷️ Đấu Thầu Gần Nhất (30 ngày)</p>
-        <p class="chart-subtitle">Lãi suất trúng thầu & bid-to-cover ratio</p>
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.25rem;">
+          <p class="chart-title" style="margin-bottom: 0;">🏷️ Đấu Thầu TPCP</p>
+          <span id="auction-range-badge" class="spread-stat-pill" style="font-size: 0.72rem;">30 ngày gần nhất</span>
+        </div>
+        <p class="chart-subtitle" id="auction-card-subtitle">Lãi suất trúng thầu & bid-to-cover ratio</p>
         <div id="recent-auction-table">
           <div class="skeleton" style="height: 180px; border-radius: 8px;"></div>
         </div>
@@ -247,9 +272,12 @@
 
       <!-- Foreign Flow -->
       <div class="chart-card fade-in">
-        <p class="chart-title">🌏 Dòng Vốn Khối Ngoại (30 ngày)</p>
-        <p class="chart-subtitle">Net buy/sell khối ngoại — tỷ đồng</p>
-        <div class="chart-body" id="foreign-flow-chart"></div>
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.25rem;">
+          <p class="chart-title" style="margin-bottom: 0;">🌏 Dòng Vốn Khối Ngoại</p>
+          <span id="foreign-range-badge" class="spread-stat-pill" style="font-size: 0.72rem;">30 ngày gần nhất</span>
+        </div>
+        <p class="chart-subtitle" id="foreign-card-subtitle">Net buy/sell khối ngoại — tỷ đồng</p>
+        <div class="chart-body" id="foreign-flow-chart" style="height: 275px; min-height: 275px; max-height: 275px; overflow: hidden;"></div>
       </div>
 
     </div>
@@ -324,16 +352,12 @@
     drawDemoSpread();
   }
 
-  // Recent auctions table
-  renderRecentAuctions(auctionData);
+  // Khởi tạo bộ lọc thời gian đồng bộ cho Đấu thầu & Dòng vốn khối ngoại
+  initBottomFilters(auctionData, foreignData);
 
-  // Foreign flow chart
-  if (foreignData) {
-    drawForeignFlow(foreignData);
-    VNBond.onResize('foreign-flow-chart', () => {
-      drawForeignFlow(foreignData);
-    });
-  }
+  VNBond.onResize('foreign-flow-chart', () => {
+    refreshBottomViews();
+  });
 
 })();
 
@@ -618,69 +642,285 @@ function setMetric(valId, chgId, value, change) {
   }
 }
 
-// ── Recent auctions table ─────────────────────────────────────────────
-function renderRecentAuctions(data) {
+// ── Bottom Filter State (Đấu Thầu & Dòng Vốn Khối Ngoại) ───────────
+let bottomFilterState = {
+  days: 30, // 30 | 60 | 90 | 180 | 365 | 0 (All) | 'custom'
+  startDate: '',
+  endDate: '',
+  allAuctions: [],
+  allForeign: [],
+};
+
+function initBottomFilters(auctionData, foreignData) {
+  let auctions = [];
+  if (auctionData) {
+    if (Array.isArray(auctionData.all_auctions) && auctionData.all_auctions.length) {
+      auctions = auctionData.all_auctions;
+    } else if (Array.isArray(auctionData.recent_auctions)) {
+      auctions = auctionData.recent_auctions;
+    } else if (Array.isArray(auctionData)) {
+      auctions = auctionData;
+    }
+  }
+
+  let foreign = [];
+  if (foreignData) {
+    if (Array.isArray(foreignData)) {
+      foreign = foreignData;
+    } else if (Array.isArray(foreignData.daily)) {
+      foreign = foreignData.daily;
+    }
+  }
+
+  if (!auctions.length) auctions = generateDemoAuctions();
+  if (!foreign.length) foreign = generateDemoForeign();
+
+  bottomFilterState.allAuctions = auctions;
+  bottomFilterState.allForeign = foreign;
+
+  // Xác định ngày mới nhất (maxDate)
+  let maxDateStr = '';
+  if (foreign.length) {
+    const dStr = (foreign[foreign.length - 1].date || foreign[foreign.length - 1].trade_date || '').toString().substring(0, 10);
+    if (dStr) maxDateStr = dStr;
+  }
+  if (auctions.length) {
+    const dStr = (auctions[0].trade_date || auctions[0].date || '').toString().substring(0, 10);
+    if (dStr && (!maxDateStr || dStr > maxDateStr)) maxDateStr = dStr;
+  }
+  if (!maxDateStr) {
+    maxDateStr = new Date().toISOString().substring(0, 10);
+  }
+
+  // Mặc định chọn 30 ngày gần nhất
+  bottomFilterState.days = 30;
+  bottomFilterState.endDate = maxDateStr;
+  const cutoff = new Date(new Date(maxDateStr).getTime() - 30 * 24 * 3600 * 1000);
+  bottomFilterState.startDate = cutoff.toISOString().substring(0, 10);
+
+  const startInput = document.getElementById('bottom-date-start');
+  const endInput = document.getElementById('bottom-date-end');
+  if (startInput) startInput.value = bottomFilterState.startDate;
+  if (endInput) endInput.value = bottomFilterState.endDate;
+
+  refreshBottomViews();
+}
+
+function setBottomRangeDays(days, btn) {
+  const group = document.getElementById('bottom-range-presets');
+  if (group) {
+    group.querySelectorAll('button').forEach(b => {
+      b.classList.remove('btn-primary');
+      b.classList.add('btn-ghost');
+    });
+  }
+  if (btn) {
+    btn.classList.remove('btn-ghost');
+    btn.classList.add('btn-primary');
+  }
+
+  bottomFilterState.days = days;
+
+  let maxDateStr = '';
+  const foreign = bottomFilterState.allForeign;
+  const auctions = bottomFilterState.allAuctions;
+  if (foreign.length) {
+    const dStr = (foreign[foreign.length - 1].date || foreign[foreign.length - 1].trade_date || '').toString().substring(0, 10);
+    if (dStr) maxDateStr = dStr;
+  }
+  if (auctions.length) {
+    const dStr = (auctions[0].trade_date || auctions[0].date || '').toString().substring(0, 10);
+    if (dStr && (!maxDateStr || dStr > maxDateStr)) maxDateStr = dStr;
+  }
+  if (!maxDateStr) maxDateStr = new Date().toISOString().substring(0, 10);
+
+  bottomFilterState.endDate = maxDateStr;
+
+  if (days === 0) {
+    // Tất cả thời gian
+    let minDateStr = maxDateStr;
+    if (foreign.length) {
+      const dStr = (foreign[0].date || foreign[0].trade_date || '').toString().substring(0, 10);
+      if (dStr && dStr < minDateStr) minDateStr = dStr;
+    }
+    if (auctions.length) {
+      const lastR = auctions[auctions.length - 1];
+      const dStr = (lastR.trade_date || lastR.date || '').toString().substring(0, 10);
+      if (dStr && dStr < minDateStr) minDateStr = dStr;
+    }
+    bottomFilterState.startDate = minDateStr;
+  } else {
+    const cutoff = new Date(new Date(maxDateStr).getTime() - days * 24 * 3600 * 1000);
+    bottomFilterState.startDate = cutoff.toISOString().substring(0, 10);
+  }
+
+  const startInput = document.getElementById('bottom-date-start');
+  const endInput = document.getElementById('bottom-date-end');
+  if (startInput) startInput.value = bottomFilterState.startDate;
+  if (endInput) endInput.value = bottomFilterState.endDate;
+
+  refreshBottomViews();
+}
+
+function applyCustomBottomDates() {
+  const startInput = document.getElementById('bottom-date-start');
+  const endInput = document.getElementById('bottom-date-end');
+  if (!startInput || !endInput) return;
+
+  let s = startInput.value;
+  let e = endInput.value;
+  if (!s || !e) return;
+  if (s > e) {
+    const temp = s;
+    s = e;
+    e = temp;
+    startInput.value = s;
+    endInput.value = e;
+  }
+
+  bottomFilterState.days = 'custom';
+  bottomFilterState.startDate = s;
+  bottomFilterState.endDate = e;
+
+  const group = document.getElementById('bottom-range-presets');
+  if (group) {
+    group.querySelectorAll('button').forEach(b => {
+      b.classList.remove('btn-primary');
+      b.classList.add('btn-ghost');
+    });
+  }
+
+  refreshBottomViews();
+}
+
+function refreshBottomViews() {
+  const { startDate, endDate, days, allAuctions, allForeign } = bottomFilterState;
+
+  let badgeText = `${VNBond.formatDateVN(startDate)} – ${VNBond.formatDateVN(endDate)}`;
+  if (days === 30) badgeText = '30 ngày';
+  else if (days === 60) badgeText = '60 ngày';
+  else if (days === 90) badgeText = '90 ngày';
+  else if (days === 180) badgeText = '6 tháng';
+  else if (days === 365) badgeText = '1 năm';
+  else if (days === 0) badgeText = 'Tất cả';
+
+  const aucBadge = document.getElementById('auction-range-badge');
+  const forBadge = document.getElementById('foreign-range-badge');
+  if (aucBadge) aucBadge.textContent = badgeText;
+  if (forBadge) forBadge.textContent = badgeText;
+
+  // Lọc Auctions
+  const filteredAuctions = allAuctions.filter(r => {
+    const dStr = (r.trade_date || r.date || '').toString().substring(0, 10);
+    return dStr >= startDate && dStr <= endDate;
+  });
+
+  renderAuctionsFiltered(filteredAuctions);
+
+  // Lọc Foreign
+  const filteredForeign = allForeign.filter(d => {
+    const dStr = (d.date || d.trade_date || '').toString().substring(0, 10);
+    return dStr >= startDate && dStr <= endDate;
+  }).sort((a, b) => {
+    const da = (a.date || a.trade_date || '').toString();
+    const db = (b.date || b.trade_date || '').toString();
+    return da.localeCompare(db);
+  });
+
+  drawForeignFlowFiltered(filteredForeign);
+}
+
+function renderAuctionsFiltered(auctions) {
   const container = document.getElementById('recent-auction-table');
-  const auctions = data && (data.recent_auctions || data.recent_90d);
+  const subTitle = document.getElementById('auction-card-subtitle');
+  if (!container) return;
+
   if (!auctions || !auctions.length) {
+    if (subTitle) subTitle.textContent = 'Không có phiên đấu thầu trong giai đoạn này';
     container.innerHTML = `
-      <div style="text-align:center; padding: 2rem; color: var(--text-muted); font-size:0.85rem;">
-        Chưa có dữ liệu đấu thầu. Hãy chạy pipeline thu thập dữ liệu.
+      <div style="text-align:center; padding: 2.5rem; color: var(--text-muted); font-size:0.85rem;">
+        Không có phiên đấu thầu nào từ ${VNBond.formatDateVN(bottomFilterState.startDate)} đến ${VNBond.formatDateVN(bottomFilterState.endDate)}.
       </div>`;
     return;
   }
 
-  const rows = auctions.slice(0, 8);
+  // Sắp xếp mới nhất lên đầu
+  const sorted = [...auctions].sort((a, b) => {
+    const da = (a.trade_date || a.date || '').toString();
+    const db = (b.trade_date || b.date || '').toString();
+    return db.localeCompare(da);
+  });
+
+  const totalSessions = sorted.length;
+  const successSessions = sorted.filter(r => (r.auction_successful != null ? r.auction_successful : r.success)).length;
+  const successRate = totalSessions > 0 ? Math.round((successSessions / totalSessions) * 100) : 0;
+  const totalWinningBn = sorted.reduce((sum, r) => sum + (r.winning_val_vnd || 0), 0) / 1e9;
+
+  if (subTitle) {
+    const winStr = totalWinningBn > 0
+      ? ` | Trúng thầu: <strong style="color:var(--text-primary);">${Math.round(totalWinningBn).toLocaleString('vi-VN')} tỷ</strong>`
+      : '';
+    subTitle.innerHTML = `<span><strong>${totalSessions}</strong> lượt thầu | Tỷ lệ trúng: <strong style="color:var(--color-up);">${successRate}%</strong> (${successSessions}/${totalSessions})${winStr}</span>`;
+  }
+
   container.innerHTML = `
-    <table class="data-table">
-      <thead><tr>
-        <th>Ngày</th><th>Tenor</th><th>Lãi Suất</th><th>BCR</th><th>Kết Quả</th>
-      </tr></thead>
-      <tbody>
-        ${rows.map(r => {
-          const dateStr = (r.trade_date || r.date || '').toString().substring(0, 10);
-          const tenorLabel = r.tenor_yr != null
-            ? (r.tenor_yr < 1 ? Math.round(r.tenor_yr * 12) + 'M' : r.tenor_yr + 'Y')
-            : (r.tenor || '—');
-          const rate = r.winning_rate_pct != null ? r.winning_rate_pct
-            : (r.winning_rate != null ? r.winning_rate : null);
-          const bcr = r.bid_to_cover;
-          const success = r.auction_successful != null ? r.auction_successful : r.success;
-          return `
-          <tr>
-            <td class="mono" style="font-size:0.75rem;">${VNBond.formatDateVN(dateStr)}</td>
-            <td><span class="tenor-tag t-10y">${tenorLabel}</span></td>
-            <td class="mono text-accent">${rate != null ? VNBond.fmt.rate(rate) : '—'}</td>
-            <td class="mono">${bcr != null ? bcr.toFixed(2) + 'x' : '—'}</td>
-            <td><span class="metric-change ${success ? 'up' : 'down'}">${success ? '✓' : '✗'}</span></td>
-          </tr>`;
-        }).join('')}
-      </tbody>
-    </table>
+    <div class="table-scroll-container">
+      <table class="data-table" style="margin: 0; width: 100%;">
+        <thead><tr>
+          <th>Ngày</th><th>Tenor</th><th>Lãi Suất</th><th>BCR</th><th>Kết Quả</th>
+        </tr></thead>
+        <tbody>
+          ${sorted.map(r => {
+            const dateStr = (r.trade_date || r.date || '').toString().substring(0, 10);
+            const tenorLabel = r.tenor_yr != null
+              ? (r.tenor_yr < 1 ? Math.round(r.tenor_yr * 12) + 'M' : r.tenor_yr + 'Y')
+              : (r.tenor || '—');
+            const rate = r.winning_rate_pct != null ? r.winning_rate_pct
+              : (r.winning_rate != null ? r.winning_rate : null);
+            const bcr = r.bid_to_cover;
+            const success = r.auction_successful != null ? r.auction_successful : r.success;
+            return `
+            <tr>
+              <td class="mono" style="font-size:0.75rem;">${VNBond.formatDateVN(dateStr)}</td>
+              <td><span class="tenor-tag t-10y">${tenorLabel}</span></td>
+              <td class="mono text-accent">${rate != null ? VNBond.fmt.rate(rate) : '—'}</td>
+              <td class="mono">${bcr != null ? bcr.toFixed(2) + 'x' : '—'}</td>
+              <td><span class="metric-change ${success ? 'up' : 'down'}">${success ? '✓' : '✗'}</span></td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>
   `;
 }
 
-// ── Foreign flow bar chart (Enhanced layout, no empty space, tooltips) ───
-function drawForeignFlow(data) {
+function drawForeignFlowFiltered(daily) {
   const container = document.getElementById('foreign-flow-chart');
-  const daily = Array.isArray(data) ? data : (data && data.daily);
+  const subTitle = document.getElementById('foreign-card-subtitle');
+  if (!container) return;
+
   if (!daily || !daily.length) {
+    if (subTitle) subTitle.textContent = 'Không có dữ liệu khối ngoại trong giai đoạn này';
     container.innerHTML = `
-      <div style="text-align:center; padding: 2rem; color: var(--text-muted); font-size:0.85rem;">
-        Chưa có dữ liệu foreign flow. Cần file PDF thống kê từ HNX.
+      <div style="text-align:center; padding: 2.5rem; color: var(--text-muted); font-size:0.85rem;">
+        Không có dữ liệu dòng vốn từ ${VNBond.formatDateVN(bottomFilterState.startDate)} đến ${VNBond.formatDateVN(bottomFilterState.endDate)}.
       </div>`;
     return;
   }
 
-  const recent = daily.slice(-30);
-  const margin = { top: 15, right: 20, bottom: 45, left: 60 };
-  const width = container.clientWidth - margin.left - margin.right;
-  const height = 320 - margin.top - margin.bottom;
+  const totalNet = daily.reduce((sum, d) => sum + (d.for_net_bn || 0), 0);
+  const totalBuy = daily.reduce((sum, d) => sum + (d.for_buy_vnd || 0), 0) / 1e9;
+  const totalSell = daily.reduce((sum, d) => sum + (d.for_sell_vnd || 0), 0) / 1e9;
+  const netSign = totalNet >= 0 ? '+' : '';
+  const netColor = totalNet >= 0 ? 'var(--color-up)' : 'var(--color-down)';
 
-  // Tính tổng net 30 ngày để hiển thị thông tin
-  const totalNet = recent.reduce((sum, d) => sum + (d.for_net_bn || 0), 0);
-  const totalBuy = recent.reduce((sum, d) => sum + (d.for_buy_vnd || 0), 0) / 1e9;
-  const totalSell = recent.reduce((sum, d) => sum + (d.for_sell_vnd || 0), 0) / 1e9;
+  if (subTitle) {
+    subTitle.innerHTML = `Net: <strong style="color:${netColor}; font-family:'JetBrains Mono',monospace;">${netSign}${totalNet.toFixed(1)} tỷ</strong> | Mua: ${totalBuy.toFixed(1)} tỷ | Bán: ${totalSell.toFixed(1)} tỷ (${daily.length} ngày GD)`;
+  }
+
+  const margin = { top: 15, right: 15, bottom: 45, left: 60 };
+  const width = Math.max(200, (container.clientWidth || 450) - margin.left - margin.right);
+  const height = 275 - margin.top - margin.bottom;
 
   container.innerHTML = '';
 
@@ -689,13 +929,14 @@ function drawForeignFlow(data) {
     .attr('viewBox', `0 0 ${width + margin.left + margin.right} ${height + margin.top + margin.bottom}`)
     .append('g').attr('transform', `translate(${margin.left},${margin.top})`);
 
-  const getDate = d => d.date || (d.trade_date || '').toString().substring(0, 10);
+  const getDate = d => (d.date || d.trade_date || '').toString().substring(0, 10);
 
   const x = d3.scaleBand()
-    .domain(recent.map(d => getDate(d)))
-    .range([0, width]).padding(0.2);
+    .domain(daily.map(d => getDate(d)))
+    .range([0, width])
+    .padding(daily.length > 120 ? 0.05 : (daily.length > 60 ? 0.15 : 0.25));
 
-  const yExtent = d3.extent(recent, d => d.for_net_bn);
+  const yExtent = d3.extent(daily, d => d.for_net_bn || 0);
   const yMaxVal = Math.max(Math.abs(yExtent[0] || 0), Math.abs(yExtent[1] || 0), 100);
   const y = d3.scaleLinear()
     .domain([-yMaxVal * 1.15, yMaxVal * 1.15]).nice()
@@ -707,7 +948,7 @@ function drawForeignFlow(data) {
     .call(g => g.select('.domain').remove())
     .call(g => g.selectAll('line').attr('stroke', 'var(--border-subtle)').attr('stroke-dasharray', '3,3'));
 
-  // Đường 0 tỷ - rõ nét ở cả hai theme
+  // Đường 0 tỷ
   svg.append('line')
     .attr('x1', 0).attr('x2', width)
     .attr('y1', y(0)).attr('y2', y(0))
@@ -716,24 +957,24 @@ function drawForeignFlow(data) {
     .attr('stroke-dasharray', '3,2');
 
   // Cột Bar
-  svg.selectAll('rect').data(recent).enter()
+  svg.selectAll('rect').data(daily).enter()
     .append('rect')
     .attr('x', d => x(getDate(d)))
-    .attr('width', x.bandwidth())
+    .attr('width', Math.max(1, x.bandwidth()))
     .attr('y', d => y(Math.max(0, d.for_net_bn || 0)))
     .attr('height', d => Math.max(2, Math.abs(y(d.for_net_bn || 0) - y(0))))
     .attr('fill', d => (d.for_net_bn || 0) >= 0 ? 'rgba(34, 197, 94, 0.85)' : 'rgba(239, 68, 68, 0.85)')
-    .attr('rx', 3)
+    .attr('rx', daily.length > 90 ? 1 : 3)
     .style('cursor', 'pointer')
     .on('mouseover', function(event, d) {
       d3.select(this).attr('opacity', 0.8);
       const isNetBuy = (d.for_net_bn || 0) >= 0;
-      const netColor = isNetBuy ? 'var(--color-up)' : 'var(--color-down)';
+      const nCol = isNetBuy ? 'var(--color-up)' : 'var(--color-down)';
       VNBond.showTooltip(event, `
         <div class="tooltip-title">📅 ${VNBond.formatDateVN(getDate(d))}</div>
         <div class="tooltip-row">
           <span>Net Khối Ngoại:</span>
-          <span class="tooltip-value" style="color:${netColor}">${(d.for_net_bn || 0).toFixed(1)} tỷ</span>
+          <span class="tooltip-value" style="color:${nCol}">${(d.for_net_bn || 0).toFixed(1)} tỷ</span>
         </div>
         <div class="tooltip-row">
           <span>Mua:</span>
@@ -752,8 +993,16 @@ function drawForeignFlow(data) {
     });
 
   // Trục X (Ngày)
+  const domainDates = x.domain();
+  let step = 1;
+  if (domainDates.length > 80) step = Math.ceil(domainDates.length / 7);
+  else if (domainDates.length > 35) step = Math.ceil(domainDates.length / 8);
+  else if (domainDates.length > 15) step = 3;
+
+  const tickDates = domainDates.filter((d, i) => i % step === 0 || i === domainDates.length - 1);
+
   svg.append('g').attr('transform', `translate(0,${height})`)
-    .call(d3.axisBottom(x).tickValues(x.domain().filter((d, i) => i % 4 === 0 || i === x.domain().length - 1)))
+    .call(d3.axisBottom(x).tickValues(tickDates))
     .call(g => g.selectAll('text').attr('fill', 'var(--text-secondary)').attr('font-size', '10px')
       .attr('transform', 'rotate(-25)').attr('text-anchor', 'end'))
     .call(g => g.select('.domain').attr('stroke', 'var(--border-subtle)'));
@@ -763,6 +1012,49 @@ function drawForeignFlow(data) {
     .call(d3.axisLeft(y).ticks(5).tickFormat(v => v.toFixed(0) + ' tỷ'))
     .call(g => g.selectAll('text').attr('fill', 'var(--text-secondary)').attr('font-size', '10px'))
     .call(g => g.select('.domain').attr('stroke', 'var(--border-subtle)'));
+}
+
+function generateDemoAuctions() {
+  const today = new Date();
+  const tenors = [3, 5, 10, 15, 30];
+  const list = [];
+  for (let i = 0; i < 30; i++) {
+    const d = new Date(today);
+    d.setDate(d.getDate() - i * 3);
+    const dateStr = d.toISOString().substring(0, 10);
+    tenors.forEach(t => {
+      const succ = Math.random() > 0.3;
+      list.push({
+        trade_date: dateStr,
+        tenor_yr: t,
+        winning_rate_pct: succ ? (3.5 + t * 0.15 + (Math.random() - 0.5) * 0.2) : null,
+        bid_to_cover: succ ? (1.2 + Math.random() * 2) : null,
+        auction_successful: succ,
+        winning_val_vnd: succ ? (1000 + Math.random() * 3000) * 1e9 : 0
+      });
+    });
+  }
+  return list;
+}
+
+function generateDemoForeign() {
+  const today = new Date();
+  const list = [];
+  for (let i = 60; i >= 0; i--) {
+    const d = new Date(today);
+    d.setDate(d.getDate() - i);
+    const dateStr = d.toISOString().substring(0, 10);
+    const net = (Math.random() - 0.48) * 800;
+    const buy = Math.max(0, net) + Math.random() * 400;
+    const sell = Math.max(0, -net) + Math.random() * 400;
+    list.push({
+      date: dateStr,
+      for_net_bn: net,
+      for_buy_vnd: buy * 1e9,
+      for_sell_vnd: sell * 1e9,
+    });
+  }
+  return list;
 }
 
 // ── Demo charts (khi chưa có data) ──────────────────────────────────────
@@ -802,7 +1094,7 @@ function drawDemoSpread() {
     };
   });
   initSpreadManager(demoSpread, []);
-  renderRecentAuctions(null);
+  initBottomFilters(null, null);
 }
 </script>
 

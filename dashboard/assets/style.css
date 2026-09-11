@@ -910,3 +910,59 @@ select:hover, select:focus {
   border: 1px solid rgba(59, 130, 246, 0.25);
   color: #93c5fd;
 }
+
+/* ── Date Range Filter Bar for Bottom Row ─────────────────── */
+.date-filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-lg);
+  padding: 0.75rem 1.25rem;
+  margin-bottom: 1rem;
+  box-shadow: var(--shadow-card);
+}
+
+.date-filter-group {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+}
+
+.date-input {
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 0.3rem 0.55rem;
+  font-size: 0.8rem;
+  font-family: inherit;
+  outline: none;
+  cursor: pointer;
+  transition: border-color var(--transition-fast);
+}
+
+.date-input:focus {
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 6px var(--accent-primary-glow);
+}
+
+.table-scroll-container {
+  max-height: 275px;
+  overflow-y: auto;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-subtle);
+}
+
+.table-scroll-container thead th {
+  position: sticky;
+  top: 0;
+  background: var(--bg-surface);
+  z-index: 2;
+  box-shadow: 0 1px 0 var(--border-subtle);
+}
+

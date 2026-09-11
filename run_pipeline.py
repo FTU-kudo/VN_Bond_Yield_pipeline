@@ -234,7 +234,7 @@ def export_json(cache_dir: Path, exports_dir: Path, verbose: bool):
     # Export auction stats tổng hợp
     auction_summary = {}
     for fname in ["auction_bcr_by_tenor.parquet", "auction_success_rate.parquet",
-                   "auction_recent_90d.parquet"]:
+                   "auction_recent_90d.parquet", "auction_all_auctions.parquet"]:
         p = cache_dir / fname
         if p.exists():
             df = pd.read_parquet(p)
@@ -262,9 +262,10 @@ def export_json(cache_dir: Path, exports_dir: Path, verbose: bool):
             auction_summary[key] = df.to_dict(orient="records")
 
     if auction_summary:
-        # Thêm alias "recent_auctions" để frontend JS có thể đọc được
-        # (tên gốc là "recent_90d" từ auction_recent_90d.parquet)
-        if "recent_90d" in auction_summary and "recent_auctions" not in auction_summary:
+        # Cung cấp toàn bộ lịch sử đấu thầu để frontend có thể lọc theo bất kỳ mốc thời gian nào
+        if "all_auctions" in auction_summary:
+            auction_summary["recent_auctions"] = auction_summary["all_auctions"]
+        elif "recent_90d" in auction_summary and "recent_auctions" not in auction_summary:
             auction_summary["recent_auctions"] = auction_summary["recent_90d"]
 
         out_path = data_dir / "auction_stats.json"

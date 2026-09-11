@@ -25,10 +25,16 @@ Nguồn: hnx_auctions_daily.parquet (output của hnx_auctions_daily.py)
 """
 from __future__ import annotations
 
+import sys
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
+
+if sys.stdout and hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
+if sys.stderr and hasattr(sys.stderr, "reconfigure"):
+    sys.stderr.reconfigure(encoding="utf-8")
 
 
 # ── Tên cột thật từ HNX (đã xác nhận thực nghiệm) ───────────────────────────
@@ -255,6 +261,19 @@ def recent_auctions_summary(df: pd.DataFrame, n_days: int = 90) -> pd.DataFrame:
     )
 
 
+def all_auctions_summary(df: pd.DataFrame) -> pd.DataFrame:
+    """Tóm tắt toàn bộ lịch sử các phiên đấu thầu đã chuẩn hóa."""
+    if COL_DATE not in df.columns:
+        return pd.DataFrame()
+    cols = [COL_DATE, "tenor_yr", COL_WIN_RATE_PARSED, "bid_to_cover",
+            "stop_out_rate", "tail_bps", COL_SUCCESS, COL_WIN_VOL_PARSED]
+    return (
+        df[[c for c in cols if c in df.columns]]
+        .sort_values(COL_DATE, ascending=False)
+        .reset_index(drop=True)
+    )
+
+
 # ── Phân tích theo kỳ hạn ─────────────────────────────────────────────────────
 
 def tenor_yield_trend(df: pd.DataFrame,
@@ -300,6 +319,7 @@ def run(cache_dir: str | Path = "./cache", verbose: bool = True) -> dict:
         "success_rate": auction_success_rate(df),
         "volume_by_quarter": issuance_volume_by_quarter(df),
         "recent_90d": recent_auctions_summary(df, n_days=90),
+        "all_auctions": all_auctions_summary(df),
         "stop_out_10y": stop_out_rate_history(df, tenor_yr_filter=10.0),
     }
 
