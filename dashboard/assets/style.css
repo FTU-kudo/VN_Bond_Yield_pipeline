@@ -928,6 +928,50 @@ input[type="range"]::-webkit-slider-thumb:hover {
   border-top: 4px solid var(--accent-secondary);
 }
 
+/* ── Foreign Flow Range Scrubber & Dual Slider ────────────────────── */
+.foreign-range-panel {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.5rem;
+  box-shadow: var(--shadow-sm);
+  backdrop-filter: blur(12px);
+}
+
+.foreign-controls-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.dual-slider-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  margin-top: 0.65rem;
+  padding: 0.85rem 1rem;
+  background: var(--bg-base);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+}
+
+.range-slider-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.range-slider-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  min-width: 68px;
+  white-space: nowrap;
+}
+
 /* ── Select / Dropdown ────────────────────────────────────── */
 select {
   background: var(--bg-card);

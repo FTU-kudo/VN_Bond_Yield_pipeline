@@ -27,10 +27,22 @@ BỐN CÁI BẪY ĐÃ BIẾT (ghi lại để không tái phạm):
 from __future__ import annotations
 
 import re
+import sys
 import unicodedata
 from datetime import date, datetime, timedelta
 from pathlib import Path
 from typing import Callable
+
+if sys.stdout and hasattr(sys.stdout, "reconfigure"):
+    try:
+        sys.stdout.reconfigure(encoding="utf-8")
+    except Exception:
+        pass
+if sys.stderr and hasattr(sys.stderr, "reconfigure"):
+    try:
+        sys.stderr.reconfigure(encoding="utf-8")
+    except Exception:
+        pass
 
 import pandas as pd
 
@@ -211,9 +223,18 @@ def daily_scan(
             df_day = fetch_fn(d, sess)
             if len(df_day):
                 pending_data.append(df_day)
-            pending_checked.append(d)
-            if verbose:
-                print(f"  {d} → {len(df_day)} dòng")
+                pending_checked.append(d)
+                if verbose:
+                    print(f"  {d} → {len(df_day)} dòng")
+            elif (date.today() - d).days > 5:
+                # Chỉ đánh dấu đã kiểm tra nếu ngày đó đã qua hơn 5 ngày (ngày nghỉ/lễ cố định)
+                pending_checked.append(d)
+                if verbose:
+                    print(f"  {d} → 0 dòng (ngày nghỉ/lễ)")
+            else:
+                # Ngày gần đây (<= 5 ngày) chưa có dữ liệu: Không ghi checked để lần quét sau tự động thử lại khi HNX upload PDF
+                if verbose:
+                    print(f"  {d} → 0 dòng (chưa xuất bản, sẽ tự quét lại lần sau)")
         except Exception as exc:  # noqa: BLE001
             # Không đánh dấu đã quét → sẽ thử lại lần sau
             if verbose:

@@ -21,8 +21,20 @@ LƯU Ý QUAN TRỌNG VỀ CAUSAL INFERENCE:
 from __future__ import annotations
 
 import json
+import sys
 from datetime import date, timedelta
 from pathlib import Path
+
+if sys.stdout and hasattr(sys.stdout, "reconfigure"):
+    try:
+        sys.stdout.reconfigure(encoding="utf-8")
+    except Exception:
+        pass
+if sys.stderr and hasattr(sys.stderr, "reconfigure"):
+    try:
+        sys.stderr.reconfigure(encoding="utf-8")
+    except Exception:
+        pass
 
 import numpy as np
 import pandas as pd
@@ -237,12 +249,12 @@ def run(cache_dir: str | Path = "./cache", verbose: bool = True) -> dict:
 
     # Lãi suất SBV
     sbv_raw = fetch_sbv_rates(verbose=verbose)
-    sbv_daily = expand_sbv_rates_daily(sbv_raw,
-                                        end_date=spreads["date"].max().isoformat())
+    max_d_str = pd.to_datetime(spreads["date"].max()).strftime("%Y-%m-%d")
+    min_d_str = pd.to_datetime(spreads["date"].min()).strftime("%Y-%m-%d")
+    sbv_daily = expand_sbv_rates_daily(sbv_raw, end_date=max_d_str)
 
     # Tỷ giá USD/VND
-    start_date = spreads["date"].min().isoformat()
-    usdvnd = fetch_usdvnd_sbv(start=start_date, verbose=verbose)
+    usdvnd = fetch_usdvnd_sbv(start=min_d_str, end=max_d_str, verbose=verbose)
 
     # Ma trận tương quan
     corr = correlation_matrix(spreads, sbv_daily, usdvnd)

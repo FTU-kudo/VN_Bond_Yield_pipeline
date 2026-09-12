@@ -6,7 +6,7 @@
   <title>Dòng Vốn Ngoại — VN Bond Dashboard</title>
   <meta name="description" content="Phân tích dòng vốn khối ngoại trên thị trường trái phiếu chính phủ Việt Nam: net buy/sell, xu hướng tích lũy, tương quan lãi suất.">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌏</text></svg>">
-  <link rel="stylesheet" href="assets/style.css?v=1.3">
+  <link rel="stylesheet" href="assets/style.css?v=1.4">
 </head>
 <body>
 
@@ -39,52 +39,118 @@
 
   <div class="page-body">
 
-    <!-- ── KPI Cards ──────────────────────────────────────────────── -->
+    <!-- ── KPI Cards (Tự động cập nhật theo khoảng thời gian đã chọn) ──────────────── -->
     <section class="metrics-grid fade-in" aria-label="Chỉ số dòng vốn ngoại"
              style="grid-template-columns: repeat(4, 1fr);">
 
-      <div class="metric-card fade-in fade-in-delay-1" id="card-net-30d">
+      <div class="metric-card fade-in fade-in-delay-1" id="card-net-range">
         <span class="metric-icon" aria-hidden="true">🌏</span>
-        <p class="metric-label">Net 30 ngày</p>
-        <p class="metric-value num-mono neutral" id="val-net-30d">—</p>
-        <span class="metric-change neutral" id="chg-net-30d">tỷ đồng</span>
+        <p class="metric-label" id="label-net-range">Net Giai Đoạn</p>
+        <p class="metric-value num-mono neutral" id="val-net-range">—</p>
+        <span class="metric-change neutral" id="chg-net-range">tỷ đồng</span>
       </div>
 
-      <div class="metric-card fade-in fade-in-delay-2" id="card-net-ytd">
-        <span class="metric-icon" aria-hidden="true">📅</span>
-        <p class="metric-label">Net YTD</p>
-        <p class="metric-value num-mono neutral" id="val-net-ytd">—</p>
-        <span class="metric-change neutral" id="chg-net-ytd">tỷ đồng</span>
+      <div class="metric-card fade-in fade-in-delay-2" id="card-total-vol">
+        <span class="metric-icon" aria-hidden="true">🔄</span>
+        <p class="metric-label" id="label-total-vol">Tổng Giao Dịch</p>
+        <p class="metric-value num-mono neutral" id="val-total-vol">—</p>
+        <span class="metric-change neutral" id="chg-total-vol">tỷ đồng</span>
       </div>
 
       <div class="metric-card fade-in fade-in-delay-3" id="card-max-buy">
         <span class="metric-icon" aria-hidden="true">📈</span>
-        <p class="metric-label">Mua ròng lớn nhất</p>
+        <p class="metric-label">Mua Ròng Lớn Nhất</p>
         <p class="metric-value num-mono up" id="val-max-buy">—</p>
         <span class="metric-change neutral" id="chg-max-buy">tỷ đồng / phiên</span>
       </div>
 
       <div class="metric-card fade-in fade-in-delay-4" id="card-max-sell">
         <span class="metric-icon" aria-hidden="true">📉</span>
-        <p class="metric-label">Bán ròng lớn nhất</p>
+        <p class="metric-label">Bán Ròng Lớn Nhất</p>
         <p class="metric-value num-mono down" id="val-max-sell">—</p>
         <span class="metric-change neutral" id="chg-max-sell">tỷ đồng / phiên</span>
       </div>
 
     </section>
 
+    <!-- ── Bộ Điều Khiển & Thanh Trượt Chọn 2 Mốc Thời Gian (Dual Scrubber) ──── -->
+    <div class="foreign-range-panel fade-in" id="foreign-range-panel">
+      
+      <!-- Hàng 1: Presets & Bộ chọn lịch -->
+      <div class="foreign-controls-bar">
+        <div class="btn-group" id="foreign-preset-group">
+          <span style="font-size: 0.75rem; color: var(--text-secondary); font-weight: 600;">Khoảng:</span>
+          <button class="btn btn-primary" id="btn-pre-30d" onclick="setForeignPreset(30, this)">30N</button>
+          <button class="btn btn-ghost" id="btn-pre-60d" onclick="setForeignPreset(60, this)">60N</button>
+          <button class="btn btn-ghost" id="btn-pre-90d" onclick="setForeignPreset(90, this)">90N</button>
+          <button class="btn btn-ghost" id="btn-pre-180d" onclick="setForeignPreset(180, this)">6T</button>
+          <button class="btn btn-ghost" id="btn-pre-365d" onclick="setForeignPreset(365, this)">1N</button>
+          <button class="btn btn-ghost" id="btn-pre-ytd" onclick="setForeignPreset('ytd', this)">YTD</button>
+          <button class="btn btn-ghost" id="btn-pre-3y" onclick="setForeignPreset(1095, this)">3N</button>
+          <button class="btn btn-ghost" id="btn-pre-all" onclick="setForeignPreset(0, this)">Tất cả</button>
+        </div>
+
+        <div class="date-filter-group">
+          <label for="foreign-date-start" style="font-size: 0.8rem; color: var(--text-secondary); font-weight: 500;">Từ:</label>
+          <input type="date" id="foreign-date-start" class="date-input" onchange="onForeignDateInputChange()" aria-label="Từ ngày">
+          <label for="foreign-date-end" style="font-size: 0.8rem; color: var(--text-secondary); font-weight: 500;">Đến:</label>
+          <input type="date" id="foreign-date-end" class="date-input" onchange="onForeignDateInputChange()" aria-label="Đến ngày">
+          <button class="btn btn-ghost" style="padding: 0.3rem 0.65rem; font-size: 0.75rem;" onclick="resetToLatestForeign()" title="Về 30 phiên gần nhất">Mới nhất</button>
+        </div>
+      </div>
+
+      <!-- Hàng 2: Thông tin tóm tắt giai đoạn -->
+      <div class="slider-status-row" style="margin-top: 0.85rem; margin-bottom: 0.4rem;">
+        <div class="slider-status-left" style="flex-wrap: wrap;">
+          <span class="slider-status-tag">📍 Giai đoạn đã chọn:</span>
+          <strong id="foreign-range-display" class="slider-date-display">—</strong>
+          <span id="foreign-range-net" class="spread-stat-pill num-mono">—</span>
+          <span id="foreign-range-stats" class="slider-yield-text">—</span>
+        </div>
+      </div>
+
+      <!-- Hàng 3: Hai thanh trượt độc lập có bong bóng ngày động trượt theo núm -->
+      <div class="dual-slider-container">
+        <!-- Thanh trượt 1: Mốc Bắt Đầu -->
+        <div class="range-slider-row">
+          <span class="range-slider-label">Từ ngày:</span>
+          <div class="slider-bubble-container" style="padding: 22px 0 6px 0;">
+            <div id="bubble-foreign-start" class="slider-thumb-bubble">
+              <span class="bubble-calendar-icon">📅</span>
+              <span id="bubble-text-start">--/--/----</span>
+              <div class="bubble-arrow"></div>
+            </div>
+            <input type="range" id="slider-foreign-start" min="0" max="100" value="0"
+                   class="time-scrubber" oninput="onForeignStartSlider(this.value)">
+          </div>
+          <span id="display-foreign-start" class="slider-boundary-date">—</span>
+        </div>
+
+        <!-- Thanh trượt 2: Mốc Kết Thúc -->
+        <div class="range-slider-row">
+          <span class="range-slider-label">Đến ngày:</span>
+          <div class="slider-bubble-container" style="padding: 22px 0 6px 0;">
+            <div id="bubble-foreign-end" class="slider-thumb-bubble">
+              <span class="bubble-calendar-icon">📅</span>
+              <span id="bubble-text-end">--/--/----</span>
+              <div class="bubble-arrow"></div>
+            </div>
+            <input type="range" id="slider-foreign-end" min="0" max="100" value="100"
+                   class="time-scrubber" oninput="onForeignEndSlider(this.value)">
+          </div>
+          <span id="display-foreign-end" class="slider-boundary-date">—</span>
+        </div>
+      </div>
+
+    </div>
+
     <!-- ── Main Chart: Daily Bar ──────────────────────────────────── -->
     <div class="chart-card chart-card-full fade-in" style="margin-bottom: 1.5rem;">
       <div class="chart-title">
         🌏 Giao Dịch Ròng Khối Ngoại Hàng Ngày
-        <div class="btn-group" style="margin-left: auto;">
-          <button class="btn btn-primary" id="btn-30d" onclick="filterDays(30, this)">30 ngày</button>
-          <button class="btn btn-ghost" id="btn-90d" onclick="filterDays(90, this)">90 ngày</button>
-          <button class="btn btn-ghost" id="btn-all" onclick="filterDays(0, this)">Tất cả</button>
-        </div>
       </div>
-      <p class="chart-subtitle">Net buy/sell khối ngoại theo ngày — tỷ đồng (xanh = mua ròng, đỏ = bán ròng)</p>
-      <div class="chart-body" id="foreign-daily-chart" style="min-height: 280px;"></div>
+      <p class="chart-subtitle" id="foreign-chart-subtitle">Net buy/sell khối ngoại theo ngày — tỷ đồng (xanh = mua ròng, đỏ = bán ròng)</p>
+      <div class="chart-body" id="foreign-daily-chart" style="min-height: 290px; height: 290px;"></div>
     </div>
 
     <!-- ── Bottom Row: Cumulative + Table ─────────────────────────── -->
@@ -93,14 +159,14 @@
       <!-- Cumulative Flow -->
       <div class="chart-card fade-in">
         <p class="chart-title">📊 Tích Lũy Ròng Khối Ngoại</p>
-        <p class="chart-subtitle">Tổng tích lũy theo thời gian — tỷ đồng</p>
-        <div class="chart-body" id="foreign-cumul-chart" style="min-height: 220px;"></div>
+        <p class="chart-subtitle" id="foreign-cumul-subtitle">Tổng tích lũy theo thời gian trong giai đoạn đã chọn — tỷ đồng</p>
+        <div class="chart-body" id="foreign-cumul-chart" style="min-height: 240px; height: 240px;"></div>
       </div>
 
       <!-- Top sessions table -->
       <div class="chart-card fade-in">
         <p class="chart-title">🏆 Phiên Giao Dịch Mạnh Nhất</p>
-        <p class="chart-subtitle">Top 10 phiên mua/bán ròng lớn nhất</p>
+        <p class="chart-subtitle" id="foreign-table-subtitle">Top 10 phiên mua/bán ròng lớn nhất trong giai đoạn đã chọn</p>
         <div id="foreign-top-table" style="margin-top: 0.5rem;">
           <div class="skeleton" style="height: 220px; border-radius: 8px;"></div>
         </div>
@@ -114,8 +180,7 @@
         <strong>⚠️ Chưa có dữ liệu dòng vốn ngoại</strong><br>
         <span style="font-size:0.85rem; margin-top:0.5rem; display:block;">
           File <code>exports/data/foreign_flow.json</code> chưa được tạo. Để có dữ liệu này, pipeline cần thu thập
-          file PDF thống kê giao dịch khối ngoại từ HNX. Chạy bước <code>python run_pipeline.py --mode full</code>
-          sau khi nguồn dữ liệu HNX được tích hợp vào <code>analysis/foreign_flow.py</code>.
+          file PDF thống kê giao dịch khối ngoại từ HNX.
         </span>
       </div>
     </div>
@@ -125,23 +190,25 @@
 
 <!-- ── Scripts ─────────────────────────────────────────────────────── -->
 <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
-<script src="assets/app.js?v=1.3"></script>
+<script src="assets/app.js?v=1.4"></script>
 <script>
-// ── Page initialization ──────────────────────────────────────────────
+// ── Global State cho Bộ Lọc Dòng Vốn Ngoại ──────────────────────────
 let allForeignData = [];
-let currentDays = 30;
+const rangeState = {
+  startIndex: 0,
+  endIndex: 0,
+  totalDays: 0,
+  activePreset: 30,
+};
 
 (async function initForeignPage() {
   await VNBond.loadAllData();
   const { foreignData } = VNBond.state;
 
-  // Hỗ trợ cả {daily:[...]} (mới, sau khi pipeline fix) lẫn flat array (cũ)
-  const dailyArr = foreignData && (Array.isArray(foreignData)
-    ? foreignData
-    : foreignData.daily);
+  // Hỗ trợ cả {daily:[...]} (mới) lẫn flat array (cũ)
+  const dailyArr = foreignData && (Array.isArray(foreignData) ? foreignData : foreignData.daily);
 
   if (!dailyArr || !dailyArr.length) {
-    // Hiện notice, ẩn skeleton
     document.getElementById('no-data-notice').style.display = 'flex';
     document.getElementById('foreign-top-table').innerHTML =
       '<div style="text-align:center; padding: 2rem; color: var(--text-muted); font-size:0.85rem;">Chưa có dữ liệu</div>';
@@ -152,63 +219,310 @@ let currentDays = 30;
     return;
   }
 
-  // Normalize: đảm bảo mỗi record có trường "date" (pipeline mới rename từ trade_date)
+  // Normalize: đảm bảo mỗi record có trường "date"
   const normalized = dailyArr.map(d => ({
     ...d,
     date: d.date || (d.trade_date ? d.trade_date.toString().substring(0, 10) : ''),
+    for_net_bn: d.for_net_bn != null ? d.for_net_bn : ((d.for_buy_vnd - d.for_sell_vnd) / 1e9),
   }));
 
   // Sắp xếp theo ngày tăng dần
   allForeignData = normalized.sort((a, b) => a.date.localeCompare(b.date));
+  const N = allForeignData.length;
+  rangeState.totalDays = N;
 
-  // Cập nhật KPI
-  updateKPIs(allForeignData);
+  // Thiết lập mặc định: 30 phiên giao dịch gần nhất
+  rangeState.startIndex = Math.max(0, N - 30);
+  rangeState.endIndex = N - 1;
 
-  // Vẽ biểu đồ với bộ lọc mặc định 30 ngày
-  renderCharts(30);
-  renderTopTable(allForeignData);
+  // Khởi tạo các thanh trượt
+  initDualSliders();
 
-  // Resize handlers
-  VNBond.onResize('foreign-daily-chart', () => renderDailyChart(getFilteredData(currentDays)));
-  VNBond.onResize('foreign-cumul-chart', () => renderCumulChart(getFilteredData(currentDays)));
+  // Áp dụng và vẽ toàn bộ giao diện
+  applyRangeUpdate();
+
+  // Đăng ký resize tự động
+  VNBond.onResize('foreign-daily-chart', () => {
+    const data = getRangeSlice();
+    renderDailyChart(data);
+  });
+  VNBond.onResize('foreign-cumul-chart', () => {
+    const data = getRangeSlice();
+    renderCumulChart(data);
+  });
 })();
 
-// ── Day filter ─────────────────────────────────────────────────────
-function filterDays(days, btn) {
-  currentDays = days;
-  document.querySelectorAll('#btn-30d, #btn-90d, #btn-all')
-    .forEach(b => b.className = 'btn btn-ghost');
-  btn.className = 'btn btn-primary';
-  renderCharts(days);
+// ── Khởi Tạo Thanh Trượt Kép ──────────────────────────────────────────
+function initDualSliders() {
+  const N = rangeState.totalDays;
+  if (N <= 0) return;
+
+  const sliderStart = document.getElementById('slider-foreign-start');
+  const sliderEnd = document.getElementById('slider-foreign-end');
+
+  sliderStart.min = 0;
+  sliderStart.max = N - 1;
+  sliderStart.value = rangeState.startIndex;
+
+  sliderEnd.min = 0;
+  sliderEnd.max = N - 1;
+  sliderEnd.value = rangeState.endIndex;
+
+  // Thiết lập min/max date cho input date
+  const minDate = allForeignData[0].date;
+  const maxDate = allForeignData[N - 1].date;
+
+  const inputStart = document.getElementById('foreign-date-start');
+  const inputEnd = document.getElementById('foreign-date-end');
+  if (inputStart && inputEnd) {
+    inputStart.min = minDate;
+    inputStart.max = maxDate;
+    inputEnd.min = minDate;
+    inputEnd.max = maxDate;
+  }
+
+  updateSliderUI();
 }
 
-function getFilteredData(days) {
-  if (!days || days === 0) return allForeignData;
-  return allForeignData.slice(-days);
+// ── Cập Nhật Vị Trí Bong Bóng & Nhãn Ngày Trên Thanh Trượt ────────────
+function updateSliderUI() {
+  const N = rangeState.totalDays;
+  if (N <= 0) return;
+
+  const startItem = allForeignData[rangeState.startIndex];
+  const endItem = allForeignData[rangeState.endIndex];
+
+  const sliderStart = document.getElementById('slider-foreign-start');
+  const sliderEnd = document.getElementById('slider-foreign-end');
+
+  sliderStart.value = rangeState.startIndex;
+  sliderEnd.value = rangeState.endIndex;
+
+  // Cập nhật text trong bong bóng
+  const bubbleStart = document.getElementById('bubble-foreign-start');
+  const bubbleTextStart = document.getElementById('bubble-text-start');
+  const bubbleEnd = document.getElementById('bubble-foreign-end');
+  const bubbleTextEnd = document.getElementById('bubble-text-end');
+
+  if (bubbleTextStart) bubbleTextStart.textContent = VNBond.formatDateVN(startItem.date);
+  if (bubbleTextEnd) bubbleTextEnd.textContent = VNBond.formatDateVN(endItem.date);
+
+  // Tính toán vị trí % trượt theo núm thumb
+  positionBubble(sliderStart, bubbleStart);
+  positionBubble(sliderEnd, bubbleEnd);
+
+  // Cập nhật nhãn bên phải
+  const dispStart = document.getElementById('display-foreign-start');
+  const dispEnd = document.getElementById('display-foreign-end');
+  if (dispStart) dispStart.textContent = VNBond.formatDateVN(startItem.date);
+  if (dispEnd) dispEnd.textContent = VNBond.formatDateVN(endItem.date);
+
+  // Cập nhật input type="date"
+  const inputStart = document.getElementById('foreign-date-start');
+  const inputEnd = document.getElementById('foreign-date-end');
+  if (inputStart) inputStart.value = startItem.date;
+  if (inputEnd) inputEnd.value = endItem.date;
 }
 
-function renderCharts(days) {
-  const data = getFilteredData(days);
-  renderDailyChart(data);
-  renderCumulChart(data);
+function positionBubble(slider, bubble) {
+  if (!slider || !bubble) return;
+  const min = parseInt(slider.min, 10);
+  const max = parseInt(slider.max, 10);
+  const val = parseInt(slider.value, 10);
+  const pct = max > min ? ((val - min) / (max - min)) * 100 : 0;
+  // Offset nhẹ để bong bóng luôn khớp đúng tâm chấm tròn (thumb)
+  const offset = (50 - pct) * 0.16;
+  bubble.style.left = `calc(${pct}% + ${offset}px)`;
 }
 
-// ── KPI cards ──────────────────────────────────────────────────────
-function updateKPIs(data) {
-  const last30 = data.slice(-30);
-  const net30 = last30.reduce((s, d) => s + (d.for_net_bn || 0), 0);
+// ── Xử Lý Sự Kiện Kéo Thanh Trượt ─────────────────────────────────────
+function onForeignStartSlider(val) {
+  let idx = parseInt(val, 10);
+  if (isNaN(idx)) return;
+  idx = Math.max(0, Math.min(rangeState.totalDays - 1, idx));
 
-  const currentYear = new Date().getFullYear();
-  const ytdData = data.filter(d => d.date && d.date.startsWith(String(currentYear)));
-  const netYTD = ytdData.reduce((s, d) => s + (d.for_net_bn || 0), 0);
+  // Ràng buộc: Mốc bắt đầu không được vượt qua mốc kết thúc
+  if (idx > rangeState.endIndex) {
+    rangeState.endIndex = idx;
+  }
+  rangeState.startIndex = idx;
+  rangeState.activePreset = null;
+  clearPresetButtons();
 
-  const maxBuy = Math.max(...data.map(d => d.for_net_bn || 0));
-  const maxSell = Math.min(...data.map(d => d.for_net_bn || 0));
+  updateSliderUI();
+  applyRangeUpdate();
+}
 
-  setKPI('val-net-30d', 'chg-net-30d', net30, 'tỷ đồng / 30 ngày');
-  setKPI('val-net-ytd', 'chg-net-ytd', netYTD, 'tỷ đồng YTD');
-  setKPI('val-max-buy', 'chg-max-buy', maxBuy, 'tỷ đồng / phiên');
-  setKPI('val-max-sell', 'chg-max-sell', maxSell, 'tỷ đồng / phiên');
+function onForeignEndSlider(val) {
+  let idx = parseInt(val, 10);
+  if (isNaN(idx)) return;
+  idx = Math.max(0, Math.min(rangeState.totalDays - 1, idx));
+
+  // Ràng buộc: Mốc kết thúc không được nhỏ hơn mốc bắt đầu
+  if (idx < rangeState.startIndex) {
+    rangeState.startIndex = idx;
+  }
+  rangeState.endIndex = idx;
+  rangeState.activePreset = null;
+  clearPresetButtons();
+
+  updateSliderUI();
+  applyRangeUpdate();
+}
+
+// ── Xử Lý Khi Người Dùng Chọn Lịch ────────────────────────────────────
+function onForeignDateInputChange() {
+  const inputStart = document.getElementById('foreign-date-start');
+  const inputEnd = document.getElementById('foreign-date-end');
+  if (!inputStart || !inputEnd || !allForeignData.length) return;
+
+  let sVal = inputStart.value;
+  let eVal = inputEnd.value;
+
+  if (sVal && eVal && sVal > eVal) {
+    // Hoán đổi nếu ngày bắt đầu lớn hơn ngày kết thúc
+    const tmp = sVal;
+    sVal = eVal;
+    eVal = tmp;
+    inputStart.value = sVal;
+    inputEnd.value = eVal;
+  }
+
+  // Tìm index tương ứng trong allForeignData
+  let sIdx = 0;
+  let eIdx = allForeignData.length - 1;
+
+  if (sVal) {
+    const found = allForeignData.findIndex(d => d.date >= sVal);
+    if (found !== -1) sIdx = found;
+  }
+  if (eVal) {
+    for (let i = allForeignData.length - 1; i >= 0; i--) {
+      if (allForeignData[i].date <= eVal) {
+        eIdx = i;
+        break;
+      }
+    }
+  }
+
+  if (sIdx > eIdx) sIdx = eIdx;
+
+  rangeState.startIndex = sIdx;
+  rangeState.endIndex = eIdx;
+  rangeState.activePreset = null;
+  clearPresetButtons();
+
+  updateSliderUI();
+  applyRangeUpdate();
+}
+
+// ── Presets Nhanh ─────────────────────────────────────────────────────
+function setForeignPreset(preset, btn) {
+  const N = rangeState.totalDays;
+  if (N <= 0) return;
+
+  clearPresetButtons();
+  if (btn) btn.className = 'btn btn-primary';
+
+  rangeState.endIndex = N - 1;
+
+  if (preset === 'ytd') {
+    const currentYear = new Date().getFullYear();
+    const ytdIdx = allForeignData.findIndex(d => d.date && d.date.startsWith(String(currentYear)));
+    rangeState.startIndex = ytdIdx !== -1 ? ytdIdx : Math.max(0, N - 180);
+  } else if (preset === 0) {
+    // Tất cả từ lịch sử 2013
+    rangeState.startIndex = 0;
+  } else {
+    // Số ngày phiên giao dịch
+    rangeState.startIndex = Math.max(0, N - preset);
+  }
+
+  rangeState.activePreset = preset;
+  updateSliderUI();
+  applyRangeUpdate();
+}
+
+function resetToLatestForeign() {
+  const btn30 = document.getElementById('btn-pre-30d');
+  setForeignPreset(30, btn30);
+}
+
+function clearPresetButtons() {
+  document.querySelectorAll('#foreign-preset-group button').forEach(b => {
+    b.className = 'btn btn-ghost';
+  });
+}
+
+// ── Trích Xuất Dữ Liệu Trong Khoảng Được Chọn ─────────────────────────
+function getRangeSlice() {
+  return allForeignData.slice(rangeState.startIndex, rangeState.endIndex + 1);
+}
+
+// ── Cập Nhật Toàn Bộ Dashboard Khối Ngoại ──────────────────────────────
+function applyRangeUpdate() {
+  const slice = getRangeSlice();
+  if (!slice.length) return;
+
+  const startItem = slice[0];
+  const endItem = slice[slice.length - 1];
+
+  // Cập nhật thanh tóm tắt
+  const rangeDisplay = document.getElementById('foreign-range-display');
+  const rangeNet = document.getElementById('foreign-range-net');
+  const rangeStats = document.getElementById('foreign-range-stats');
+
+  const totalNet = slice.reduce((sum, d) => sum + (d.for_net_bn || 0), 0);
+  const totalBuyVnd = slice.reduce((sum, d) => sum + (d.for_buy_vnd || 0), 0);
+  const totalSellVnd = slice.reduce((sum, d) => sum + (d.for_sell_vnd || 0), 0);
+
+  if (rangeDisplay) {
+    rangeDisplay.textContent = `${VNBond.formatDateVN(startItem.date)} ➔ ${VNBond.formatDateVN(endItem.date)}`;
+  }
+  if (rangeNet) {
+    rangeNet.textContent = `Net: ${(totalNet >= 0 ? '+' : '') + totalNet.toFixed(1)} tỷ`;
+    rangeNet.className = 'spread-stat-pill num-mono ' + (totalNet > 0 ? 'up' : totalNet < 0 ? 'down' : 'neutral');
+  }
+  if (rangeStats) {
+    const buyBn = (totalBuyVnd / 1e9).toFixed(1);
+    const sellBn = (totalSellVnd / 1e9).toFixed(1);
+    rangeStats.textContent = `Mua: ${buyBn} tỷ | Bán: ${sellBn} tỷ (${slice.length} phiên GD)`;
+  }
+
+  // Cập nhật 4 thẻ KPI theo giai đoạn
+  updateKPIs(slice);
+
+  // Vẽ lại 2 biểu đồ và bảng
+  renderDailyChart(slice);
+  renderCumulChart(slice);
+  renderTopTable(slice);
+}
+
+// ── Cập Nhật 4 Thẻ KPI ────────────────────────────────────────────────
+function updateKPIs(slice) {
+  if (!slice || !slice.length) return;
+
+  const totalNet = slice.reduce((sum, d) => sum + (d.for_net_bn || 0), 0);
+  const totalBuy = slice.reduce((sum, d) => sum + (d.for_buy_vnd || 0), 0);
+  const totalSell = slice.reduce((sum, d) => sum + (d.for_sell_vnd || 0), 0);
+  const totalVolBn = (totalBuy + totalSell) / 1e9;
+
+  let maxBuyItem = slice[0];
+  let maxSellItem = slice[0];
+
+  slice.forEach(d => {
+    if ((d.for_net_bn || 0) > (maxBuyItem.for_net_bn || 0)) maxBuyItem = d;
+    if ((d.for_net_bn || 0) < (maxSellItem.for_net_bn || 0)) maxSellItem = d;
+  });
+
+  setKPI('val-net-range', 'chg-net-range', totalNet, `${slice.length} phiên giao dịch`);
+  setKPI('val-total-vol', 'chg-total-vol', totalVolBn, `Mua: ${(totalBuy/1e9).toFixed(0)} tỷ | Bán: ${(totalSell/1e9).toFixed(0)} tỷ`);
+
+  const maxBuyVal = maxBuyItem.for_net_bn || 0;
+  const maxSellVal = maxSellItem.for_net_bn || 0;
+
+  setKPI('val-max-buy', 'chg-max-buy', maxBuyVal, `Ngày ${VNBond.formatDateVN(maxBuyItem.date)}`);
+  setKPI('val-max-sell', 'chg-max-sell', maxSellVal, `Ngày ${VNBond.formatDateVN(maxSellItem.date)}`);
 }
 
 function setKPI(valId, chgId, value, label) {
@@ -221,15 +535,15 @@ function setKPI(valId, chgId, value, label) {
   if (chgEl) chgEl.textContent = label;
 }
 
-// ── Daily bar chart ─────────────────────────────────────────────────
+// ── Vẽ Biểu Đồ Cột: Giao Dịch Ròng Hàng Ngày ──────────────────────────
 function renderDailyChart(data) {
   const container = document.getElementById('foreign-daily-chart');
   if (!container || !data.length) return;
 
   container.innerHTML = '';
-  const margin = { top: 15, right: 20, bottom: 45, left: 65 };
+  const margin = { top: 15, right: 20, bottom: 45, left: 70 };
   const W = container.clientWidth - margin.left - margin.right;
-  const H = container.clientHeight - margin.top - margin.bottom;
+  const H = (container.clientHeight || 290) - margin.top - margin.bottom;
   if (W <= 0 || H <= 0) return;
 
   const svg = d3.select('#foreign-daily-chart')
@@ -239,83 +553,124 @@ function renderDailyChart(data) {
 
   const x = d3.scaleBand()
     .domain(data.map(d => d.date))
-    .range([0, W]).padding(0.15);
+    .range([0, W])
+    .padding(data.length <= 45 ? 0.2 : (data.length <= 150 ? 0.1 : 0.02));
 
   const yExtent = d3.extent(data, d => d.for_net_bn);
-  const yPad = Math.abs(yExtent[1] - yExtent[0]) * 0.1 || 5;
-  const y = d3.scaleLinear()
-    .domain([yExtent[0] - yPad, yExtent[1] + yPad]).nice()
-    .range([H, 0]);
+  const yPad = Math.abs(yExtent[1] - yExtent[0]) * 0.12 || 5;
+  const yMin = Math.min(yExtent[0] - yPad, 0);
+  const yMax = Math.max(yExtent[1] + yPad, 0);
+  const y = d3.scaleLinear().domain([yMin, yMax]).nice().range([H, 0]);
 
-  // Grid
+  // Đường lưới ngang
   svg.append('g')
     .call(d3.axisLeft(y).tickSize(-W).tickFormat(''))
     .call(g => g.select('.domain').remove())
     .call(g => g.selectAll('line').attr('stroke', 'var(--border-subtle)').attr('stroke-dasharray', '3,3'));
 
-  // Zero line
+  // Đường mốc 0
   svg.append('line')
     .attr('x1', 0).attr('x2', W)
     .attr('y1', y(0)).attr('y2', y(0))
-    .attr('stroke', 'rgba(148,163,184,0.4)').attr('stroke-width', 1);
+    .attr('stroke', 'rgba(148,163,184,0.5)').attr('stroke-width', 1.2);
 
-  // Bars
-  svg.selectAll('rect').data(data).enter()
+  // Các thanh cột Net buy/sell
+  const barWidth = Math.max(1, x.bandwidth());
+  svg.selectAll('rect.bar')
+    .data(data)
+    .enter()
     .append('rect')
+    .attr('class', 'bar')
     .attr('x', d => x(d.date))
-    .attr('width', x.bandwidth())
+    .attr('width', barWidth)
     .attr('y', d => y(Math.max(0, d.for_net_bn)))
-    .attr('height', d => Math.abs(y(d.for_net_bn) - y(0)))
-    .attr('fill', d => d.for_net_bn >= 0 ? 'rgba(34,197,94,0.75)' : 'rgba(239,68,68,0.75)')
-    .attr('rx', 2)
+    .attr('height', d => Math.max(1.5, Math.abs(y(d.for_net_bn) - y(0))))
+    .attr('fill', d => d.for_net_bn >= 0 ? 'rgba(34,197,94,0.85)' : 'rgba(239,68,68,0.85)')
+    .attr('rx', data.length <= 60 ? 2.5 : 0)
     .on('mouseover', function(event, d) {
-      d3.select(this).attr('opacity', 1).attr('fill', d.for_net_bn >= 0 ? '#22c55e' : '#ef4444');
+      d3.select(this).attr('opacity', 1).attr('fill', d.for_net_bn >= 0 ? '#16a34a' : '#dc2626');
+      
+      const buyText = d.for_buy_vnd ? (d.for_buy_vnd / 1e9).toFixed(1) + ' tỷ' : '—';
+      const sellText = d.for_sell_vnd ? (d.for_sell_vnd / 1e9).toFixed(1) + ' tỷ' : '—';
+      const shareText = d.for_share_pct ? `${d.for_share_pct.toFixed(1)}%` : '—';
+
       VNBond.showTooltip(event, `
-        <div class="tooltip-title">${d.date}</div>
+        <div class="tooltip-title">
+          <span>📅</span>
+          <span>${VNBond.formatDateVN(d.date)}</span>
+        </div>
         <div class="tooltip-row">
-          <span>Net khối ngoại</span>
+          <span>Net khối ngoại:</span>
           <span class="tooltip-value ${d.for_net_bn >= 0 ? 'up' : 'down'}">
             ${d.for_net_bn >= 0 ? '+' : ''}${d.for_net_bn.toFixed(1)} tỷ
           </span>
         </div>
+        <div class="tooltip-row" style="font-size:0.75rem; color:var(--text-secondary);">
+          <span>Giá trị Mua:</span>
+          <span class="tooltip-value num-mono">${buyText}</span>
+        </div>
+        <div class="tooltip-row" style="font-size:0.75rem; color:var(--text-secondary);">
+          <span>Giá trị Bán:</span>
+          <span class="tooltip-value num-mono">${sellText}</span>
+        </div>
+        ${d.for_share_pct ? `
+        <div class="tooltip-row" style="font-size:0.72rem; color:var(--text-muted); margin-top:3px;">
+          <span>Tỷ trọng GD toàn thị trường:</span>
+          <span class="tooltip-value">${shareText}</span>
+        </div>` : ''}
       `);
     })
     .on('mousemove', event => VNBond.moveTooltip(event))
     .on('mouseout', function(e, d) {
       d3.select(this).attr('opacity', 0.9)
-        .attr('fill', d.for_net_bn >= 0 ? 'rgba(34,197,94,0.75)' : 'rgba(239,68,68,0.75)');
+        .attr('fill', d.for_net_bn >= 0 ? 'rgba(34,197,94,0.85)' : 'rgba(239,68,68,0.85)');
       VNBond.hideTooltip();
     });
 
-  // X axis — hiện tick thưa
-  const tickEvery = Math.ceil(data.length / 8);
+  // Trục hoành X — Giãn cách nhãn thông minh chống đè chữ
+  const tickTarget = Math.min(10, Math.max(3, Math.floor(W / 90)));
+  const tickEvery = Math.max(1, Math.ceil(data.length / tickTarget));
+  
   svg.append('g').attr('transform', `translate(0,${H})`)
     .call(d3.axisBottom(x).tickValues(x.domain().filter((d, i) => i % tickEvery === 0)))
-    .call(g => g.selectAll('text').attr('fill', 'var(--text-secondary)').attr('font-size', '9px')
-      .attr('transform', 'rotate(-30)').attr('text-anchor', 'end'))
+    .call(g => g.selectAll('text')
+      .text(d => VNBond.formatDateVN(d))
+      .attr('fill', 'var(--text-secondary)')
+      .attr('font-size', '9.5px')
+      .attr('font-family', 'JetBrains Mono, monospace')
+      .attr('transform', 'rotate(-25)')
+      .attr('text-anchor', 'end'))
     .call(g => g.select('.domain').attr('stroke', 'var(--border-subtle)'));
 
-  // Y axis
+  // Trục tung Y
   svg.append('g')
     .call(d3.axisLeft(y).ticks(5).tickFormat(v => v.toFixed(0) + ' tỷ'))
-    .call(g => g.selectAll('text').attr('fill', 'var(--text-secondary)').attr('font-size', '10px'))
+    .call(g => g.selectAll('text')
+      .attr('fill', 'var(--text-secondary)')
+      .attr('font-size', '10px')
+      .attr('font-family', 'JetBrains Mono, monospace'))
     .call(g => g.select('.domain').attr('stroke', 'var(--border-subtle)'));
 }
 
-// ── Cumulative chart ─────────────────────────────────────────────────
+// ── Vẽ Biểu Đồ Tích Lũy Ròng (Cumulative Flow) ───────────────────────
 function renderCumulChart(data) {
   const container = document.getElementById('foreign-cumul-chart');
   if (!container || !data.length) return;
 
   container.innerHTML = '';
 
-  // Tính tích lũy
+  // Tính lũy kế bắt đầu từ mốc 0 của giai đoạn được chọn
   let cumul = 0;
-  const cumulData = data.map(d => ({ date: new Date(d.date), value: (cumul += (d.for_net_bn || 0)) }));
+  const cumulData = data.map(d => ({
+    date: new Date(d.date),
+    dateStr: d.date,
+    dailyNet: d.for_net_bn || 0,
+    value: (cumul += (d.for_net_bn || 0)),
+  }));
 
-  const margin = { top: 15, right: 20, bottom: 40, left: 65 };
+  const margin = { top: 15, right: 20, bottom: 40, left: 70 };
   const W = container.clientWidth - margin.left - margin.right;
-  const H = container.clientHeight - margin.top - margin.bottom;
+  const H = (container.clientHeight || 240) - margin.top - margin.bottom;
   if (W <= 0 || H <= 0) return;
 
   const svg = d3.select('#foreign-cumul-chart')
@@ -324,45 +679,107 @@ function renderCumulChart(data) {
     .append('g').attr('transform', `translate(${margin.left},${margin.top})`);
 
   const x = d3.scaleTime().domain(d3.extent(cumulData, d => d.date)).range([0, W]);
-  const y = d3.scaleLinear().domain(d3.extent(cumulData, d => d.value)).nice().range([H, 0]);
+  const yExtent = d3.extent(cumulData, d => d.value);
+  const yPad = Math.abs(yExtent[1] - yExtent[0]) * 0.1 || 10;
+  const yMin = Math.min(yExtent[0] - yPad, 0);
+  const yMax = Math.max(yExtent[1] + yPad, 0);
+  const y = d3.scaleLinear().domain([yMin, yMax]).nice().range([H, 0]);
 
-  // Grid
+  // Đường lưới ngang
   svg.append('g')
     .call(d3.axisLeft(y).tickSize(-W).tickFormat(''))
     .call(g => g.select('.domain').remove())
     .call(g => g.selectAll('line').attr('stroke', 'var(--border-subtle)').attr('stroke-dasharray', '3,3'));
 
-  // Area fill
-  const lastVal = cumulData[cumulData.length - 1]?.value || 0;
-  const areaColor = lastVal >= 0 ? 'rgba(34,197,94,0.12)' : 'rgba(239,68,68,0.12)';
-  const lineColor = lastVal >= 0 ? '#22c55e' : '#ef4444';
+  // Đường mốc 0
+  if (yMin <= 0 && yMax >= 0) {
+    svg.append('line')
+      .attr('x1', 0).attr('x2', W)
+      .attr('y1', y(0)).attr('y2', y(0))
+      .attr('stroke', 'rgba(148,163,184,0.4)').attr('stroke-width', 1).attr('stroke-dasharray', '4,2');
+  }
 
-  const area = d3.area().x(d => x(d.date)).y0(H).y1(d => y(d.value)).curve(d3.curveMonotoneX);
+  // Tô màu mảng diện tích tích lũy
+  const lastVal = cumulData[cumulData.length - 1]?.value || 0;
+  const areaColor = lastVal >= 0 ? 'rgba(34,197,94,0.15)' : 'rgba(239,68,68,0.15)';
+  const lineColor = lastVal >= 0 ? '#16a34a' : '#dc2626';
+
+  const area = d3.area().x(d => x(d.date)).y0(y(0)).y1(d => y(d.value)).curve(d3.curveMonotoneX);
   svg.append('path').datum(cumulData).attr('fill', areaColor).attr('d', area);
 
   const line = d3.line().x(d => x(d.date)).y(d => y(d.value)).curve(d3.curveMonotoneX);
   svg.append('path').datum(cumulData).attr('fill', 'none')
-    .attr('stroke', lineColor).attr('stroke-width', 2).attr('d', line);
+    .attr('stroke', lineColor).attr('stroke-width', 2.2).attr('d', line);
 
-  // Zero line nếu có
-  if (y.domain()[0] < 0 && y.domain()[1] > 0) {
-    svg.append('line').attr('x1', 0).attr('x2', W).attr('y1', y(0)).attr('y2', y(0))
-      .attr('stroke', 'rgba(148,163,184,0.4)').attr('stroke-width', 1).attr('stroke-dasharray', '4,2');
-  }
-
-  // Axes
+  // Trục hoành X
   svg.append('g').attr('transform', `translate(0,${H})`)
-    .call(d3.axisBottom(x).ticks(5))
-    .call(g => g.selectAll('text').attr('fill', 'var(--text-secondary)').attr('font-size', '10px'))
+    .call(d3.axisBottom(x).ticks(5).tickFormat(d => VNBond.formatDateVN(d)))
+    .call(g => g.selectAll('text')
+      .attr('fill', 'var(--text-secondary)')
+      .attr('font-size', '9.5px')
+      .attr('font-family', 'JetBrains Mono, monospace'))
     .call(g => g.select('.domain').attr('stroke', 'var(--border-subtle)'));
 
+  // Trục tung Y
   svg.append('g')
     .call(d3.axisLeft(y).ticks(5).tickFormat(v => v.toFixed(0) + ' tỷ'))
-    .call(g => g.selectAll('text').attr('fill', 'var(--text-secondary)').attr('font-size', '10px'))
+    .call(g => g.selectAll('text')
+      .attr('fill', 'var(--text-secondary)')
+      .attr('font-size', '10px')
+      .attr('font-family', 'JetBrains Mono, monospace'))
     .call(g => g.select('.domain').attr('stroke', 'var(--border-subtle)'));
+
+  // Hover overlay cho Cumulative
+  const bisectDate = d3.bisector(d => d.date).left;
+  const overlay = svg.append('rect')
+    .attr('width', W).attr('height', H)
+    .attr('fill', 'none').attr('pointer-events', 'all');
+
+  const hoverDot = svg.append('circle').attr('r', 4.5).attr('fill', lineColor).style('display', 'none');
+  const hoverLine = svg.append('line').attr('y1', 0).attr('y2', H)
+    .attr('stroke', 'var(--accent-primary)').attr('stroke-dasharray', '3,3').style('display', 'none');
+
+  overlay.on('mousemove', function(event) {
+    const [mx] = d3.pointer(event, this);
+    const x0 = x.invert(mx);
+    const i = bisectDate(cumulData, x0, 1);
+    const d0 = cumulData[i - 1];
+    const d1 = cumulData[i];
+    if (!d0) return;
+    const d = (!d1 || (x0 - d0.date < d1.date - x0)) ? d0 : d1;
+
+    const px = x(d.date);
+    const py = y(d.value);
+    hoverLine.attr('x1', px).attr('x2', px).style('display', 'block');
+    hoverDot.attr('cx', px).attr('cy', py).style('display', 'block');
+
+    VNBond.showTooltip(event, `
+      <div class="tooltip-title">
+        <span>📅</span>
+        <span>${VNBond.formatDateVN(d.dateStr)}</span>
+      </div>
+      <div class="tooltip-row">
+        <span>Lũy kế giai đoạn:</span>
+        <span class="tooltip-value ${d.value >= 0 ? 'up' : 'down'}">
+          ${(d.value >= 0 ? '+' : '') + d.value.toFixed(1)} tỷ
+        </span>
+      </div>
+      <div class="tooltip-row" style="font-size:0.75rem; color:var(--text-secondary);">
+        <span>Phiên này:</span>
+        <span class="tooltip-value ${d.dailyNet >= 0 ? 'up' : 'down'}">
+          ${(d.dailyNet >= 0 ? '+' : '') + d.dailyNet.toFixed(1)} tỷ
+        </span>
+      </div>
+    `);
+  })
+  .on('mouseout', function() {
+    hoverDot.style('display', 'none');
+    hoverLine.style('display', 'none');
+    VNBond.hideTooltip();
+  });
 }
 
-// ── Top sessions table ───────────────────────────────────────────────
+// ── Bảng Top 10 Phiên Giao Dịch Mạnh Nhất Trong Giai Đoạn ────────────
 function renderTopTable(data) {
   const container = document.getElementById('foreign-top-table');
   if (!data || !data.length) {
@@ -370,26 +787,37 @@ function renderTopTable(data) {
     return;
   }
 
-  // Sắp xếp: top 5 mua + top 5 bán ròng
-  const sorted = [...data].sort((a, b) => Math.abs(b.for_net_bn) - Math.abs(a.for_net_bn));
+  // Sắp xếp: top 10 theo trị tuyệt đối lớn nhất
+  const sorted = [...data].sort((a, b) => Math.abs(b.for_net_bn || 0) - Math.abs(a.for_net_bn || 0));
   const top10 = sorted.slice(0, 10);
 
   container.innerHTML = `
     <table class="data-table">
       <thead><tr>
-        <th>Ngày</th><th>Net (tỷ đồng)</th><th>Hướng</th>
+        <th>Ngày</th>
+        <th>Net (tỷ đồng)</th>
+        <th>Mua / Bán</th>
+        <th>Hướng</th>
       </tr></thead>
       <tbody>
-        ${top10.map(r => `
-        <tr>
-          <td class="mono" style="font-size:0.75rem;">${VNBond.formatDateVN(r.date)}</td>
-          <td class="mono ${r.for_net_bn >= 0 ? 'text-accent' : ''}" style="color:${r.for_net_bn < 0 ? 'var(--danger)' : ''};">
-            ${r.for_net_bn >= 0 ? '+' : ''}${r.for_net_bn.toFixed(1)}
-          </td>
-          <td><span class="metric-change ${r.for_net_bn >= 0 ? 'up' : 'down'}">
-            ${r.for_net_bn >= 0 ? '▲ Mua ròng' : '▼ Bán ròng'}
-          </span></td>
-        </tr>`).join('')}
+        ${top10.map(r => {
+          const buyStr = r.for_buy_vnd ? (r.for_buy_vnd / 1e9).toFixed(0) : '—';
+          const sellStr = r.for_sell_vnd ? (r.for_sell_vnd / 1e9).toFixed(0) : '—';
+          const net = r.for_net_bn || 0;
+          return `
+          <tr>
+            <td class="mono" style="font-size:0.75rem;">${VNBond.formatDateVN(r.date)}</td>
+            <td class="mono ${net >= 0 ? 'text-accent' : ''}" style="color:${net < 0 ? 'var(--danger)' : ''}; font-weight: 700;">
+              ${net >= 0 ? '+' : ''}${net.toFixed(1)}
+            </td>
+            <td class="mono" style="font-size:0.72rem; color: var(--text-secondary);">
+              ${buyStr} / ${sellStr}
+            </td>
+            <td><span class="metric-change ${net >= 0 ? 'up' : 'down'}" style="font-size: 0.72rem;">
+              ${net >= 0 ? '▲ Mua ròng' : '▼ Bán ròng'}
+            </span></td>
+          </tr>`;
+        }).join('')}
       </tbody>
     </table>
   `;
