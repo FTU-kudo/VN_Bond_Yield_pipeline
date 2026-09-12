@@ -63,13 +63,13 @@
       <div class="chart-title">
         Đường Cong Lợi Suất theo Ngày Chọn
         <div class="btn-group" style="margin-left:auto;">
-          <button class="btn btn-ghost btn-compare" id="btn-comp-0" style="font-size: 0.8rem; padding: 0.25rem 0.6rem;" onclick="setCompare(0)">Bỏ So Sánh</button>
-          <button class="btn btn-ghost btn-compare" id="btn-comp-1" style="font-size: 0.8rem; padding: 0.25rem 0.6rem;" onclick="setCompare(1)">1 Tháng Trước</button>
-          <button class="btn btn-ghost btn-compare" id="btn-comp-6" style="font-size: 0.8rem; padding: 0.25rem 0.6rem;" onclick="setCompare(6)">6 Tháng Trước</button>
-          <button class="btn btn-ghost btn-compare" id="btn-comp-12" style="font-size: 0.8rem; padding: 0.25rem 0.6rem;" onclick="setCompare(12)">1 Năm Trước</button>
+          <button class="btn btn-ghost btn-compare" id="btn-comp-0" style="font-size: 0.8rem; padding: 0.25rem 0.6rem;" onclick="setCompare(0)">Current Only</button>
+          <button class="btn btn-ghost btn-compare" id="btn-comp-1" style="font-size: 0.8rem; padding: 0.25rem 0.6rem;" onclick="setCompare(1)">1M Ago</button>
+          <button class="btn btn-ghost btn-compare" id="btn-comp-6" style="font-size: 0.8rem; padding: 0.25rem 0.6rem;" onclick="setCompare(6)">6M Ago</button>
+          <button class="btn btn-ghost btn-compare" id="btn-comp-12" style="font-size: 0.8rem; padding: 0.25rem 0.6rem;" onclick="setCompare(12)">1Y Ago</button>
         </div>
       </div>
-      <p class="chart-subtitle" id="curve-info">Dữ liệu spot rate liên tục — kỳ hạn 1 tháng đến 30 năm</p>
+      <p class="chart-subtitle" id="curve-info">Continuous spot rate curve — 1M to 30Y tenors</p>
       <div class="chart-body chart-body-tall" id="yield-curve-main" style="min-height: 380px;"></div>
     </div>
 
@@ -79,14 +79,14 @@
       <!-- Spread History -->
       <div class="chart-card">
         <p class="chart-title">↕️ Term Spread 10Y-2Y (bps)</p>
-        <p class="chart-subtitle">Toàn bộ lịch sử — Màu đỏ = đảo ngược đường cong</p>
+        <p class="chart-subtitle">Full historical series — Red indicates curve inversion (10Y &lt; 2Y)</p>
         <div class="chart-body" id="spread-history-chart" style="min-height: 250px;"></div>
       </div>
 
       <!-- Butterfly -->
       <div class="chart-card">
         <p class="chart-title">⚖️ Butterfly Spread 2s5s10s (bps)</p>
-        <p class="chart-subtitle">Đo độ cong đường cong — Dương = bướu ở kỳ hạn giữa</p>
+        <p class="chart-subtitle">Curvature proxy: 2×5Y - (2Y + 10Y) — Positive = medium-term hump</p>
         <div class="chart-body" id="butterfly-chart" style="min-height: 250px;"></div>
       </div>
 
@@ -96,14 +96,14 @@
     <div class="chart-card chart-card-full" id="ns-params-card" style="margin-bottom: 1.5rem; max-width: 100%; min-width: 0; box-sizing: border-box; overflow: hidden;">
       <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:0.75rem; margin-bottom: 0.75rem; width: 100%; min-width: 0;">
         <div style="min-width: 0; flex: 1 1 280px;">
-          <p class="chart-title" style="margin-bottom:0.25rem;">⚙️ Tham Số Nelson-Siegel theo Thời Gian</p>
-          <p class="chart-subtitle" style="word-break: break-word; margin-bottom: 0.25rem;">Mô hình Nelson-Siegel 4 tham số: β₀ (Level) · β₁ (Slope) · β₂ (Curvature) · λ (Decay)</p>
+          <p class="chart-title" style="margin-bottom:0.25rem;">⚙️ Nelson-Siegel Parameter Evolution</p>
+          <p class="chart-subtitle" style="word-break: break-word; margin-bottom: 0.25rem;">Nelson-Siegel 4-factor model: β₀ (Level) · β₁ (Slope) · β₂ (Curvature) · λ (Decay)</p>
         </div>
         
         <div style="display:flex; gap:0.6rem; flex-wrap:wrap; align-items:center; max-width: 100%;">
           <!-- Param Selectors -->
           <div class="btn-group" id="ns-param-filter" style="background:var(--bg-surface); padding:2px; border-radius:6px; border:1px solid var(--border-subtle); display:flex; flex-wrap:wrap; gap:2px;">
-            <button class="btn btn-ghost btn-ns-param active" data-param="all" style="font-size:0.75rem; padding:0.2rem 0.55rem; font-weight:600; border-radius:4px; background:rgba(255,255,255,0.1);">Tất cả</button>
+            <button class="btn btn-ghost btn-ns-param active" data-param="all" style="font-size:0.75rem; padding:0.2rem 0.55rem; font-weight:600; border-radius:4px; background:rgba(255,255,255,0.1);">All</button>
             <button class="btn btn-ghost btn-ns-param" data-param="b0" style="font-size:0.75rem; padding:0.2rem 0.55rem; border-radius:4px; color:#38bdf8;">β₀ Level</button>
             <button class="btn btn-ghost btn-ns-param" data-param="b1" style="font-size:0.75rem; padding:0.2rem 0.55rem; border-radius:4px; color:#f43f5e;">β₁ Slope</button>
             <button class="btn btn-ghost btn-ns-param" data-param="b2" style="font-size:0.75rem; padding:0.2rem 0.55rem; border-radius:4px; color:#10b981;">β₂ Curv</button>
@@ -113,10 +113,10 @@
 
           <!-- Time Range Presets -->
           <div class="btn-group" id="ns-range-filter" style="background:var(--bg-surface); padding:2px; border-radius:6px; border:1px solid var(--border-subtle); display:flex; gap:2px;">
-            <button class="btn btn-ghost btn-ns-range" data-range="1y" style="font-size:0.75rem; padding:0.2rem 0.5rem; border-radius:4px;">1N</button>
-            <button class="btn btn-ghost btn-ns-range" data-range="3y" style="font-size:0.75rem; padding:0.2rem 0.5rem; border-radius:4px;">3N</button>
-            <button class="btn btn-ghost btn-ns-range" data-range="5y" style="font-size:0.75rem; padding:0.2rem 0.5rem; border-radius:4px;">5N</button>
-            <button class="btn btn-ghost btn-ns-range active" data-range="all" style="font-size:0.75rem; padding:0.2rem 0.5rem; font-weight:600; border-radius:4px; background:rgba(255,255,255,0.1);">Tất cả</button>
+            <button class="btn btn-ghost btn-ns-range" data-range="1y" style="font-size:0.75rem; padding:0.2rem 0.5rem; border-radius:4px;">1Y</button>
+            <button class="btn btn-ghost btn-ns-range" data-range="3y" style="font-size:0.75rem; padding:0.2rem 0.5rem; border-radius:4px;">3Y</button>
+            <button class="btn btn-ghost btn-ns-range" data-range="5y" style="font-size:0.75rem; padding:0.2rem 0.5rem; border-radius:4px;">5Y</button>
+            <button class="btn btn-ghost btn-ns-range active" data-range="all" style="font-size:0.75rem; padding:0.2rem 0.5rem; font-weight:600; border-radius:4px; background:rgba(255,255,255,0.1);">All</button>
           </div>
         </div>
       </div>
@@ -128,7 +128,7 @@
       <div id="ns-chart-legend" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.6rem; margin-bottom:0.5rem; font-size:0.75rem; color:var(--text-secondary); width:100%; min-width:0;">
         <div style="display:flex; gap:0.8rem; align-items:center; flex-wrap:wrap; min-width:0; flex:1 1 auto;" id="ns-legend-items"></div>
         <div style="font-size:0.72rem; color:var(--text-muted); flex-shrink:0; line-height:1.3;">
-          💡 Rê chuột để xem số liệu chi tiết
+          💡 Hover over chart to inspect values
         </div>
       </div>
 
@@ -138,8 +138,8 @@
 
     <!-- ── Percentile Rank Table ──────────────────────────────────── -->
     <div class="chart-card">
-      <p class="chart-title">📊 Lợi Suất So Với Lịch Sử (Percentile 1 năm)</p>
-      <p class="chart-subtitle">0% = thấp nhất · 100% = cao nhất trong 252 ngày giao dịch gần nhất</p>
+      <p class="chart-title">📊 Historical Yield Percentiles (1-Year Lookback)</p>
+      <p class="chart-subtitle">0% = 52W Low · 100% = 52W High across last 252 trading days</p>
       <div id="percentile-table-body" style="margin-top:0.75rem;">
         <div class="skeleton" style="height: 180px; border-radius:8px;"></div>
       </div>
@@ -168,11 +168,11 @@ const NS_COLORS = {
 };
 
 const NS_LABELS = {
-  b0: { name: 'β₀ Level', desc: 'Lãi suất dài hạn (m → ∞)', unit: '%' },
-  b1: { name: 'β₁ Slope', desc: 'Độ dốc (âm = dốc lên bình thường)', unit: '%' },
-  b2: { name: 'β₂ Curvature', desc: 'Độ cong bướu trung hạn (2Y - 7Y)', unit: '%' },
-  lam1: { name: 'λ Decay', desc: 'Tốc độ suy giảm / Vị trí uốn cong', unit: '' },
-  rmse: { name: 'RMSE', desc: 'Sai số bình phương trung bình khớp', unit: ' bps' },
+  b0: { name: 'β₀ Level', desc: 'Long-term yield asymptote (m → ∞)', unit: '%' },
+  b1: { name: 'β₁ Slope', desc: 'Curve slope (negative = normal upward)', unit: '%' },
+  b2: { name: 'β₂ Curvature', desc: 'Medium-term hump curvature (2Y – 7Y)', unit: '%' },
+  lam1: { name: 'λ Decay', desc: 'Decay rate / Scale parameter', unit: '' },
+  rmse: { name: 'RMSE', desc: 'Root Mean Square Error (Fit)', unit: ' bps' },
 };
 
 (async function init() {
@@ -336,7 +336,7 @@ function renderNSMetricsBar(latest) {
 
   const isUpward = latest.b1 < -0.2;
   const isInverted = latest.b1 > 0.2;
-  const slopeText = isUpward ? 'Dốc lên chuẩn (Slope < 0)' : (isInverted ? 'Đảo ngược (Inverted)' : 'Đường cong phẳng (Flat)');
+  const slopeText = isUpward ? 'Normal Upward (Slope < 0)' : (isInverted ? 'Inverted (Slope > 0)' : 'Flat Curve');
   const slopeColor = isUpward ? 'var(--color-up)' : (isInverted ? 'var(--color-down)' : 'var(--color-neutral)');
 
   const rmseVal = (latest.rmse * 100).toFixed(4);
@@ -344,17 +344,17 @@ function renderNSMetricsBar(latest) {
   bar.innerHTML = `
     <div style="background:var(--bg-surface); padding:0.55rem 0.65rem; border-radius:6px; border:1px solid var(--border-subtle); border-left:3px solid ${NS_COLORS.b0}; min-width:0; overflow:hidden;">
       <div style="font-size:0.7rem; color:var(--text-secondary); display:flex; justify-content:space-between; gap:0.2rem;">
-        <span style="white-space:nowrap;">β₀ Level</span><span style="white-space:nowrap;">Dài hạn</span>
+        <span style="white-space:nowrap;">β₀ Level</span><span style="white-space:nowrap;">Long-Term</span>
       </div>
       <div style="font-size:1.15rem; font-weight:700; color:${NS_COLORS.b0}; font-family:'JetBrains Mono',monospace; margin:2px 0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
         ${latest.b0.toFixed(3)}%
       </div>
-      <div style="font-size:0.68rem; color:var(--text-muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="Tiệm cận m → ∞">Tiệm cận m → ∞</div>
+      <div style="font-size:0.68rem; color:var(--text-muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="Asymptote m → ∞">Asymptote m → ∞</div>
     </div>
 
     <div style="background:var(--bg-surface); padding:0.55rem 0.65rem; border-radius:6px; border:1px solid var(--border-subtle); border-left:3px solid ${NS_COLORS.b1}; min-width:0; overflow:hidden;">
       <div style="font-size:0.7rem; color:var(--text-secondary); display:flex; justify-content:space-between; gap:0.2rem;">
-        <span style="white-space:nowrap;">β₁ Slope</span><span style="white-space:nowrap;">Độ dốc</span>
+        <span style="white-space:nowrap;">β₁ Slope</span><span style="white-space:nowrap;">Slope</span>
       </div>
       <div style="font-size:1.15rem; font-weight:700; color:${NS_COLORS.b1}; font-family:'JetBrains Mono',monospace; margin:2px 0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
         ${latest.b1.toFixed(3)}%
@@ -364,32 +364,32 @@ function renderNSMetricsBar(latest) {
 
     <div style="background:var(--bg-surface); padding:0.55rem 0.65rem; border-radius:6px; border:1px solid var(--border-subtle); border-left:3px solid ${NS_COLORS.b2}; min-width:0; overflow:hidden;">
       <div style="font-size:0.7rem; color:var(--text-secondary); display:flex; justify-content:space-between; gap:0.2rem;">
-        <span style="white-space:nowrap;">β₂ Curvature</span><span style="white-space:nowrap;">Độ cong</span>
+        <span style="white-space:nowrap;">β₂ Curvature</span><span style="white-space:nowrap;">Curvature</span>
       </div>
       <div style="font-size:1.15rem; font-weight:700; color:${NS_COLORS.b2}; font-family:'JetBrains Mono',monospace; margin:2px 0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
         ${latest.b2.toFixed(3)}%
       </div>
-      <div style="font-size:0.68rem; color:var(--text-muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="Bướu kỳ hạn 2Y – 7Y">Bướu kỳ hạn 2Y – 7Y</div>
+      <div style="font-size:0.68rem; color:var(--text-muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="Medium-term Hump (2Y – 7Y)">Medium-term Hump (2Y – 7Y)</div>
     </div>
 
     <div style="background:var(--bg-surface); padding:0.55rem 0.65rem; border-radius:6px; border:1px solid var(--border-subtle); border-left:3px solid ${NS_COLORS.lam1}; min-width:0; overflow:hidden;">
       <div style="font-size:0.7rem; color:var(--text-secondary); display:flex; justify-content:space-between; gap:0.2rem;">
-        <span style="white-space:nowrap;">λ Decay</span><span style="white-space:nowrap;">Suy giảm</span>
+        <span style="white-space:nowrap;">λ Decay</span><span style="white-space:nowrap;">Decay Rate</span>
       </div>
       <div style="font-size:1.15rem; font-weight:700; color:${NS_COLORS.lam1}; font-family:'JetBrains Mono',monospace; margin:2px 0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
         ${latest.lam1.toFixed(3)}
       </div>
-      <div style="font-size:0.68rem; color:var(--text-muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="Đỉnh bướu tại ~${(latest.lam1 * 1.79).toFixed(1)} năm">Đỉnh bướu tại ~${(latest.lam1 * 1.79).toFixed(1)} năm</div>
+      <div style="font-size:0.68rem; color:var(--text-muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="Hump peak at ~${(latest.lam1 * 1.79).toFixed(1)}Y">Hump peak at ~${(latest.lam1 * 1.79).toFixed(1)}Y</div>
     </div>
 
     <div style="background:var(--bg-surface); padding:0.55rem 0.65rem; border-radius:6px; border:1px solid var(--border-subtle); border-left:3px solid ${NS_COLORS.rmse}; min-width:0; overflow:hidden;">
       <div style="font-size:0.7rem; color:var(--text-secondary); display:flex; justify-content:space-between; gap:0.2rem;">
-        <span style="white-space:nowrap;">RMSE Khớp</span><span style="white-space:nowrap;">Chuẩn xác</span>
+        <span style="white-space:nowrap;">RMSE (Fit)</span><span style="white-space:nowrap;">Goodness of Fit</span>
       </div>
       <div style="font-size:1.15rem; font-weight:700; color:${NS_COLORS.rmse}; font-family:'JetBrains Mono',monospace; margin:2px 0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
         ${rmseVal} bps
       </div>
-      <div style="font-size:0.68rem; color:var(--text-muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${latest.n_points} kỳ hạn HNX thực tế">${latest.n_points} kỳ hạn HNX thực tế</div>
+      <div style="font-size:0.68rem; color:var(--text-muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${latest.n_points} active HNX tenors">${latest.n_points} active HNX tenors</div>
     </div>
   `;
 }
@@ -632,7 +632,7 @@ function renderNSParamsChart() {
         }
       });
 
-      const slopeTag = d.b1 < -0.2 ? '<span style="color:var(--color-up);">📈 Dốc lên chuẩn</span>' : (d.b1 > 0.2 ? '<span style="color:var(--color-down);">⚠️ Đảo ngược (Inverted)</span>' : '<span style="color:var(--color-neutral);">➖ Phẳng (Flat)</span>');
+      const slopeTag = d.b1 < -0.2 ? '<span style="color:var(--color-up);">📈 Normal Upward</span>' : (d.b1 > 0.2 ? '<span style="color:var(--color-down);">⚠️ Inverted</span>' : '<span style="color:var(--color-neutral);">➖ Flat Curve</span>');
       
       let rowsHtml = '';
       activeSeries.forEach(p => {
@@ -755,7 +755,7 @@ function renderPercentileTable(curveData, spreadData) {
 
   container.innerHTML = `
     <table class="data-table">
-      <thead><tr><th>Chỉ Số</th><th>Hiện Tại</th><th>Vị Trí trong 252D</th><th>Rank</th></tr></thead>
+      <thead><tr><th>Metric</th><th>Current</th><th>252D Percentile Range</th><th>Percentile</th></tr></thead>
       <tbody>${rows.join('')}</tbody>
     </table>`;
 }
