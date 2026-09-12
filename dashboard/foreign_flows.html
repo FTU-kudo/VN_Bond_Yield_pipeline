@@ -39,7 +39,7 @@
 
   <div class="page-body">
 
-    <!-- ── KPI Cards (Tự động cập nhật theo khoảng thời gian đã chọn) ──────────────── -->
+    <!-- ── KPI Cards (Tự động tính toán theo khoảng thời gian đã chọn) ─────────── -->
     <section class="metrics-grid fade-in" aria-label="Chỉ số dòng vốn ngoại"
              style="grid-template-columns: repeat(4, 1fr);">
 
@@ -73,72 +73,40 @@
 
     </section>
 
-    <!-- ── Bộ Điều Khiển & Thanh Trượt Chọn 2 Mốc Thời Gian (Dual Scrubber) ──── -->
+    <!-- ── Bộ Điều Khiển Khoảng Thời Gian: Từ Ngày ➔ Đến Ngày ────────────── -->
     <div class="foreign-range-panel fade-in" id="foreign-range-panel">
       
-      <!-- Hàng 1: Presets & Bộ chọn lịch -->
+      <!-- Hàng 1: Nút chọn nhanh & 2 ô chọn lịch "Từ ngày" - "Đến ngày" -->
       <div class="foreign-controls-bar">
         <div class="btn-group" id="foreign-preset-group">
-          <span style="font-size: 0.75rem; color: var(--text-secondary); font-weight: 600;">Khoảng:</span>
-          <button class="btn btn-primary" id="btn-pre-30d" onclick="setForeignPreset(30, this)">30N</button>
-          <button class="btn btn-ghost" id="btn-pre-60d" onclick="setForeignPreset(60, this)">60N</button>
-          <button class="btn btn-ghost" id="btn-pre-90d" onclick="setForeignPreset(90, this)">90N</button>
-          <button class="btn btn-ghost" id="btn-pre-180d" onclick="setForeignPreset(180, this)">6T</button>
-          <button class="btn btn-ghost" id="btn-pre-365d" onclick="setForeignPreset(365, this)">1N</button>
+          <span style="font-size: 0.8rem; color: var(--text-secondary); font-weight: 600;">Mốc nhanh:</span>
+          <button class="btn btn-primary" id="btn-pre-30d" onclick="setForeignPreset(30, this)">30 Ngày</button>
+          <button class="btn btn-ghost" id="btn-pre-60d" onclick="setForeignPreset(60, this)">60 Ngày</button>
+          <button class="btn btn-ghost" id="btn-pre-90d" onclick="setForeignPreset(90, this)">90 Ngày</button>
+          <button class="btn btn-ghost" id="btn-pre-180d" onclick="setForeignPreset(180, this)">6 Tháng</button>
+          <button class="btn btn-ghost" id="btn-pre-365d" onclick="setForeignPreset(365, this)">1 Năm</button>
           <button class="btn btn-ghost" id="btn-pre-ytd" onclick="setForeignPreset('ytd', this)">YTD</button>
-          <button class="btn btn-ghost" id="btn-pre-3y" onclick="setForeignPreset(1095, this)">3N</button>
+          <button class="btn btn-ghost" id="btn-pre-3y" onclick="setForeignPreset(1095, this)">3 Năm</button>
           <button class="btn btn-ghost" id="btn-pre-all" onclick="setForeignPreset(0, this)">Tất cả</button>
         </div>
 
-        <div class="date-filter-group">
-          <label for="foreign-date-start" style="font-size: 0.8rem; color: var(--text-secondary); font-weight: 500;">Từ:</label>
+        <div class="date-filter-group" style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+          <label for="foreign-date-start" style="font-size: 0.82rem; color: var(--text-secondary); font-weight: 600;">Từ ngày:</label>
           <input type="date" id="foreign-date-start" class="date-input" onchange="onForeignDateInputChange()" aria-label="Từ ngày">
-          <label for="foreign-date-end" style="font-size: 0.8rem; color: var(--text-secondary); font-weight: 500;">Đến:</label>
+          <label for="foreign-date-end" style="font-size: 0.82rem; color: var(--text-secondary); font-weight: 600;">Đến ngày:</label>
           <input type="date" id="foreign-date-end" class="date-input" onchange="onForeignDateInputChange()" aria-label="Đến ngày">
-          <button class="btn btn-ghost" style="padding: 0.3rem 0.65rem; font-size: 0.75rem;" onclick="resetToLatestForeign()" title="Về 30 phiên gần nhất">Mới nhất</button>
+          <button class="btn btn-ghost" style="padding: 0.32rem 0.75rem; font-size: 0.78rem;" onclick="onForeignDateInputChange()">Lọc</button>
+          <button class="btn btn-ghost" style="padding: 0.32rem 0.65rem; font-size: 0.78rem;" onclick="resetToLatestForeign()" title="Về 30 phiên gần nhất">Mới nhất</button>
         </div>
       </div>
 
-      <!-- Hàng 2: Thông tin tóm tắt giai đoạn -->
-      <div class="slider-status-row" style="margin-top: 0.85rem; margin-bottom: 0.4rem;">
+      <!-- Hàng 2: Thông tin tóm tắt giai đoạn đang theo dõi -->
+      <div class="slider-status-row" style="margin-top: 0.85rem; padding-top: 0.65rem; border-top: 1px solid var(--border-subtle);">
         <div class="slider-status-left" style="flex-wrap: wrap;">
-          <span class="slider-status-tag">📍 Giai đoạn đã chọn:</span>
+          <span class="slider-status-tag">📍 Giai đoạn theo dõi:</span>
           <strong id="foreign-range-display" class="slider-date-display">—</strong>
           <span id="foreign-range-net" class="spread-stat-pill num-mono">—</span>
           <span id="foreign-range-stats" class="slider-yield-text">—</span>
-        </div>
-      </div>
-
-      <!-- Hàng 3: Hai thanh trượt độc lập có bong bóng ngày động trượt theo núm -->
-      <div class="dual-slider-container">
-        <!-- Thanh trượt 1: Mốc Bắt Đầu -->
-        <div class="range-slider-row">
-          <span class="range-slider-label">Từ ngày:</span>
-          <div class="slider-bubble-container" style="padding: 22px 0 6px 0;">
-            <div id="bubble-foreign-start" class="slider-thumb-bubble">
-              <span class="bubble-calendar-icon">📅</span>
-              <span id="bubble-text-start">--/--/----</span>
-              <div class="bubble-arrow"></div>
-            </div>
-            <input type="range" id="slider-foreign-start" min="0" max="100" value="0"
-                   class="time-scrubber" oninput="onForeignStartSlider(this.value)">
-          </div>
-          <span id="display-foreign-start" class="slider-boundary-date">—</span>
-        </div>
-
-        <!-- Thanh trượt 2: Mốc Kết Thúc -->
-        <div class="range-slider-row">
-          <span class="range-slider-label">Đến ngày:</span>
-          <div class="slider-bubble-container" style="padding: 22px 0 6px 0;">
-            <div id="bubble-foreign-end" class="slider-thumb-bubble">
-              <span class="bubble-calendar-icon">📅</span>
-              <span id="bubble-text-end">--/--/----</span>
-              <div class="bubble-arrow"></div>
-            </div>
-            <input type="range" id="slider-foreign-end" min="0" max="100" value="100"
-                   class="time-scrubber" oninput="onForeignEndSlider(this.value)">
-          </div>
-          <span id="display-foreign-end" class="slider-boundary-date">—</span>
         </div>
       </div>
 
@@ -219,7 +187,7 @@ const rangeState = {
     return;
   }
 
-  // Normalize: đảm bảo mỗi record có trường "date"
+  // Normalize: đảm bảo mỗi record có trường "date" và số liệu net chuẩn
   const normalized = dailyArr.map(d => ({
     ...d,
     date: d.date || (d.trade_date ? d.trade_date.toString().substring(0, 10) : ''),
@@ -235,8 +203,21 @@ const rangeState = {
   rangeState.startIndex = Math.max(0, N - 30);
   rangeState.endIndex = N - 1;
 
-  // Khởi tạo các thanh trượt
-  initDualSliders();
+  // Thiết lập min/max và giá trị ban đầu cho 2 ô "Từ ngày" - "Đến ngày"
+  const minDate = allForeignData[0].date;
+  const maxDate = allForeignData[N - 1].date;
+
+  const inputStart = document.getElementById('foreign-date-start');
+  const inputEnd = document.getElementById('foreign-date-end');
+  if (inputStart && inputEnd) {
+    inputStart.min = minDate;
+    inputStart.max = maxDate;
+    inputEnd.min = minDate;
+    inputEnd.max = maxDate;
+
+    inputStart.value = allForeignData[rangeState.startIndex].date;
+    inputEnd.value = allForeignData[rangeState.endIndex].date;
+  }
 
   // Áp dụng và vẽ toàn bộ giao diện
   applyRangeUpdate();
@@ -252,125 +233,7 @@ const rangeState = {
   });
 })();
 
-// ── Khởi Tạo Thanh Trượt Kép ──────────────────────────────────────────
-function initDualSliders() {
-  const N = rangeState.totalDays;
-  if (N <= 0) return;
-
-  const sliderStart = document.getElementById('slider-foreign-start');
-  const sliderEnd = document.getElementById('slider-foreign-end');
-
-  sliderStart.min = 0;
-  sliderStart.max = N - 1;
-  sliderStart.value = rangeState.startIndex;
-
-  sliderEnd.min = 0;
-  sliderEnd.max = N - 1;
-  sliderEnd.value = rangeState.endIndex;
-
-  // Thiết lập min/max date cho input date
-  const minDate = allForeignData[0].date;
-  const maxDate = allForeignData[N - 1].date;
-
-  const inputStart = document.getElementById('foreign-date-start');
-  const inputEnd = document.getElementById('foreign-date-end');
-  if (inputStart && inputEnd) {
-    inputStart.min = minDate;
-    inputStart.max = maxDate;
-    inputEnd.min = minDate;
-    inputEnd.max = maxDate;
-  }
-
-  updateSliderUI();
-}
-
-// ── Cập Nhật Vị Trí Bong Bóng & Nhãn Ngày Trên Thanh Trượt ────────────
-function updateSliderUI() {
-  const N = rangeState.totalDays;
-  if (N <= 0) return;
-
-  const startItem = allForeignData[rangeState.startIndex];
-  const endItem = allForeignData[rangeState.endIndex];
-
-  const sliderStart = document.getElementById('slider-foreign-start');
-  const sliderEnd = document.getElementById('slider-foreign-end');
-
-  sliderStart.value = rangeState.startIndex;
-  sliderEnd.value = rangeState.endIndex;
-
-  // Cập nhật text trong bong bóng
-  const bubbleStart = document.getElementById('bubble-foreign-start');
-  const bubbleTextStart = document.getElementById('bubble-text-start');
-  const bubbleEnd = document.getElementById('bubble-foreign-end');
-  const bubbleTextEnd = document.getElementById('bubble-text-end');
-
-  if (bubbleTextStart) bubbleTextStart.textContent = VNBond.formatDateVN(startItem.date);
-  if (bubbleTextEnd) bubbleTextEnd.textContent = VNBond.formatDateVN(endItem.date);
-
-  // Tính toán vị trí % trượt theo núm thumb
-  positionBubble(sliderStart, bubbleStart);
-  positionBubble(sliderEnd, bubbleEnd);
-
-  // Cập nhật nhãn bên phải
-  const dispStart = document.getElementById('display-foreign-start');
-  const dispEnd = document.getElementById('display-foreign-end');
-  if (dispStart) dispStart.textContent = VNBond.formatDateVN(startItem.date);
-  if (dispEnd) dispEnd.textContent = VNBond.formatDateVN(endItem.date);
-
-  // Cập nhật input type="date"
-  const inputStart = document.getElementById('foreign-date-start');
-  const inputEnd = document.getElementById('foreign-date-end');
-  if (inputStart) inputStart.value = startItem.date;
-  if (inputEnd) inputEnd.value = endItem.date;
-}
-
-function positionBubble(slider, bubble) {
-  if (!slider || !bubble) return;
-  const min = parseInt(slider.min, 10);
-  const max = parseInt(slider.max, 10);
-  const val = parseInt(slider.value, 10);
-  const pct = max > min ? ((val - min) / (max - min)) * 100 : 0;
-  // Offset nhẹ để bong bóng luôn khớp đúng tâm chấm tròn (thumb)
-  const offset = (50 - pct) * 0.16;
-  bubble.style.left = `calc(${pct}% + ${offset}px)`;
-}
-
-// ── Xử Lý Sự Kiện Kéo Thanh Trượt ─────────────────────────────────────
-function onForeignStartSlider(val) {
-  let idx = parseInt(val, 10);
-  if (isNaN(idx)) return;
-  idx = Math.max(0, Math.min(rangeState.totalDays - 1, idx));
-
-  // Ràng buộc: Mốc bắt đầu không được vượt qua mốc kết thúc
-  if (idx > rangeState.endIndex) {
-    rangeState.endIndex = idx;
-  }
-  rangeState.startIndex = idx;
-  rangeState.activePreset = null;
-  clearPresetButtons();
-
-  updateSliderUI();
-  applyRangeUpdate();
-}
-
-function onForeignEndSlider(val) {
-  let idx = parseInt(val, 10);
-  if (isNaN(idx)) return;
-  idx = Math.max(0, Math.min(rangeState.totalDays - 1, idx));
-
-  // Ràng buộc: Mốc kết thúc không được nhỏ hơn mốc bắt đầu
-  if (idx < rangeState.startIndex) {
-    rangeState.startIndex = idx;
-  }
-  rangeState.endIndex = idx;
-  rangeState.activePreset = null;
-  clearPresetButtons();
-
-  updateSliderUI();
-  applyRangeUpdate();
-}
-
-// ── Xử Lý Khi Người Dùng Chọn Lịch ────────────────────────────────────
+// ── Xử Lý Khi Người Dùng Chọn Ô "Từ ngày" hoặc "Đến ngày" ─────────────
 function onForeignDateInputChange() {
   const inputStart = document.getElementById('foreign-date-start');
   const inputEnd = document.getElementById('foreign-date-end');
@@ -380,7 +243,7 @@ function onForeignDateInputChange() {
   let eVal = inputEnd.value;
 
   if (sVal && eVal && sVal > eVal) {
-    // Hoán đổi nếu ngày bắt đầu lớn hơn ngày kết thúc
+    // Tự động hoán đổi nếu chọn ngày bắt đầu lớn hơn ngày kết thúc
     const tmp = sVal;
     sVal = eVal;
     eVal = tmp;
@@ -388,7 +251,7 @@ function onForeignDateInputChange() {
     inputEnd.value = eVal;
   }
 
-  // Tìm index tương ứng trong allForeignData
+  // Tìm index tương ứng trong danh sách ngày giao dịch thực tế
   let sIdx = 0;
   let eIdx = allForeignData.length - 1;
 
@@ -412,11 +275,10 @@ function onForeignDateInputChange() {
   rangeState.activePreset = null;
   clearPresetButtons();
 
-  updateSliderUI();
   applyRangeUpdate();
 }
 
-// ── Presets Nhanh ─────────────────────────────────────────────────────
+// ── Xử Lý Nút Chọn Khoảng Nhanh (Presets) ──────────────────────────────
 function setForeignPreset(preset, btn) {
   const N = rangeState.totalDays;
   if (N <= 0) return;
@@ -431,15 +293,22 @@ function setForeignPreset(preset, btn) {
     const ytdIdx = allForeignData.findIndex(d => d.date && d.date.startsWith(String(currentYear)));
     rangeState.startIndex = ytdIdx !== -1 ? ytdIdx : Math.max(0, N - 180);
   } else if (preset === 0) {
-    // Tất cả từ lịch sử 2013
+    // Toàn bộ lịch sử từ 2013
     rangeState.startIndex = 0;
   } else {
-    // Số ngày phiên giao dịch
+    // Số phiên giao dịch
     rangeState.startIndex = Math.max(0, N - preset);
   }
 
+  // Cập nhật giá trị vào 2 ô "Từ ngày" và "Đến ngày"
+  const inputStart = document.getElementById('foreign-date-start');
+  const inputEnd = document.getElementById('foreign-date-end');
+  if (inputStart && inputEnd) {
+    inputStart.value = allForeignData[rangeState.startIndex].date;
+    inputEnd.value = allForeignData[rangeState.endIndex].date;
+  }
+
   rangeState.activePreset = preset;
-  updateSliderUI();
   applyRangeUpdate();
 }
 
@@ -459,7 +328,7 @@ function getRangeSlice() {
   return allForeignData.slice(rangeState.startIndex, rangeState.endIndex + 1);
 }
 
-// ── Cập Nhật Toàn Bộ Dashboard Khối Ngoại ──────────────────────────────
+// ── Cập Nhật Toàn Bộ Dashboard Theo Khoảng Thời Gian Đã Chọn ──────────
 function applyRangeUpdate() {
   const slice = getRangeSlice();
   if (!slice.length) return;
@@ -492,7 +361,7 @@ function applyRangeUpdate() {
   // Cập nhật 4 thẻ KPI theo giai đoạn
   updateKPIs(slice);
 
-  // Vẽ lại 2 biểu đồ và bảng
+  // Vẽ lại 2 biểu đồ và bảng xếp hạng
   renderDailyChart(slice);
   renderCumulChart(slice);
   renderTopTable(slice);
