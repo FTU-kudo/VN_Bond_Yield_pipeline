@@ -194,6 +194,7 @@ def bid_to_cover_summary(df: pd.DataFrame) -> pd.DataFrame:
                           "std": "bcr_std", "count": "n_auctions"})
         .reset_index()
     )
+    by_tenor["label"] = by_tenor["tenor_yr"].apply(lambda t: f"{int(t) if t == int(t) else t}Y")
     return by_tenor
 
 
@@ -209,12 +210,17 @@ def stop_out_rate_history(df: pd.DataFrame,
     ok = df[df[COL_SUCCESS] == True].copy()  # noqa: E712
     if tenor_yr_filter is not None:
         ok = ok[np.abs(ok["tenor_yr"].fillna(-1) - tenor_yr_filter) < 0.3]
-    return (
+    
+    sub = (
         ok[[COL_DATE, "tenor_yr", COL_WIN_RATE_PARSED, "stop_out_rate", "tail_bps"]]
         .dropna(subset=[COL_DATE, COL_WIN_RATE_PARSED])
         .sort_values(COL_DATE)
         .reset_index(drop=True)
     )
+    # Đảm bảo có cả alias winning_rate và stop_out để frontend dùng thuận tiện
+    sub["winning_rate"] = sub[COL_WIN_RATE_PARSED]
+    sub["stop_out"] = sub["stop_out_rate"]
+    return sub
 
 
 def auction_success_rate(df: pd.DataFrame) -> pd.DataFrame:
@@ -232,7 +238,7 @@ def auction_success_rate(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def issuance_volume_by_quarter(df: pd.DataFrame) -> pd.DataFrame:
-    """Khối lượng phát hành thực tế (GT trúng thầu) theo quý và tenor."""
+    """Khối lượng phát hành thực tế (GT trúng thầu) theo quý và tenor (tỷ đồng)."""
     ok = df[df[COL_SUCCESS] == True].copy()  # noqa: E712
     if ok.empty:
         return pd.DataFrame()
@@ -240,9 +246,10 @@ def issuance_volume_by_quarter(df: pd.DataFrame) -> pd.DataFrame:
         ok.groupby(["quarter", "tenor_yr"])[COL_WIN_VOL_PARSED]
         .sum()
         .reset_index()
-        .rename(columns={COL_WIN_VOL_PARSED: "win_volume_bn"})
     )
-    grouped["win_volume_bn"] = grouped["win_volume_bn"].round(1)
+    # Quy đổi từ VNĐ sang tỷ VNĐ
+    grouped["win_volume_bn"] = (grouped[COL_WIN_VOL_PARSED] / 1e9).round(1)
+    grouped["tenor_label"] = grouped["tenor_yr"].apply(lambda t: f"{int(t) if t == int(t) else t}Y")
     return grouped
 
 
@@ -320,6 +327,7 @@ def run(cache_dir: str | Path = "./cache", verbose: bool = True) -> dict:
         "volume_by_quarter": issuance_volume_by_quarter(df),
         "recent_90d": recent_auctions_summary(df, n_days=90),
         "all_auctions": all_auctions_summary(df),
+        "stop_out_history": stop_out_rate_history(df, tenor_yr_filter=None),
         "stop_out_10y": stop_out_rate_history(df, tenor_yr_filter=10.0),
     }
 

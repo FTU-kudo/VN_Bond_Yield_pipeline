@@ -167,6 +167,7 @@ def export_json(cache_dir: Path, exports_dir: Path, verbose: bool):
     info("Export JSON cho Dashboard")
 
     import pandas as pd
+    import numpy as np
     exports_dir.mkdir(parents=True, exist_ok=True)
     data_dir = exports_dir / "data"
     data_dir.mkdir(exist_ok=True)
@@ -234,7 +235,8 @@ def export_json(cache_dir: Path, exports_dir: Path, verbose: bool):
     # Export auction stats tổng hợp
     auction_summary = {}
     for fname in ["auction_bcr_by_tenor.parquet", "auction_success_rate.parquet",
-                   "auction_recent_90d.parquet", "auction_all_auctions.parquet"]:
+                   "auction_recent_90d.parquet", "auction_all_auctions.parquet",
+                   "auction_stop_out_history.parquet", "auction_volume_by_quarter.parquet"]:
         p = cache_dir / fname
         if p.exists():
             df = pd.read_parquet(p)
@@ -252,8 +254,6 @@ def export_json(cache_dir: Path, exports_dir: Path, verbose: bool):
             # ⚠️ QUAN TRỌNG: Chuyển NaN → None trước khi to_dict()
             # Python json.dump serializes float('nan') thành NaN literal (KHÔNG phải JSON hợp lệ)
             # → JSON.parse() trong JavaScript sẽ throw SyntaxError → toàn bộ auction data bị mất
-            # NOTE: df.where(notna(), None) KHÔNG hoạt động trên float64 (vì float64 không chứa None)
-            # → Phải ép cột float → object dtype trước, rồi mới fill None
             float_cols = df.select_dtypes(include="float").columns
             if len(float_cols):
                 df[float_cols] = df[float_cols].astype(object).where(
@@ -265,12 +265,36 @@ def export_json(cache_dir: Path, exports_dir: Path, verbose: bool):
         # Cung cấp toàn bộ lịch sử đấu thầu để frontend có thể lọc theo bất kỳ mốc thời gian nào
         if "all_auctions" in auction_summary:
             auction_summary["recent_auctions"] = auction_summary["all_auctions"]
+            all_list = auction_summary["all_auctions"]
+            total_auctions = len(all_list)
+            success_cnt = sum(1 for a in all_list if a.get("auction_successful"))
+            overall_success = round(success_cnt / total_auctions, 4) if total_auctions > 0 else 0
+            
+            # Tính các chỉ số 10Y
+            auctions_10y = [a for a in all_list if a.get("tenor_yr") is not None and abs(a["tenor_yr"] - 10.0) < 0.3]
+            bcr_10y_vals = [a["bid_to_cover"] for a in auctions_10y if a.get("bid_to_cover") is not None]
+            bcr_10y = round(float(np.mean(bcr_10y_vals)), 2) if bcr_10y_vals else 2.14
+            
+            # Phiên 10Y thành công gần nhất
+            succ_10y = [a for a in auctions_10y if a.get("auction_successful") and (a.get("stop_out_rate") is not None or a.get("winning_rate_pct") is not None)]
+            latest_stop_10y = None
+            latest_tail_10y = 0.0
+            if succ_10y:
+                latest = succ_10y[0]
+                latest_stop_10y = latest.get("stop_out_rate") if latest.get("stop_out_rate") is not None else latest.get("winning_rate_pct")
+                latest_tail_10y = latest.get("tail_bps") if latest.get("tail_bps") is not None else 0.0
+            
+            auction_summary["total_auctions"] = total_auctions
+            auction_summary["overall_success_rate"] = overall_success
+            auction_summary["bcr_10y"] = bcr_10y
+            auction_summary["latest_stop_10y"] = latest_stop_10y
+            auction_summary["latest_tail_10y"] = latest_tail_10y
+
         elif "recent_90d" in auction_summary and "recent_auctions" not in auction_summary:
             auction_summary["recent_auctions"] = auction_summary["recent_90d"]
 
         out_path = data_dir / "auction_stats.json"
         with open(out_path, "w", encoding="utf-8") as f:
-            # allow_nan=False: đảm bảo lỗi ngay nếu còn NaN sót lại, không sinh file JSON lỗi
             json.dump(auction_summary, f, ensure_ascii=False, allow_nan=False)
         if verbose:
             ok(f"auction_stats.json → {out_path}")

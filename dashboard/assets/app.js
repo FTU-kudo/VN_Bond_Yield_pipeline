@@ -38,7 +38,8 @@ const state = {
 /* ── Data Loading ───────────────────────────────────────────────────── */
 async function loadJSON(filename) {
   try {
-    const resp = await fetch(CONFIG.DATA_DIR + filename);
+    const url = CONFIG.DATA_DIR + filename + (filename.includes('?') ? '&' : '?') + '_t=' + Date.now();
+    const resp = await fetch(url);
     if (!resp.ok) throw new Error(`${resp.status} ${resp.statusText}`);
     return await resp.json();
   } catch (e) {
