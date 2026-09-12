@@ -172,10 +172,11 @@ def export_json(cache_dir: Path, exports_dir: Path, verbose: bool):
     data_dir = exports_dir / "data"
     data_dir.mkdir(exist_ok=True)
 
-    # Export fitted curve và spread (flat array) — frontend dùng trực tiếp
+    # Export fitted curve, spread, và fitted params NS (flat array) — frontend dùng trực tiếp
     simple_files = {
         "fitted_curve_ns.parquet": "fitted_curve_ns.json",
         "spread_analysis.parquet": "spread_analysis.json",
+        "fitted_params_ns.parquet": "fitted_params_ns.json",
     }
 
     for parquet_name, json_name in simple_files.items():
@@ -186,13 +187,23 @@ def export_json(cache_dir: Path, exports_dir: Path, verbose: bool):
 
         df = pd.read_parquet(parquet_path)
 
-        # Chuyển Timestamp → string
+        # Chuyển Timestamp → string ISO chuẩn YYYY-MM-DD
         for col in df.columns:
-            if df[col].dtype == "datetime64[ns]" or hasattr(df[col], "dt"):
+            if df[col].dtype == "datetime64[ns]" or (hasattr(df[col], "dt") and df[col].dtype.kind == "M"):
                 try:
-                    df[col] = df[col].astype(str)
+                    df[col] = df[col].dt.strftime("%Y-%m-%d")
                 except Exception:
-                    pass
+                    try:
+                        df[col] = df[col].astype(str).str[:10]
+                    except Exception:
+                        pass
+
+        # Xử lý NaN trong float columns để tránh sinh NaN literal trong JSON
+        float_cols = df.select_dtypes(include="float").columns
+        if len(float_cols):
+            df[float_cols] = df[float_cols].astype(object).where(
+                df[float_cols].notna(), other=None
+            )
 
         data = df.to_dict(orient="records")
         out_path = data_dir / json_name

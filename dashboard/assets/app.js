@@ -31,6 +31,7 @@ const state = {
   auctionData: null,   // hnx_auctions_daily.json
   spreadData: null,    // spread_analysis.json
   foreignData: null,   // foreign_daily_flow.json
+  paramsData: null,    // fitted_params_ns.json
   currentDate: null,
   selectedTenors: ['2Y', '5Y', '10Y'],
 };
@@ -49,17 +50,19 @@ async function loadJSON(filename) {
 }
 
 async function loadAllData() {
-  const [curve, spread, auction, foreign] = await Promise.all([
+  const [curve, spread, auction, foreign, params] = await Promise.all([
     loadJSON('fitted_curve_ns.json'),
     loadJSON('spread_analysis.json'),
     loadJSON('auction_stats.json'),
     loadJSON('foreign_flow.json'),
+    loadJSON('fitted_params_ns.json'),
   ]);
 
   state.curveData = curve;
   state.spreadData = spread;
   state.auctionData = auction;
   state.foreignData = foreign;
+  state.paramsData = params;
 
   if (curve && curve.length > 0) {
     const dates = [...new Set(curve.map(d => d.date))].sort();

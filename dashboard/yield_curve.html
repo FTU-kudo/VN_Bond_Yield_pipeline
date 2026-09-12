@@ -94,9 +94,46 @@
 
     <!-- ── Parameter Evolution ────────────────────────────────────── -->
     <div class="chart-card chart-card-full" style="margin-bottom: 1.5rem;">
-      <p class="chart-title">⚙️ Tham Số Nelson-Siegel theo Thời Gian</p>
-      <p class="chart-subtitle">β₀ (level) · β₁ (slope) · β₂ (curvature) · λ (decay)</p>
-      <div class="chart-body" id="ns-params-chart" style="min-height: 280px;"></div>
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:0.75rem; margin-bottom: 0.75rem;">
+        <div>
+          <p class="chart-title" style="margin-bottom:0.25rem;">⚙️ Tham Số Nelson-Siegel theo Thời Gian</p>
+          <p class="chart-subtitle">Mô hình Nelson-Siegel 4 tham số: β₀ (Level) · β₁ (Slope) · β₂ (Curvature) · λ (Decay)</p>
+        </div>
+        
+        <div style="display:flex; gap:0.6rem; flex-wrap:wrap; align-items:center;">
+          <!-- Param Selectors -->
+          <div class="btn-group" id="ns-param-filter" style="background:var(--bg-surface); padding:2px; border-radius:6px; border:1px solid var(--border-subtle); display:flex; gap:2px;">
+            <button class="btn btn-ghost btn-ns-param active" data-param="all" style="font-size:0.75rem; padding:0.2rem 0.55rem; font-weight:600; border-radius:4px; background:rgba(255,255,255,0.1);">Tất cả</button>
+            <button class="btn btn-ghost btn-ns-param" data-param="b0" style="font-size:0.75rem; padding:0.2rem 0.55rem; border-radius:4px; color:#38bdf8;">β₀ Level</button>
+            <button class="btn btn-ghost btn-ns-param" data-param="b1" style="font-size:0.75rem; padding:0.2rem 0.55rem; border-radius:4px; color:#f43f5e;">β₁ Slope</button>
+            <button class="btn btn-ghost btn-ns-param" data-param="b2" style="font-size:0.75rem; padding:0.2rem 0.55rem; border-radius:4px; color:#10b981;">β₂ Curv</button>
+            <button class="btn btn-ghost btn-ns-param" data-param="lam1" style="font-size:0.75rem; padding:0.2rem 0.55rem; border-radius:4px; color:#f59e0b;">λ Decay</button>
+            <button class="btn btn-ghost btn-ns-param" data-param="rmse" style="font-size:0.75rem; padding:0.2rem 0.55rem; border-radius:4px; color:#a855f7;">RMSE</button>
+          </div>
+
+          <!-- Time Range Presets -->
+          <div class="btn-group" id="ns-range-filter" style="background:var(--bg-surface); padding:2px; border-radius:6px; border:1px solid var(--border-subtle); display:flex; gap:2px;">
+            <button class="btn btn-ghost btn-ns-range" data-range="1y" style="font-size:0.75rem; padding:0.2rem 0.5rem; border-radius:4px;">1N</button>
+            <button class="btn btn-ghost btn-ns-range" data-range="3y" style="font-size:0.75rem; padding:0.2rem 0.5rem; border-radius:4px;">3N</button>
+            <button class="btn btn-ghost btn-ns-range" data-range="5y" style="font-size:0.75rem; padding:0.2rem 0.5rem; border-radius:4px;">5N</button>
+            <button class="btn btn-ghost btn-ns-range active" data-range="all" style="font-size:0.75rem; padding:0.2rem 0.5rem; font-weight:600; border-radius:4px; background:rgba(255,255,255,0.1);">Tất cả</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Metrics Summary Bar (Latest Parameters) -->
+      <div id="ns-metrics-bar" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:0.6rem; margin-bottom:0.75rem;"></div>
+
+      <!-- Legend & Instructions -->
+      <div id="ns-chart-legend" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem; margin-bottom:0.5rem; font-size:0.75rem; color:var(--text-secondary);">
+        <div style="display:flex; gap:1.2rem; align-items:center; flex-wrap:wrap;" id="ns-legend-items"></div>
+        <div style="font-size:0.72rem; color:var(--text-muted);">
+          💡 Rê chuột để xem số liệu chi tiết · Click vào biểu đồ để đồng bộ ngày trên Đường cong
+        </div>
+      </div>
+
+      <!-- Chart Container -->
+      <div class="chart-body" id="ns-params-chart" style="height: 330px; min-height: 330px; position:relative; overflow:hidden;"></div>
     </div>
 
     <!-- ── Percentile Rank Table ──────────────────────────────────── -->
@@ -112,17 +149,37 @@
 </main>
 
 <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
-<script src="assets/app.js?v=1.3"></script>
+<script src="assets/app.js?v=1.5"></script>
 <script>
 // ── Yield Curve Page Logic ────────────────────────────────────────────
 let allDates = [];
 let curveDataGlobal = null;
 let spreadDataGlobal = null;
+let paramsDataGlobal = null;
+let currentSelectedDate = null;
+let nsParamState = { param: 'all', range: 'all' };
+
+const NS_COLORS = {
+  b0: '#38bdf8',   // Cyan
+  b1: '#f43f5e',   // Rose Pink
+  b2: '#10b981',   // Emerald Green
+  lam1: '#f59e0b', // Amber Gold
+  rmse: '#a855f7', // Purple
+};
+
+const NS_LABELS = {
+  b0: { name: 'β₀ Level', desc: 'Lãi suất dài hạn (m → ∞)', unit: '%' },
+  b1: { name: 'β₁ Slope', desc: 'Độ dốc (âm = dốc lên bình thường)', unit: '%' },
+  b2: { name: 'β₂ Curvature', desc: 'Độ cong bướu trung hạn (2Y - 7Y)', unit: '%' },
+  lam1: { name: 'λ Decay', desc: 'Tốc độ suy giảm / Vị trí uốn cong', unit: '' },
+  rmse: { name: 'RMSE', desc: 'Sai số bình phương trung bình khớp', unit: ' bps' },
+};
 
 (async function init() {
   await VNBond.loadAllData();
   curveDataGlobal = VNBond.state.curveData;
   spreadDataGlobal = VNBond.state.spreadData;
+  paramsDataGlobal = VNBond.state.paramsData;
 
   if (!curveDataGlobal) {
     // Render demo
@@ -131,6 +188,7 @@ let spreadDataGlobal = null;
 
   // Init slider
   allDates = VNBond.initDateSlider('date-slider', curveDataGlobal, (date) => {
+    currentSelectedDate = date;
     document.getElementById('slider-date-display').textContent = VNBond.formatDateVN(date);
     let subtitle = `Nelson-Siegel fitting — Ngày ${VNBond.formatDateVN(date)}`;
     
@@ -151,10 +209,12 @@ let spreadDataGlobal = null;
     
     document.getElementById('curve-info').textContent = subtitle;
     VNBond.drawYieldCurve('yield-curve-main', curveDataGlobal, date, compData);
+    updateNSParamsMarker(date);
   });
 
   // Initial render
   const latestDate = allDates[allDates.length - 1];
+  currentSelectedDate = latestDate;
   document.getElementById('slider-date-display').textContent = VNBond.formatDateVN(latestDate);
   VNBond.drawYieldCurve('yield-curve-main', curveDataGlobal, latestDate);
 
@@ -171,11 +231,16 @@ let spreadDataGlobal = null;
     drawDemoSpreadHistory();
   }
 
-  // NS params chart
-  drawNSParams(curveDataGlobal);
+  // NS params chart & controls
+  initNSParamControls();
+  drawNSParams(paramsDataGlobal);
 
   // Percentile table
   renderPercentileTable(curveDataGlobal, spreadDataGlobal);
+
+  VNBond.onResize('ns-params-chart', () => {
+    renderNSParamsChart();
+  });
 })();
 
 function stepDate(delta) {
@@ -208,15 +273,452 @@ function setCompare(months) {
   slider.dispatchEvent(new Event('input'));
 }
 
-function drawNSParams(curveData) {
-  // Placeholder — sẽ vẽ từ fitted_params_ns.parquet
+function initNSParamControls() {
+  document.querySelectorAll('.btn-ns-param').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.btn-ns-param').forEach(b => {
+        b.classList.remove('active');
+        b.style.fontWeight = 'normal';
+        b.style.background = 'transparent';
+      });
+      btn.classList.add('active');
+      btn.style.fontWeight = 'bold';
+      btn.style.background = 'rgba(255,255,255,0.1)';
+      nsParamState.param = btn.dataset.param;
+      updateNSLegend();
+      renderNSParamsChart();
+    });
+  });
+
+  document.querySelectorAll('.btn-ns-range').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.btn-ns-range').forEach(b => {
+        b.classList.remove('active');
+        b.style.fontWeight = 'normal';
+        b.style.background = 'transparent';
+      });
+      btn.classList.add('active');
+      btn.style.fontWeight = 'bold';
+      btn.style.background = 'rgba(255,255,255,0.1)';
+      nsParamState.range = btn.dataset.range;
+      renderNSParamsChart();
+    });
+  });
+}
+
+function drawNSParams(paramsData) {
+  if (!paramsData || !paramsData.length) {
+    const container = document.getElementById('ns-params-chart');
+    container.innerHTML = `
+      <div style="display:flex; align-items:center; justify-content:center; height:100%; color:var(--text-muted); font-size:0.85rem; flex-direction:column; gap:0.5rem;">
+        <span style="font-size:2rem; opacity:0.4;">⚙️</span>
+        <span>Chưa có dữ liệu fitted_params_ns.json</span>
+        <span style="font-size:0.75rem;">Hãy chạy: python run_pipeline.py --mode export</span>
+      </div>`;
+    return;
+  }
+
+  // Preprocess date objects
+  paramsData.forEach(d => {
+    if (!d.dateObj) d.dateObj = new Date(d.date);
+  });
+
+  // Render Metric Cards
+  const latest = paramsData[paramsData.length - 1];
+  renderNSMetricsBar(latest);
+  updateNSLegend();
+  renderNSParamsChart();
+}
+
+function renderNSMetricsBar(latest) {
+  const bar = document.getElementById('ns-metrics-bar');
+  if (!bar || !latest) return;
+
+  const isUpward = latest.b1 < -0.2;
+  const isInverted = latest.b1 > 0.2;
+  const slopeText = isUpward ? 'Dốc lên chuẩn (Slope < 0)' : (isInverted ? 'Đảo ngược (Inverted)' : 'Đường cong phẳng (Flat)');
+  const slopeColor = isUpward ? 'var(--color-up)' : (isInverted ? 'var(--color-down)' : 'var(--color-neutral)');
+
+  const rmseVal = (latest.rmse * 100).toFixed(4);
+
+  bar.innerHTML = `
+    <div style="background:var(--bg-surface); padding:0.6rem 0.75rem; border-radius:6px; border:1px solid var(--border-subtle); border-left:3px solid ${NS_COLORS.b0};">
+      <div style="font-size:0.7rem; color:var(--text-secondary); display:flex; justify-content:space-between;">
+        <span>β₀ Level</span><span>Dài hạn</span>
+      </div>
+      <div style="font-size:1.15rem; font-weight:700; color:${NS_COLORS.b0}; font-family:'JetBrains Mono',monospace; margin:2px 0;">
+        ${latest.b0.toFixed(3)}%
+      </div>
+      <div style="font-size:0.68rem; color:var(--text-muted);">Tiệm cận m → ∞</div>
+    </div>
+
+    <div style="background:var(--bg-surface); padding:0.6rem 0.75rem; border-radius:6px; border:1px solid var(--border-subtle); border-left:3px solid ${NS_COLORS.b1};">
+      <div style="font-size:0.7rem; color:var(--text-secondary); display:flex; justify-content:space-between;">
+        <span>β₁ Slope</span><span>Độ dốc</span>
+      </div>
+      <div style="font-size:1.15rem; font-weight:700; color:${NS_COLORS.b1}; font-family:'JetBrains Mono',monospace; margin:2px 0;">
+        ${latest.b1.toFixed(3)}%
+      </div>
+      <div style="font-size:0.68rem; color:${slopeColor}; font-weight:500;">${slopeText}</div>
+    </div>
+
+    <div style="background:var(--bg-surface); padding:0.6rem 0.75rem; border-radius:6px; border:1px solid var(--border-subtle); border-left:3px solid ${NS_COLORS.b2};">
+      <div style="font-size:0.7rem; color:var(--text-secondary); display:flex; justify-content:space-between;">
+        <span>β₂ Curvature</span><span>Độ cong</span>
+      </div>
+      <div style="font-size:1.15rem; font-weight:700; color:${NS_COLORS.b2}; font-family:'JetBrains Mono',monospace; margin:2px 0;">
+        ${latest.b2.toFixed(3)}%
+      </div>
+      <div style="font-size:0.68rem; color:var(--text-muted);">Bướu kỳ hạn 2Y – 7Y</div>
+    </div>
+
+    <div style="background:var(--bg-surface); padding:0.6rem 0.75rem; border-radius:6px; border:1px solid var(--border-subtle); border-left:3px solid ${NS_COLORS.lam1};">
+      <div style="font-size:0.7rem; color:var(--text-secondary); display:flex; justify-content:space-between;">
+        <span>λ Decay</span><span>Suy giảm</span>
+      </div>
+      <div style="font-size:1.15rem; font-weight:700; color:${NS_COLORS.lam1}; font-family:'JetBrains Mono',monospace; margin:2px 0;">
+        ${latest.lam1.toFixed(3)}
+      </div>
+      <div style="font-size:0.68rem; color:var(--text-muted);">Đỉnh bướu tại ~${(latest.lam1 * 1.79).toFixed(1)} năm</div>
+    </div>
+
+    <div style="background:var(--bg-surface); padding:0.6rem 0.75rem; border-radius:6px; border:1px solid var(--border-subtle); border-left:3px solid ${NS_COLORS.rmse};">
+      <div style="font-size:0.7rem; color:var(--text-secondary); display:flex; justify-content:space-between;">
+        <span>RMSE Khớp</span><span>Chuẩn xác</span>
+      </div>
+      <div style="font-size:1.15rem; font-weight:700; color:${NS_COLORS.rmse}; font-family:'JetBrains Mono',monospace; margin:2px 0;">
+        ${rmseVal} bps
+      </div>
+      <div style="font-size:0.68rem; color:var(--text-muted);">${latest.n_points} kỳ hạn HNX thực tế</div>
+    </div>
+  `;
+}
+
+function updateNSLegend() {
+  const container = document.getElementById('ns-legend-items');
+  if (!container) return;
+
+  const activeParam = nsParamState.param;
+  let items = [];
+  if (activeParam === 'all') {
+    items = ['b0', 'b1', 'b2', 'lam1'];
+  } else {
+    items = [activeParam];
+  }
+
+  container.innerHTML = items.map(p => `
+    <span style="display:inline-flex; align-items:center; gap:0.35rem;">
+      <span style="width:10px; height:10px; border-radius:50%; background:${NS_COLORS[p]}; display:inline-block;"></span>
+      <strong style="color:var(--text-primary); font-size:0.75rem;">${NS_LABELS[p].name}</strong>
+      <span style="color:var(--text-muted); font-size:0.7rem;">(${NS_LABELS[p].desc})</span>
+    </span>
+  `).join('');
+}
+
+let nsChartScales = null;
+
+function renderNSParamsChart() {
   const container = document.getElementById('ns-params-chart');
-  container.innerHTML = `
-    <div style="display:flex; align-items:center; justify-content:center; height:100%; color:var(--text-muted); font-size:0.85rem; flex-direction:column; gap:0.5rem;">
-      <span style="font-size:2rem; opacity:0.4;">⚙️</span>
-      <span>Chưa có fitted_params_ns.parquet</span>
-      <span style="font-size:0.75rem;">Hãy chạy: python analysis/yield_curve_fitting.py</span>
-    </div>`;
+  if (!container || !paramsDataGlobal || !paramsDataGlobal.length) return;
+
+  container.innerHTML = '';
+  const totalH = 330;
+  container.style.height = totalH + 'px';
+  const totalW = container.clientWidth || 800;
+  const margin = { top: 20, right: 35, bottom: 35, left: 55 };
+  const plotW = Math.max(100, totalW - margin.left - margin.right);
+  const plotH = Math.max(100, totalH - margin.top - margin.bottom);
+
+  // Filter by range
+  const latestDateObj = paramsDataGlobal[paramsDataGlobal.length - 1].dateObj;
+  let filtered = paramsDataGlobal;
+  if (nsParamState.range === '1y') {
+    const cutoff = new Date(latestDateObj.getTime() - 365 * 86400000);
+    filtered = paramsDataGlobal.filter(d => d.dateObj >= cutoff);
+  } else if (nsParamState.range === '3y') {
+    const cutoff = new Date(latestDateObj.getTime() - 3 * 365 * 86400000);
+    filtered = paramsDataGlobal.filter(d => d.dateObj >= cutoff);
+  } else if (nsParamState.range === '5y') {
+    const cutoff = new Date(latestDateObj.getTime() - 5 * 365 * 86400000);
+    filtered = paramsDataGlobal.filter(d => d.dateObj >= cutoff);
+  }
+
+  const svg = d3.select(container)
+    .append('svg')
+    .attr('width', '100%')
+    .attr('height', totalH)
+    .attr('viewBox', `0 0 ${totalW} ${totalH}`);
+
+  const g = svg.append('g').attr('transform', `translate(${margin.left},${margin.top})`);
+
+  // X scale
+  const x = d3.scaleTime()
+    .domain(d3.extent(filtered, d => d.dateObj))
+    .range([0, plotW]);
+
+  // Y scale
+  let y;
+  const paramKey = nsParamState.param;
+  if (paramKey === 'all') {
+    let minVal = d3.min(filtered, d => Math.min(d.b0, d.b1, d.b2, d.lam1));
+    let maxVal = d3.max(filtered, d => Math.max(d.b0, d.b1, d.b2, d.lam1));
+    minVal = Math.max(-12, (minVal != null ? minVal : -5) - 0.5);
+    maxVal = Math.min(18, (maxVal != null ? maxVal : 15) + 0.5);
+    y = d3.scaleLinear().domain([minVal, maxVal]).range([plotH, 0]).nice();
+  } else if (paramKey === 'rmse') {
+    const [minVal, maxVal] = d3.extent(filtered, d => d.rmse * 100);
+    y = d3.scaleLinear().domain([0, (maxVal || 0.1) * 1.15]).range([plotH, 0]).nice();
+  } else {
+    const [minVal, maxVal] = d3.extent(filtered, d => d[paramKey]);
+    const pad = Math.max(0.2, ((maxVal || 1) - (minVal || 0)) * 0.1);
+    y = d3.scaleLinear().domain([(minVal != null ? minVal : 0) - pad, (maxVal != null ? maxVal : 5) + pad]).range([plotH, 0]).nice();
+  }
+
+  nsChartScales = { x, y, plotW, plotH, margin, filtered };
+
+  // Grid lines
+  g.append('g')
+    .attr('class', 'grid')
+    .call(d3.axisLeft(y).ticks(5).tickSize(-plotW).tickFormat(''))
+    .selectAll('line')
+    .attr('stroke', 'var(--border-subtle)')
+    .attr('stroke-dasharray', '2 2')
+    .attr('stroke-opacity', 0.6);
+  g.select('.grid .domain').remove();
+
+  // Zero reference line
+  if (y.domain()[0] <= 0 && y.domain()[1] >= 0) {
+    g.append('line')
+      .attr('x1', 0).attr('x2', plotW)
+      .attr('y1', y(0)).attr('y2', y(0))
+      .attr('stroke', 'rgba(148, 163, 184, 0.45)')
+      .attr('stroke-dasharray', '4 4')
+      .attr('stroke-width', 1);
+  }
+
+  // Gradient area if single parameter
+  if (paramKey !== 'all') {
+    const color = NS_COLORS[paramKey];
+    const defs = svg.append('defs');
+    const grad = defs.append('linearGradient').attr('id', 'ns-area-grad')
+      .attr('x1', '0%').attr('y1', '0%').attr('x2', '0%').attr('y2', '100%');
+    grad.append('stop').attr('offset', '0%').attr('stop-color', color).attr('stop-opacity', 0.25);
+    grad.append('stop').attr('offset', '100%').attr('stop-color', color).attr('stop-opacity', 0.0);
+
+    const valFn = d => paramKey === 'rmse' ? d.rmse * 100 : d[paramKey];
+    const yBaseline = Math.max(0, y.domain()[0]);
+    const areaGen = d3.area()
+      .defined(d => valFn(d) != null && !isNaN(valFn(d)))
+      .x(d => x(d.dateObj))
+      .y0(y(yBaseline))
+      .y1(d => y(valFn(d)))
+      .curve(d3.curveMonotoneX);
+
+    g.append('path')
+      .datum(filtered)
+      .attr('fill', 'url(#ns-area-grad)')
+      .attr('d', areaGen);
+  }
+
+  // Lines
+  const activeSeries = paramKey === 'all' ? ['b0', 'b1', 'b2', 'lam1'] : [paramKey];
+  activeSeries.forEach(p => {
+    const valFn = d => p === 'rmse' ? d.rmse * 100 : d[p];
+    const lineGen = d3.line()
+      .defined(d => valFn(d) != null && !isNaN(valFn(d)))
+      .x(d => x(d.dateObj))
+      .y(d => y(valFn(d)))
+      .curve(d3.curveMonotoneX);
+
+    g.append('path')
+      .datum(filtered)
+      .attr('fill', 'none')
+      .attr('stroke', NS_COLORS[p])
+      .attr('stroke-width', paramKey === 'all' ? 1.8 : 2.5)
+      .attr('d', lineGen);
+  });
+
+  // X Axis
+  g.append('g')
+    .attr('transform', `translate(0,${plotH})`)
+    .call(d3.axisBottom(x).ticks(Math.max(4, Math.floor(plotW / 120))).tickFormat(d3.timeFormat('%m/%Y')))
+    .selectAll('text')
+    .attr('fill', 'var(--text-secondary)')
+    .attr('font-size', '11px');
+
+  // Y Axis
+  const yAxisFormat = d => {
+    if (paramKey === 'rmse') return d.toFixed(3) + ' bps';
+    if (paramKey === 'lam1') return d.toFixed(1);
+    return d.toFixed(1) + '%';
+  };
+  g.append('g')
+    .call(d3.axisLeft(y).ticks(6).tickFormat(yAxisFormat))
+    .selectAll('text')
+    .attr('fill', 'var(--text-secondary)')
+    .attr('font-size', '11px')
+    .attr('font-family', "'JetBrains Mono', monospace");
+
+  // Synchronized vertical marker for date slider
+  const markerGroup = g.append('g').attr('id', 'ns-date-marker-group');
+  if (currentSelectedDate) {
+    drawMarkerLine(markerGroup, x, plotH, currentSelectedDate);
+  }
+
+  // Crosshair & Tooltip
+  const tooltipGroup = g.append('g').style('display', 'none');
+  const crosshair = tooltipGroup.append('line')
+    .attr('y1', 0).attr('y2', plotH)
+    .attr('stroke', 'rgba(255,255,255,0.4)')
+    .attr('stroke-dasharray', '2 2')
+    .attr('stroke-width', 1);
+
+  const focusDots = {};
+  activeSeries.forEach(p => {
+    focusDots[p] = tooltipGroup.append('circle')
+      .attr('r', 4.5)
+      .attr('fill', NS_COLORS[p])
+      .attr('stroke', '#ffffff')
+      .attr('stroke-width', 1.5);
+  });
+
+  let tooltipEl = document.getElementById('ns-chart-tooltip');
+  if (!tooltipEl) {
+    tooltipEl = document.createElement('div');
+    tooltipEl.id = 'ns-chart-tooltip';
+    tooltipEl.style.position = 'absolute';
+    tooltipEl.style.pointerEvents = 'none';
+    tooltipEl.style.zIndex = '100';
+    tooltipEl.style.display = 'none';
+    tooltipEl.style.background = 'rgba(15, 23, 42, 0.94)';
+    tooltipEl.style.backdropFilter = 'blur(10px)';
+    tooltipEl.style.border = '1px solid rgba(255, 255, 255, 0.18)';
+    tooltipEl.style.borderRadius = '8px';
+    tooltipEl.style.padding = '0.7rem 0.9rem';
+    tooltipEl.style.fontSize = '0.75rem';
+    tooltipEl.style.color = '#f1f5f9';
+    tooltipEl.style.boxShadow = '0 10px 25px rgba(0,0,0,0.5)';
+    container.appendChild(tooltipEl);
+  }
+
+  const bisect = d3.bisector(d => d.dateObj).center;
+
+  // Overlay rect for pointer interactions
+  g.append('rect')
+    .attr('width', plotW)
+    .attr('height', plotH)
+    .attr('fill', 'transparent')
+    .attr('cursor', 'crosshair')
+    .on('mouseenter', () => {
+      tooltipGroup.style('display', null);
+      tooltipEl.style.display = 'block';
+    })
+    .on('mousemove', (event) => {
+      const [mx, my] = d3.pointer(event);
+      const dateAtMouse = x.invert(mx);
+      const idx = bisect(filtered, dateAtMouse);
+      const d = filtered[idx];
+      if (!d) return;
+
+      const px = x(d.dateObj);
+      crosshair.attr('x1', px).attr('x2', px);
+
+      activeSeries.forEach(p => {
+        const val = p === 'rmse' ? d.rmse * 100 : d[p];
+        if (val != null && !isNaN(val)) {
+          focusDots[p].attr('cx', px).attr('cy', y(val)).style('display', null);
+        } else {
+          focusDots[p].style('display', 'none');
+        }
+      });
+
+      const slopeTag = d.b1 < -0.2 ? '<span style="color:#22c55e;">📈 Dốc lên chuẩn</span>' : (d.b1 > 0.2 ? '<span style="color:#ef4444;">⚠️ Đảo ngược (Inverted)</span>' : '<span style="color:#f59e0b;">➖ Phẳng (Flat)</span>');
+      
+      let rowsHtml = '';
+      activeSeries.forEach(p => {
+        const val = p === 'rmse' ? (d.rmse * 100).toFixed(4) + ' bps' : d[p].toFixed(3) + (p === 'lam1' ? '' : '%');
+        rowsHtml += `
+          <div style="display:flex; justify-content:space-between; gap:1.2rem; align-items:center; margin-top:3px;">
+            <span style="color:${NS_COLORS[p]};">● ${NS_LABELS[p].name}:</span>
+            <span style="font-family:'JetBrains Mono',monospace; font-weight:600;">${val}</span>
+          </div>`;
+      });
+
+      tooltipEl.innerHTML = `
+        <div style="font-weight:bold; margin-bottom:5px; border-bottom:1px solid rgba(255,255,255,0.12); padding-bottom:3px; display:flex; justify-content:space-between; gap:1rem;">
+          <span>📅 ${VNBond.formatDateVN(d.date)}</span>
+          <span>${slopeTag}</span>
+        </div>
+        ${rowsHtml}
+        <div style="margin-top:6px; font-size:0.68rem; color:#94a3b8; text-align:right;">
+          Click để đồng bộ Đường cong ngày này 👆
+        </div>
+      `;
+
+      const ttW = tooltipEl.offsetWidth || 230;
+      let leftPos = mx + margin.left + 15;
+      if (leftPos + ttW > totalW - 10) {
+        leftPos = mx + margin.left - ttW - 15;
+      }
+      let topPos = Math.max(10, my + margin.top - 30);
+      tooltipEl.style.left = `${leftPos}px`;
+      tooltipEl.style.top = `${topPos}px`;
+    })
+    .on('mouseleave', () => {
+      tooltipGroup.style('display', 'none');
+      tooltipEl.style.display = 'none';
+    })
+    .on('click', (event) => {
+      const [mx] = d3.pointer(event);
+      const dateAtMouse = x.invert(mx);
+      const idx = bisect(filtered, dateAtMouse);
+      const d = filtered[idx];
+      if (d && allDates && allDates.length) {
+        const targetTime = d.dateObj.getTime();
+        let closestIdx = 0, minDiff = Infinity;
+        allDates.forEach((ad, i) => {
+          const diff = Math.abs(new Date(ad).getTime() - targetTime);
+          if (diff < minDiff) { minDiff = diff; closestIdx = i; }
+        });
+        const slider = document.getElementById('date-slider');
+        if (slider) {
+          slider.value = closestIdx;
+          slider.dispatchEvent(new Event('input'));
+        }
+      }
+    });
+}
+
+function drawMarkerLine(g, x, plotH, dateStr) {
+  g.selectAll('*').remove();
+  if (!dateStr) return;
+  const dObj = new Date(dateStr);
+  const [minD, maxD] = x.domain();
+  if (dObj < minD || dObj > maxD) return;
+  const mx = x(dObj);
+
+  g.append('line')
+    .attr('x1', mx).attr('x2', mx)
+    .attr('y1', 0).attr('y2', plotH)
+    .attr('stroke', 'var(--accent-primary, #3b82f6)')
+    .attr('stroke-width', 2)
+    .attr('stroke-dasharray', '3 3')
+    .attr('opacity', 0.9);
+
+  g.append('circle')
+    .attr('cx', mx).attr('cy', 8)
+    .attr('r', 4.5)
+    .attr('fill', 'var(--accent-primary, #3b82f6)')
+    .attr('stroke', '#fff')
+    .attr('stroke-width', 1.5);
+}
+
+function updateNSParamsMarker(dateStr) {
+  if (!nsChartScales) return;
+  const markerGroup = d3.select('#ns-date-marker-group');
+  if (markerGroup.node()) {
+    drawMarkerLine(markerGroup, nsChartScales.x, nsChartScales.plotH, dateStr);
+  }
 }
 
 function renderPercentileTable(curveData, spreadData) {
