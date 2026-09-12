@@ -93,16 +93,16 @@
     </div>
 
     <!-- ── Parameter Evolution ────────────────────────────────────── -->
-    <div class="chart-card chart-card-full" style="margin-bottom: 1.5rem;">
-      <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:0.75rem; margin-bottom: 0.75rem;">
-        <div>
+    <div class="chart-card chart-card-full" id="ns-params-card" style="margin-bottom: 1.5rem; max-width: 100%; min-width: 0; box-sizing: border-box; overflow: hidden;">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:0.75rem; margin-bottom: 0.75rem; width: 100%; min-width: 0;">
+        <div style="min-width: 0; flex: 1 1 280px;">
           <p class="chart-title" style="margin-bottom:0.25rem;">⚙️ Tham Số Nelson-Siegel theo Thời Gian</p>
-          <p class="chart-subtitle">Mô hình Nelson-Siegel 4 tham số: β₀ (Level) · β₁ (Slope) · β₂ (Curvature) · λ (Decay)</p>
+          <p class="chart-subtitle" style="word-break: break-word; margin-bottom: 0.25rem;">Mô hình Nelson-Siegel 4 tham số: β₀ (Level) · β₁ (Slope) · β₂ (Curvature) · λ (Decay)</p>
         </div>
         
-        <div style="display:flex; gap:0.6rem; flex-wrap:wrap; align-items:center;">
+        <div style="display:flex; gap:0.6rem; flex-wrap:wrap; align-items:center; max-width: 100%;">
           <!-- Param Selectors -->
-          <div class="btn-group" id="ns-param-filter" style="background:var(--bg-surface); padding:2px; border-radius:6px; border:1px solid var(--border-subtle); display:flex; gap:2px;">
+          <div class="btn-group" id="ns-param-filter" style="background:var(--bg-surface); padding:2px; border-radius:6px; border:1px solid var(--border-subtle); display:flex; flex-wrap:wrap; gap:2px;">
             <button class="btn btn-ghost btn-ns-param active" data-param="all" style="font-size:0.75rem; padding:0.2rem 0.55rem; font-weight:600; border-radius:4px; background:rgba(255,255,255,0.1);">Tất cả</button>
             <button class="btn btn-ghost btn-ns-param" data-param="b0" style="font-size:0.75rem; padding:0.2rem 0.55rem; border-radius:4px; color:#38bdf8;">β₀ Level</button>
             <button class="btn btn-ghost btn-ns-param" data-param="b1" style="font-size:0.75rem; padding:0.2rem 0.55rem; border-radius:4px; color:#f43f5e;">β₁ Slope</button>
@@ -122,18 +122,18 @@
       </div>
 
       <!-- Quick Metrics Summary Bar (Latest Parameters) -->
-      <div id="ns-metrics-bar" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:0.6rem; margin-bottom:0.75rem;"></div>
+      <div id="ns-metrics-bar" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(140px, 1fr)); gap:0.5rem; margin-bottom:0.75rem; width:100%; min-width:0;"></div>
 
       <!-- Legend & Instructions -->
-      <div id="ns-chart-legend" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem; margin-bottom:0.5rem; font-size:0.75rem; color:var(--text-secondary);">
-        <div style="display:flex; gap:1.2rem; align-items:center; flex-wrap:wrap;" id="ns-legend-items"></div>
-        <div style="font-size:0.72rem; color:var(--text-muted);">
+      <div id="ns-chart-legend" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.6rem; margin-bottom:0.5rem; font-size:0.75rem; color:var(--text-secondary); width:100%; min-width:0;">
+        <div style="display:flex; gap:0.8rem; align-items:center; flex-wrap:wrap; min-width:0; flex:1 1 auto;" id="ns-legend-items"></div>
+        <div style="font-size:0.72rem; color:var(--text-muted); flex-shrink:0; line-height:1.3;">
           💡 Rê chuột để xem số liệu chi tiết · Click vào biểu đồ để đồng bộ ngày trên Đường cong
         </div>
       </div>
 
       <!-- Chart Container -->
-      <div class="chart-body" id="ns-params-chart" style="height: 330px; min-height: 330px; position:relative; overflow:hidden;"></div>
+      <div class="chart-body" id="ns-params-chart" style="height: 330px; min-height: 330px; position:relative; overflow:hidden; width:100%; max-width:100%; min-width:0;"></div>
     </div>
 
     <!-- ── Percentile Rank Table ──────────────────────────────────── -->
@@ -342,54 +342,54 @@ function renderNSMetricsBar(latest) {
   const rmseVal = (latest.rmse * 100).toFixed(4);
 
   bar.innerHTML = `
-    <div style="background:var(--bg-surface); padding:0.6rem 0.75rem; border-radius:6px; border:1px solid var(--border-subtle); border-left:3px solid ${NS_COLORS.b0};">
-      <div style="font-size:0.7rem; color:var(--text-secondary); display:flex; justify-content:space-between;">
-        <span>β₀ Level</span><span>Dài hạn</span>
+    <div style="background:var(--bg-surface); padding:0.55rem 0.65rem; border-radius:6px; border:1px solid var(--border-subtle); border-left:3px solid ${NS_COLORS.b0}; min-width:0; overflow:hidden;">
+      <div style="font-size:0.7rem; color:var(--text-secondary); display:flex; justify-content:space-between; gap:0.2rem;">
+        <span style="white-space:nowrap;">β₀ Level</span><span style="white-space:nowrap;">Dài hạn</span>
       </div>
-      <div style="font-size:1.15rem; font-weight:700; color:${NS_COLORS.b0}; font-family:'JetBrains Mono',monospace; margin:2px 0;">
+      <div style="font-size:1.15rem; font-weight:700; color:${NS_COLORS.b0}; font-family:'JetBrains Mono',monospace; margin:2px 0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
         ${latest.b0.toFixed(3)}%
       </div>
-      <div style="font-size:0.68rem; color:var(--text-muted);">Tiệm cận m → ∞</div>
+      <div style="font-size:0.68rem; color:var(--text-muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="Tiệm cận m → ∞">Tiệm cận m → ∞</div>
     </div>
 
-    <div style="background:var(--bg-surface); padding:0.6rem 0.75rem; border-radius:6px; border:1px solid var(--border-subtle); border-left:3px solid ${NS_COLORS.b1};">
-      <div style="font-size:0.7rem; color:var(--text-secondary); display:flex; justify-content:space-between;">
-        <span>β₁ Slope</span><span>Độ dốc</span>
+    <div style="background:var(--bg-surface); padding:0.55rem 0.65rem; border-radius:6px; border:1px solid var(--border-subtle); border-left:3px solid ${NS_COLORS.b1}; min-width:0; overflow:hidden;">
+      <div style="font-size:0.7rem; color:var(--text-secondary); display:flex; justify-content:space-between; gap:0.2rem;">
+        <span style="white-space:nowrap;">β₁ Slope</span><span style="white-space:nowrap;">Độ dốc</span>
       </div>
-      <div style="font-size:1.15rem; font-weight:700; color:${NS_COLORS.b1}; font-family:'JetBrains Mono',monospace; margin:2px 0;">
+      <div style="font-size:1.15rem; font-weight:700; color:${NS_COLORS.b1}; font-family:'JetBrains Mono',monospace; margin:2px 0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
         ${latest.b1.toFixed(3)}%
       </div>
-      <div style="font-size:0.68rem; color:${slopeColor}; font-weight:500;">${slopeText}</div>
+      <div style="font-size:0.68rem; color:${slopeColor}; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${slopeText}">${slopeText}</div>
     </div>
 
-    <div style="background:var(--bg-surface); padding:0.6rem 0.75rem; border-radius:6px; border:1px solid var(--border-subtle); border-left:3px solid ${NS_COLORS.b2};">
-      <div style="font-size:0.7rem; color:var(--text-secondary); display:flex; justify-content:space-between;">
-        <span>β₂ Curvature</span><span>Độ cong</span>
+    <div style="background:var(--bg-surface); padding:0.55rem 0.65rem; border-radius:6px; border:1px solid var(--border-subtle); border-left:3px solid ${NS_COLORS.b2}; min-width:0; overflow:hidden;">
+      <div style="font-size:0.7rem; color:var(--text-secondary); display:flex; justify-content:space-between; gap:0.2rem;">
+        <span style="white-space:nowrap;">β₂ Curvature</span><span style="white-space:nowrap;">Độ cong</span>
       </div>
-      <div style="font-size:1.15rem; font-weight:700; color:${NS_COLORS.b2}; font-family:'JetBrains Mono',monospace; margin:2px 0;">
+      <div style="font-size:1.15rem; font-weight:700; color:${NS_COLORS.b2}; font-family:'JetBrains Mono',monospace; margin:2px 0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
         ${latest.b2.toFixed(3)}%
       </div>
-      <div style="font-size:0.68rem; color:var(--text-muted);">Bướu kỳ hạn 2Y – 7Y</div>
+      <div style="font-size:0.68rem; color:var(--text-muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="Bướu kỳ hạn 2Y – 7Y">Bướu kỳ hạn 2Y – 7Y</div>
     </div>
 
-    <div style="background:var(--bg-surface); padding:0.6rem 0.75rem; border-radius:6px; border:1px solid var(--border-subtle); border-left:3px solid ${NS_COLORS.lam1};">
-      <div style="font-size:0.7rem; color:var(--text-secondary); display:flex; justify-content:space-between;">
-        <span>λ Decay</span><span>Suy giảm</span>
+    <div style="background:var(--bg-surface); padding:0.55rem 0.65rem; border-radius:6px; border:1px solid var(--border-subtle); border-left:3px solid ${NS_COLORS.lam1}; min-width:0; overflow:hidden;">
+      <div style="font-size:0.7rem; color:var(--text-secondary); display:flex; justify-content:space-between; gap:0.2rem;">
+        <span style="white-space:nowrap;">λ Decay</span><span style="white-space:nowrap;">Suy giảm</span>
       </div>
-      <div style="font-size:1.15rem; font-weight:700; color:${NS_COLORS.lam1}; font-family:'JetBrains Mono',monospace; margin:2px 0;">
+      <div style="font-size:1.15rem; font-weight:700; color:${NS_COLORS.lam1}; font-family:'JetBrains Mono',monospace; margin:2px 0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
         ${latest.lam1.toFixed(3)}
       </div>
-      <div style="font-size:0.68rem; color:var(--text-muted);">Đỉnh bướu tại ~${(latest.lam1 * 1.79).toFixed(1)} năm</div>
+      <div style="font-size:0.68rem; color:var(--text-muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="Đỉnh bướu tại ~${(latest.lam1 * 1.79).toFixed(1)} năm">Đỉnh bướu tại ~${(latest.lam1 * 1.79).toFixed(1)} năm</div>
     </div>
 
-    <div style="background:var(--bg-surface); padding:0.6rem 0.75rem; border-radius:6px; border:1px solid var(--border-subtle); border-left:3px solid ${NS_COLORS.rmse};">
-      <div style="font-size:0.7rem; color:var(--text-secondary); display:flex; justify-content:space-between;">
-        <span>RMSE Khớp</span><span>Chuẩn xác</span>
+    <div style="background:var(--bg-surface); padding:0.55rem 0.65rem; border-radius:6px; border:1px solid var(--border-subtle); border-left:3px solid ${NS_COLORS.rmse}; min-width:0; overflow:hidden;">
+      <div style="font-size:0.7rem; color:var(--text-secondary); display:flex; justify-content:space-between; gap:0.2rem;">
+        <span style="white-space:nowrap;">RMSE Khớp</span><span style="white-space:nowrap;">Chuẩn xác</span>
       </div>
-      <div style="font-size:1.15rem; font-weight:700; color:${NS_COLORS.rmse}; font-family:'JetBrains Mono',monospace; margin:2px 0;">
+      <div style="font-size:1.15rem; font-weight:700; color:${NS_COLORS.rmse}; font-family:'JetBrains Mono',monospace; margin:2px 0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
         ${rmseVal} bps
       </div>
-      <div style="font-size:0.68rem; color:var(--text-muted);">${latest.n_points} kỳ hạn HNX thực tế</div>
+      <div style="font-size:0.68rem; color:var(--text-muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${latest.n_points} kỳ hạn HNX thực tế">${latest.n_points} kỳ hạn HNX thực tế</div>
     </div>
   `;
 }
@@ -407,10 +407,10 @@ function updateNSLegend() {
   }
 
   container.innerHTML = items.map(p => `
-    <span style="display:inline-flex; align-items:center; gap:0.35rem;">
-      <span style="width:10px; height:10px; border-radius:50%; background:${NS_COLORS[p]}; display:inline-block;"></span>
-      <strong style="color:var(--text-primary); font-size:0.75rem;">${NS_LABELS[p].name}</strong>
-      <span style="color:var(--text-muted); font-size:0.7rem;">(${NS_LABELS[p].desc})</span>
+    <span style="display:inline-flex; align-items:center; gap:0.35rem; min-width:0; flex-shrink:1;">
+      <span style="width:10px; height:10px; border-radius:50%; background:${NS_COLORS[p]}; display:inline-block; flex-shrink:0;"></span>
+      <strong style="color:var(--text-primary); font-size:0.75rem; white-space:nowrap;">${NS_LABELS[p].name}</strong>
+      <span style="color:var(--text-muted); font-size:0.7rem; white-space:nowrap;">(${NS_LABELS[p].desc})</span>
     </span>
   `).join('');
 }
@@ -424,10 +424,10 @@ function renderNSParamsChart() {
   container.innerHTML = '';
   const totalH = 330;
   container.style.height = totalH + 'px';
-  const totalW = container.clientWidth || 800;
-  const margin = { top: 20, right: 35, bottom: 35, left: 55 };
-  const plotW = Math.max(100, totalW - margin.left - margin.right);
-  const plotH = Math.max(100, totalH - margin.top - margin.bottom);
+  const totalW = Math.max(260, Math.floor(container.getBoundingClientRect().width || container.clientWidth || 800));
+  const margin = { top: 20, right: 45, bottom: 35, left: 55 };
+  const plotW = Math.max(80, totalW - margin.left - margin.right);
+  const plotH = Math.max(80, totalH - margin.top - margin.bottom);
 
   // Filter by range
   const latestDateObj = paramsDataGlobal[paramsDataGlobal.length - 1].dateObj;
@@ -447,7 +447,9 @@ function renderNSParamsChart() {
     .append('svg')
     .attr('width', '100%')
     .attr('height', totalH)
-    .attr('viewBox', `0 0 ${totalW} ${totalH}`);
+    .attr('viewBox', `0 0 ${totalW} ${totalH}`)
+    .style('display', 'block')
+    .style('max-width', '100%');
 
   const g = svg.append('g').attr('transform', `translate(${margin.left},${margin.top})`);
 
@@ -660,6 +662,7 @@ function renderNSParamsChart() {
       if (leftPos + ttW > totalW - 10) {
         leftPos = mx + margin.left - ttW - 15;
       }
+      leftPos = Math.max(10, Math.min(leftPos, totalW - ttW - 10));
       let topPos = Math.max(10, my + margin.top - 30);
       tooltipEl.style.left = `${leftPos}px`;
       tooltipEl.style.top = `${topPos}px`;

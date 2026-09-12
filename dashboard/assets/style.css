@@ -242,6 +242,8 @@ body::before {
   min-height: 100vh;
   position: relative;
   z-index: 1;
+  max-width: calc(100vw - 64px);
+  overflow-x: hidden;
 }
 
 .page-header {
@@ -397,6 +399,9 @@ body::before {
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .chart-card:hover {
@@ -405,6 +410,9 @@ body::before {
 
 .chart-card-full {
   grid-column: 1 / -1;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
 }
 
 .chart-title {
@@ -428,6 +436,9 @@ body::before {
   min-height: 280px;
   position: relative;
   flex: 1;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
 }
 
 .chart-body-tall { min-height: 380px; height: 380px; }
@@ -447,6 +458,22 @@ body::before {
   max-height: 320px;
   width: 100%;
   overflow: hidden;
+}
+
+#ns-params-chart {
+  height: 330px;
+  min-height: 330px;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow: hidden;
+}
+
+#ns-params-chart svg {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  height: auto;
 }
 
 #tenor-table-body {
@@ -1027,6 +1054,10 @@ select:hover, select:focus {
 }
 
 /* ── Responsive ───────────────────────────────────────────── */
+@media (max-width: 1280px) {
+  .page-body { padding: var(--space-lg) var(--space-xl); }
+}
+
 @media (max-width: 1024px) {
   .chart-grid-2 { grid-template-columns: 1fr; }
   .chart-grid-3 { grid-template-columns: 1fr; }
