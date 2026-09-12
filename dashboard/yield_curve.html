@@ -128,7 +128,7 @@
       <div id="ns-chart-legend" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.6rem; margin-bottom:0.5rem; font-size:0.75rem; color:var(--text-secondary); width:100%; min-width:0;">
         <div style="display:flex; gap:0.8rem; align-items:center; flex-wrap:wrap; min-width:0; flex:1 1 auto;" id="ns-legend-items"></div>
         <div style="font-size:0.72rem; color:var(--text-muted); flex-shrink:0; line-height:1.3;">
-          💡 Rê chuột để xem số liệu chi tiết · Click vào biểu đồ để đồng bộ ngày trên Đường cong
+          💡 Rê chuột để xem số liệu chi tiết
         </div>
       </div>
 
@@ -458,15 +458,11 @@ function renderNSParamsChart() {
     .domain(d3.extent(filtered, d => d.dateObj))
     .range([0, plotW]);
 
-  // Y scale
+  // Y scale: Kéo dãn cận trên lên 20% và cận dưới xuống -20% cho chế độ 'all'
   let y;
   const paramKey = nsParamState.param;
   if (paramKey === 'all') {
-    let minVal = d3.min(filtered, d => Math.min(d.b0, d.b1, d.b2, d.lam1));
-    let maxVal = d3.max(filtered, d => Math.max(d.b0, d.b1, d.b2, d.lam1));
-    minVal = Math.max(-12, (minVal != null ? minVal : -5) - 0.5);
-    maxVal = Math.min(18, (maxVal != null ? maxVal : 15) + 0.5);
-    y = d3.scaleLinear().domain([minVal, maxVal]).range([plotH, 0]).nice();
+    y = d3.scaleLinear().domain([-20, 20]).range([plotH, 0]);
   } else if (paramKey === 'rmse') {
     const [minVal, maxVal] = d3.extent(filtered, d => d.rmse * 100);
     y = d3.scaleLinear().domain([0, (maxVal || 0.1) * 1.15]).range([plotH, 0]).nice();
@@ -481,7 +477,7 @@ function renderNSParamsChart() {
   // Grid lines
   g.append('g')
     .attr('class', 'grid')
-    .call(d3.axisLeft(y).ticks(5).tickSize(-plotW).tickFormat(''))
+    .call(d3.axisLeft(y).ticks(paramKey === 'all' ? 8 : 5).tickSize(-plotW).tickFormat(''))
     .selectAll('line')
     .attr('stroke', 'var(--border-subtle)')
     .attr('stroke-dasharray', '2 2')
@@ -493,7 +489,8 @@ function renderNSParamsChart() {
     g.append('line')
       .attr('x1', 0).attr('x2', plotW)
       .attr('y1', y(0)).attr('y2', y(0))
-      .attr('stroke', 'rgba(148, 163, 184, 0.45)')
+      .attr('stroke', 'var(--text-muted)')
+      .attr('stroke-opacity', 0.5)
       .attr('stroke-dasharray', '4 4')
       .attr('stroke-width', 1);
   }
@@ -555,7 +552,7 @@ function renderNSParamsChart() {
     return d.toFixed(1) + '%';
   };
   g.append('g')
-    .call(d3.axisLeft(y).ticks(6).tickFormat(yAxisFormat))
+    .call(d3.axisLeft(y).ticks(paramKey === 'all' ? 8 : 6).tickFormat(yAxisFormat))
     .selectAll('text')
     .attr('fill', 'var(--text-secondary)')
     .attr('font-size', '11px')
@@ -571,7 +568,8 @@ function renderNSParamsChart() {
   const tooltipGroup = g.append('g').style('display', 'none');
   const crosshair = tooltipGroup.append('line')
     .attr('y1', 0).attr('y2', plotH)
-    .attr('stroke', 'rgba(255,255,255,0.4)')
+    .attr('stroke', 'var(--text-secondary)')
+    .attr('stroke-opacity', 0.5)
     .attr('stroke-dasharray', '2 2')
     .attr('stroke-width', 1);
 
@@ -580,7 +578,7 @@ function renderNSParamsChart() {
     focusDots[p] = tooltipGroup.append('circle')
       .attr('r', 4.5)
       .attr('fill', NS_COLORS[p])
-      .attr('stroke', '#ffffff')
+      .attr('stroke', 'var(--bg-card)')
       .attr('stroke-width', 1.5);
   });
 
@@ -588,20 +586,20 @@ function renderNSParamsChart() {
   if (!tooltipEl) {
     tooltipEl = document.createElement('div');
     tooltipEl.id = 'ns-chart-tooltip';
-    tooltipEl.style.position = 'absolute';
-    tooltipEl.style.pointerEvents = 'none';
-    tooltipEl.style.zIndex = '100';
-    tooltipEl.style.display = 'none';
-    tooltipEl.style.background = 'rgba(15, 23, 42, 0.94)';
-    tooltipEl.style.backdropFilter = 'blur(10px)';
-    tooltipEl.style.border = '1px solid rgba(255, 255, 255, 0.18)';
-    tooltipEl.style.borderRadius = '8px';
-    tooltipEl.style.padding = '0.7rem 0.9rem';
-    tooltipEl.style.fontSize = '0.75rem';
-    tooltipEl.style.color = '#f1f5f9';
-    tooltipEl.style.boxShadow = '0 10px 25px rgba(0,0,0,0.5)';
     container.appendChild(tooltipEl);
   }
+  tooltipEl.style.position = 'absolute';
+  tooltipEl.style.pointerEvents = 'none';
+  tooltipEl.style.zIndex = '100';
+  tooltipEl.style.display = 'none';
+  tooltipEl.style.background = 'var(--bg-card)';
+  tooltipEl.style.color = 'var(--text-primary)';
+  tooltipEl.style.border = '1px solid var(--border-glow)';
+  tooltipEl.style.borderRadius = 'var(--radius-md, 8px)';
+  tooltipEl.style.backdropFilter = 'blur(12px)';
+  tooltipEl.style.padding = '0.7rem 0.9rem';
+  tooltipEl.style.fontSize = '0.75rem';
+  tooltipEl.style.boxShadow = '0 8px 24px rgba(0, 0, 0, 0.15)';
 
   const bisect = d3.bisector(d => d.dateObj).center;
 
@@ -634,27 +632,24 @@ function renderNSParamsChart() {
         }
       });
 
-      const slopeTag = d.b1 < -0.2 ? '<span style="color:#22c55e;">📈 Dốc lên chuẩn</span>' : (d.b1 > 0.2 ? '<span style="color:#ef4444;">⚠️ Đảo ngược (Inverted)</span>' : '<span style="color:#f59e0b;">➖ Phẳng (Flat)</span>');
+      const slopeTag = d.b1 < -0.2 ? '<span style="color:var(--color-up);">📈 Dốc lên chuẩn</span>' : (d.b1 > 0.2 ? '<span style="color:var(--color-down);">⚠️ Đảo ngược (Inverted)</span>' : '<span style="color:var(--color-neutral);">➖ Phẳng (Flat)</span>');
       
       let rowsHtml = '';
       activeSeries.forEach(p => {
         const val = p === 'rmse' ? (d.rmse * 100).toFixed(4) + ' bps' : d[p].toFixed(3) + (p === 'lam1' ? '' : '%');
         rowsHtml += `
           <div style="display:flex; justify-content:space-between; gap:1.2rem; align-items:center; margin-top:3px;">
-            <span style="color:${NS_COLORS[p]};">● ${NS_LABELS[p].name}:</span>
-            <span style="font-family:'JetBrains Mono',monospace; font-weight:600;">${val}</span>
+            <span style="color:${NS_COLORS[p]}; font-weight:500;">● ${NS_LABELS[p].name}:</span>
+            <span style="font-family:'JetBrains Mono',monospace; font-weight:600; color:var(--text-primary);">${val}</span>
           </div>`;
       });
 
       tooltipEl.innerHTML = `
-        <div style="font-weight:bold; margin-bottom:5px; border-bottom:1px solid rgba(255,255,255,0.12); padding-bottom:3px; display:flex; justify-content:space-between; gap:1rem;">
+        <div style="font-weight:bold; margin-bottom:5px; border-bottom:1px solid var(--border-subtle); padding-bottom:4px; display:flex; justify-content:space-between; gap:1rem; color:var(--text-primary);">
           <span>📅 ${VNBond.formatDateVN(d.date)}</span>
           <span>${slopeTag}</span>
         </div>
         ${rowsHtml}
-        <div style="margin-top:6px; font-size:0.68rem; color:#94a3b8; text-align:right;">
-          Click để đồng bộ Đường cong ngày này 👆
-        </div>
       `;
 
       const ttW = tooltipEl.offsetWidth || 230;
