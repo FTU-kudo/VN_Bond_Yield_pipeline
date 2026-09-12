@@ -334,6 +334,16 @@ function calculateCustomSpread(curveData, tenorA, tenorB) {
   return result;
 }
 
+/* ── Spread Presets Metadata ────────────────────────────────────────── */
+const SPREAD_PRESETS = {
+  'spread_10y_2y': { labelA: '10Y', labelB: '2Y', tenorA: 10, tenorB: 2, keyA: 'y_10y', keyB: 'y_2y' },
+  'spread_10y_3m': { labelA: '10Y', labelB: '3M', tenorA: 10, tenorB: 0.25, keyA: 'y_10y', keyB: 'y_3m' },
+  'spread_5y_2y': { labelA: '5Y', labelB: '2Y', tenorA: 5, tenorB: 2, keyA: 'y_5y', keyB: 'y_2y' },
+  'spread_10y_1y': { labelA: '10Y', labelB: '1Y', tenorA: 10, tenorB: 1, keyA: 'y_10y', keyB: 'y_1y' },
+  'spread_30y_10y': { labelA: '30Y', labelB: '10Y', tenorA: 30, tenorB: 10, keyA: 'y_30y', keyB: 'y_10y' },
+  'butterfly_2s5s10s': { isButterfly: true, label: 'Butterfly 2s5s10s', key2: 'y_2y', key5: 'y_5y', key10: 'y_10y' },
+};
+
 /* ── Spread Line Chart ──────────────────────────────────────────────── */
 function drawSpreadChart(containerId, inputData, options = {}) {
   const container = document.getElementById(containerId);
@@ -352,20 +362,48 @@ function drawSpreadChart(containerId, inputData, options = {}) {
         date: d.dateObj || new Date(d.date),
         dateStr: (d.date && typeof d.date === 'string') ? d.date.substring(0, 10) : (d.dateObj ? d.dateObj.toISOString().substring(0, 10) : ''),
         value: d.value,
+        colKey: d.colKey || colKey,
+        labelA: d.labelA || 'Kỳ hạn 1',
+        labelB: d.labelB || 'Kỳ hạn 2',
+        isButterfly: !!d.isButterfly,
         yA: d.yA,
         yB: d.yB,
+        y2: d.y2,
+        y5: d.y5,
+        y10: d.y10,
       }));
     } else {
       // spreadData gốc có colKey
+      const presetInfo = SPREAD_PRESETS[colKey] || { labelA: '10Y', labelB: '2Y', tenorA: 10, tenorB: 2, keyA: 'y_10y', keyB: 'y_2y' };
+      const curveIdx = state.curveData ? getCurveIndex(state.curveData) : null;
       data = inputData
         .filter(d => d[colKey] != null)
-        .map(d => ({
-          date: new Date(d.date),
-          dateStr: (d.date || '').toString().substring(0, 10),
-          value: d[colKey] * 100,
-          yA: d.y_10y,
-          yB: d.y_2y,
-        }));
+        .map(d => {
+          const dateStr = (d.date || '').toString().substring(0, 10);
+          const cYields = curveIdx ? curveIdx.get(dateStr) : null;
+          let yA = d[presetInfo.keyA];
+          let yB = d[presetInfo.keyB];
+          if (yA == null && cYields && presetInfo.tenorA != null) yA = cYields[presetInfo.tenorA];
+          if (yB == null && cYields && presetInfo.tenorB != null) yB = cYields[presetInfo.tenorB];
+
+          const item = {
+            date: new Date(d.date),
+            dateStr: dateStr,
+            value: d[colKey] * 100,
+            colKey: colKey,
+            isButterfly: !!presetInfo.isButterfly,
+            labelA: presetInfo.labelA,
+            labelB: presetInfo.labelB,
+            yA: yA,
+            yB: yB,
+          };
+          if (presetInfo.isButterfly) {
+            item.y2 = d.y_2y != null ? d.y_2y : (cYields ? cYields[2] : null);
+            item.y5 = d.y_5y != null ? d.y_5y : (cYields ? cYields[5] : null);
+            item.y10 = d.y_10y != null ? d.y_10y : (cYields ? cYields[10] : null);
+          }
+          return item;
+        });
     }
   }
 
@@ -587,16 +625,35 @@ function drawSpreadChart(containerId, inputData, options = {}) {
     hoverAxisText.attr('x', badgeX).text(dateFormatted);
     hoverAxisG.style('display', 'block');
 
-    const isInverted = d.value < 0;
-    const regime = isInverted ? '⚠️ Đảo ngược' : '✓ Bình thường';
-    const regimeColor = isInverted ? 'var(--color-down)' : 'var(--color-up)';
+    let regime = '';
+    let regimeColor = '';
+    if (d.isButterfly) {
+      const isHump = d.value > 0;
+      regime = isHump ? 'Gồ lên (Hump lồi)' : 'Lõm xuống (Hump lõm)';
+      regimeColor = isHump ? 'var(--color-neutral)' : 'var(--color-neutral)';
+    } else {
+      const isInverted = d.value < 0;
+      regime = isInverted ? '⚠️ Đảo ngược' : '✓ Bình thường';
+      regimeColor = isInverted ? 'var(--color-down)' : 'var(--color-up)';
+    }
 
     let extraYield = '';
-    if (d.yA != null && d.yB != null) {
+    if (d.isButterfly) {
+      const y2Str = d.y2 != null ? d.y2.toFixed(2) + '%' : '—';
+      const y5Str = d.y5 != null ? d.y5.toFixed(2) + '%' : '—';
+      const y10Str = d.y10 != null ? d.y10.toFixed(2) + '%' : '—';
+      extraYield = `
+        <div class="tooltip-row" style="margin-top:4px; font-size:0.75rem;">
+          <span>Lợi suất 3 chân:</span>
+          <span class="tooltip-value">2Y: ${y2Str} · 5Y: ${y5Str} · 10Y: ${y10Str}</span>
+        </div>`;
+    } else if (d.yA != null && d.yB != null) {
+      const lblA = d.labelA || 'Kỳ hạn 1';
+      const lblB = d.labelB || 'Kỳ hạn 2';
       extraYield = `
         <div class="tooltip-row" style="margin-top:4px; font-size:0.75rem;">
           <span>Lợi suất thành phần:</span>
-          <span class="tooltip-value">${d.yA.toFixed(2)}% vs ${d.yB.toFixed(2)}%</span>
+          <span class="tooltip-value">${lblA}: ${d.yA.toFixed(2)}% vs ${lblB}: ${d.yB.toFixed(2)}%</span>
         </div>`;
     }
 
@@ -606,8 +663,8 @@ function drawSpreadChart(containerId, inputData, options = {}) {
         <span style="letter-spacing:0.3px;">${dateFormatted}</span>
       </div>
       <div class="tooltip-row">
-        <span>Spread:</span>
-        <span class="tooltip-value" style="color:${regimeColor}">${(d.value >= 0 ? '+' : '') + d.value.toFixed(1)} bps</span>
+        <span>${d.isButterfly ? 'Chỉ số bướu:' : 'Spread:'}</span>
+        <span class="tooltip-value" style="color:${d.isButterfly ? 'var(--text-accent)' : regimeColor}">${(d.value >= 0 ? '+' : '') + d.value.toFixed(1)} bps</span>
       </div>
       <div class="tooltip-row">
         <span>Trạng thái:</span>
@@ -831,6 +888,8 @@ window.VNBond = {
   drawYieldCurve,
   drawSpreadChart,
   calculateCustomSpread,
+  getCurveIndex,
+  SPREAD_PRESETS,
   updateMetricCard,
   initDateSlider,
   formatDateVN,

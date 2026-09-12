@@ -210,6 +210,7 @@ const NS_LABELS = {
     document.getElementById('curve-info').textContent = subtitle;
     VNBond.drawYieldCurve('yield-curve-main', curveDataGlobal, date, compData);
     updateNSParamsMarker(date);
+    renderPercentileTable(curveDataGlobal, spreadDataGlobal, date);
   });
 
   // Initial render
@@ -236,7 +237,7 @@ const NS_LABELS = {
   drawNSParams(paramsDataGlobal);
 
   // Percentile table
-  renderPercentileTable(curveDataGlobal, spreadDataGlobal);
+  renderPercentileTable(curveDataGlobal, spreadDataGlobal, latestDate);
 
   VNBond.onResize('ns-params-chart', () => {
     renderNSParamsChart();
@@ -719,7 +720,7 @@ function updateNSParamsMarker(dateStr) {
   }
 }
 
-function renderPercentileTable(curveData, spreadData) {
+function renderPercentileTable(curveData, spreadData, targetDate = null) {
   const container = document.getElementById('percentile-table-body');
   if (!spreadData || !spreadData.length) {
     container.innerHTML = `<div style="padding:1.5rem; text-align:center; color:var(--text-muted); font-size:0.85rem;">Cần dữ liệu spread để tính percentile rank.</div>`;
@@ -727,35 +728,66 @@ function renderPercentileTable(curveData, spreadData) {
   }
 
   const cols = ['y_3m', 'y_2y', 'y_5y', 'y_10y', 'spread_10y_2y', 'butterfly_2s5s10s'];
-  const labels = { y_3m: '3M', y_2y: '2Y', y_5y: '5Y', y_10y: '10Y',
-    spread_10y_2y: 'Spread 10Y-2Y', butterfly_2s5s10s: 'Butterfly' };
+  const labels = {
+    y_3m: '3M Yield',
+    y_2y: '2Y Yield',
+    y_5y: '5Y Yield',
+    y_10y: '10Y Yield',
+    spread_10y_2y: 'Spread 10Y-2Y',
+    butterfly_2s5s10s: 'Butterfly 2s5s10s'
+  };
 
-  const n = Math.min(252, spreadData.length);
-  const recent = spreadData.slice(-n);
-  const last = spreadData[spreadData.length - 1];
+  let activeIdx = spreadData.length - 1;
+  if (targetDate) {
+    const targetStr = (typeof targetDate === 'string' ? targetDate : targetDate.toISOString()).substring(0, 10);
+    const exactIdx = spreadData.findIndex(d => (d.date || '').toString().substring(0, 10) === targetStr);
+    if (exactIdx >= 0) {
+      activeIdx = exactIdx;
+    } else {
+      const tTime = new Date(targetStr).getTime();
+      let minDiff = Infinity;
+      spreadData.forEach((d, i) => {
+        const diff = Math.abs(new Date(d.date).getTime() - tTime);
+        if (diff < minDiff) { minDiff = diff; activeIdx = i; }
+      });
+    }
+  }
 
-  const rows = cols.filter(c => last[c] != null).map(col => {
-    const values = recent.map(d => d[col]).filter(v => v != null);
-    const cur = last[col];
-    const rank = values.filter(v => v <= cur).length / values.length;
+  const currentItem = spreadData[activeIdx];
+  const currentDateFormatted = VNBond.formatDateVN(currentItem.date);
+  const windowStartIdx = Math.max(0, activeIdx - 251);
+  const windowData = spreadData.slice(windowStartIdx, activeIdx + 1);
+  const nSessions = windowData.length;
+
+  const rows = cols.filter(c => currentItem[c] != null).map(col => {
+    const values = windowData.map(d => d[col]).filter(v => v != null);
+    const cur = currentItem[col];
+    const rank = values.filter(v => v <= cur).length / (values.length || 1);
     const percentile = Math.round(rank * 100);
     const barColor = percentile > 80 ? 'var(--color-down)' : percentile < 20 ? 'var(--color-up)' : 'var(--color-neutral)';
     return `
       <tr>
-        <td style="color:var(--text-secondary); font-size:0.8rem;">${labels[col]}</td>
-        <td class="mono text-accent">${col.startsWith('y_') ? VNBond.fmt.rate(cur) : (cur*100).toFixed(1)+' bps'}</td>
+        <td style="color:var(--text-secondary); font-size:0.8rem; font-weight:500;">${labels[col]}</td>
+        <td class="mono text-accent" style="font-weight:600;">${col.startsWith('y_') ? VNBond.fmt.rate(cur) : (cur*100).toFixed(1)+' bps'}</td>
         <td style="width:40%">
           <div style="background:var(--border-subtle); border-radius:4px; height:6px; overflow:hidden;">
-            <div style="width:${percentile}%; height:100%; background:${barColor}; border-radius:4px; transition: width 0.6s;"></div>
+            <div style="width:${percentile}%; height:100%; background:${barColor}; border-radius:4px; transition: width 0.3s;"></div>
           </div>
         </td>
-        <td class="mono" style="text-align:right; color:${barColor};">${percentile}%</td>
+        <td class="mono" style="text-align:right; font-weight:600; color:${barColor};">${percentile}%</td>
       </tr>`;
   });
 
   container.innerHTML = `
     <table class="data-table">
-      <thead><tr><th>Chỉ Số</th><th>Hiện Tại</th><th>Vị Trí trong 252D</th><th>Rank</th></tr></thead>
+      <thead>
+        <tr>
+          <th>Chỉ Số</th>
+          <th>Giá Trị (${currentDateFormatted})</th>
+          <th>Vị Trí trong ${nSessions} Phiên</th>
+          <th style="text-align:right;">Percentile Rank</th>
+        </tr>
+      </thead>
       <tbody>${rows.join('')}</tbody>
     </table>`;
 }

@@ -419,27 +419,54 @@ function loadSpreadSeries() {
   const { spreadData, curveData } = VNBond.state;
   if (spreadState.mode === 'preset') {
     const colKey = spreadState.presetKey;
+    const presetInfo = (VNBond.SPREAD_PRESETS && VNBond.SPREAD_PRESETS[colKey]) || { labelA: '10Y', labelB: '2Y', tenorA: 10, tenorB: 2, keyA: 'y_10y', keyB: 'y_2y' };
+    const curveIdx = curveData ? VNBond.getCurveIndex(curveData) : null;
     if (spreadData && spreadData.length) {
       spreadState.activeSeries = spreadData
         .filter(d => d[colKey] != null)
-        .map(d => ({
-          date: new Date(d.date),
-          dateStr: (d.date || '').toString().substring(0, 10),
-          value: d[colKey] * 100, // bps
-          yA: d.y_10y,
-          yB: d.y_2y,
-        }))
+        .map(d => {
+          const dateStr = (d.date || '').toString().substring(0, 10);
+          const cYields = curveIdx ? curveIdx.get(dateStr) : null;
+          let yA = d[presetInfo.keyA];
+          let yB = d[presetInfo.keyB];
+          if (yA == null && cYields && presetInfo.tenorA != null) yA = cYields[presetInfo.tenorA];
+          if (yB == null && cYields && presetInfo.tenorB != null) yB = cYields[presetInfo.tenorB];
+
+          const item = {
+            date: new Date(d.date),
+            dateStr: dateStr,
+            value: d[colKey] * 100, // bps
+            colKey: colKey,
+            isButterfly: !!presetInfo.isButterfly,
+            labelA: presetInfo.labelA,
+            labelB: presetInfo.labelB,
+            yA: yA,
+            yB: yB,
+          };
+          if (presetInfo.isButterfly) {
+            item.y2 = d.y_2y != null ? d.y_2y : (cYields ? cYields[2] : null);
+            item.y5 = d.y_5y != null ? d.y_5y : (cYields ? cYields[5] : null);
+            item.y10 = d.y_10y != null ? d.y_10y : (cYields ? cYields[10] : null);
+          }
+          return item;
+        })
         .sort((a, b) => a.date - b.date);
     }
   } else {
     // Custom pair
     if (curveData && curveData.length) {
+      const labelA = VNBond.tenorLabel(spreadState.customA);
+      const labelB = VNBond.tenorLabel(spreadState.customB);
       spreadState.activeSeries = VNBond.calculateCustomSpread(
         curveData,
         spreadState.customA,
         spreadState.customB
       ).map(d => ({
         ...d,
+        colKey: 'custom',
+        labelA: labelA,
+        labelB: labelB,
+        isButterfly: false,
         date: d.dateObj instanceof Date ? d.dateObj : new Date(d.date),
         dateStr: d.dateStr || (typeof d.date === 'string' ? d.date.substring(0, 10) : ''),
       }));
@@ -515,9 +542,15 @@ function updateSpreadUI() {
   // Cập nhật regime header theo điểm cuối cùng
   const latestItem = series[series.length - 1];
   if (regimeHeader && latestItem) {
-    const isInv = latestItem.value < 0;
-    regimeHeader.textContent = isInv ? 'Đảo ngược' : 'Bình thường';
-    regimeHeader.className = 'metric-change ' + (isInv ? 'down' : 'up');
+    if (latestItem.isButterfly) {
+      const isHump = latestItem.value > 0;
+      regimeHeader.textContent = isHump ? 'Gồ lên' : 'Lõm xuống';
+      regimeHeader.className = 'metric-change neutral';
+    } else {
+      const isInv = latestItem.value < 0;
+      regimeHeader.textContent = isInv ? 'Đảo ngược' : 'Bình thường';
+      regimeHeader.className = 'metric-change ' + (isInv ? 'down' : 'up');
+    }
   }
 
   // Vẽ biểu đồ
@@ -541,14 +574,28 @@ function updateSliderReadout(item) {
     valEl.style.color = item.value >= 0 ? 'var(--color-up)' : 'var(--color-down)';
   }
   if (regimeEl) {
-    const isInv = item.value < 0;
-    regimeEl.textContent = isInv ? '⚠️ Đảo ngược' : '✓ Dốc lên';
-    regimeEl.style.borderColor = isInv ? 'rgba(239, 68, 68, 0.4)' : 'rgba(34, 197, 94, 0.4)';
-    regimeEl.style.color = isInv ? 'var(--color-down)' : 'var(--color-up)';
+    if (item.isButterfly) {
+      const isHump = item.value > 0;
+      regimeEl.textContent = isHump ? 'Gồ lên (Hump lồi)' : 'Lõm xuống (Hump lõm)';
+      regimeEl.style.borderColor = 'var(--border-subtle)';
+      regimeEl.style.color = 'var(--text-primary)';
+    } else {
+      const isInv = item.value < 0;
+      regimeEl.textContent = isInv ? '⚠️ Đảo ngược' : '✓ Dốc lên';
+      regimeEl.style.borderColor = isInv ? 'rgba(239, 68, 68, 0.4)' : 'rgba(34, 197, 94, 0.4)';
+      regimeEl.style.color = isInv ? 'var(--color-down)' : 'var(--color-up)';
+    }
   }
   if (yieldsEl) {
-    if (item.yA != null && item.yB != null) {
-      yieldsEl.textContent = `Lợi suất: ${item.yA.toFixed(2)}% vs ${item.yB.toFixed(2)}%`;
+    if (item.isButterfly) {
+      const y2Str = item.y2 != null ? item.y2.toFixed(2) + '%' : '—';
+      const y5Str = item.y5 != null ? item.y5.toFixed(2) + '%' : '—';
+      const y10Str = item.y10 != null ? item.y10.toFixed(2) + '%' : '—';
+      yieldsEl.textContent = `Lợi suất: 2Y (${y2Str}) · 5Y (${y5Str}) · 10Y (${y10Str})`;
+    } else if (item.yA != null && item.yB != null) {
+      const lblA = item.labelA || 'Kỳ hạn 1';
+      const lblB = item.labelB || 'Kỳ hạn 2';
+      yieldsEl.textContent = `Lợi suất: ${lblA} (${item.yA.toFixed(2)}%) vs ${lblB} (${item.yB.toFixed(2)}%)`;
     } else {
       yieldsEl.textContent = '';
     }
