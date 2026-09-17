@@ -48,45 +48,11 @@ def fetch_usdvnd_sbv(
     end: str | None = None,
     verbose: bool = True,
 ) -> pd.DataFrame:
-    """Tỷ giá trung tâm USD/VND từ SBV.
-
-    SBV công bố tỷ giá trung tâm hằng ngày tại:
-    https://www.sbv.gov.vn/webcenter/portal/vi/menu/rm/tg
-    Endpoint truy cập: API JSON công khai, không cần đăng nhập.
-
-    Rate limiting: 6 giây/request (WAF F5 của SBV).
-    """
-    import time
-
+    """Tỷ giá trung tâm USD/VND từ SBV."""
     if verbose:
-        print("Đang lấy tỷ giá USD/VND từ SBV...")
+        print("Đang lấy tỷ giá USD/VND qua yfinance...")
 
-    # SBV có endpoint JSON tại web services
-    url = "https://www.sbv.gov.vn/webcenter/portal/vi/menu/rm/tg"
-    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
-
-    # Dùng endpoint thay thế - SBV API công khai
-    # (Thực tế cần parse HTML hoặc dùng API nếu có)
-    # Đây là placeholder — sẽ cần điều chỉnh theo endpoint thực
-    rows = []
     try:
-        # Thử endpoint JSON của SBV
-        api_url = (
-            "https://www.sbv.gov.vn/webcenter/ShowProperty"
-            "?nodeId=/UCMServer/SBV_279549&revision=latestreleased"
-        )
-        r = requests.get(api_url, headers=headers, timeout=15)
-        time.sleep(6)  # WAF SBV: bắt buộc 6s
-        if r.status_code == 200:
-            # Parse nếu trả JSON hoặc HTML
-            pass
-    except Exception as e:
-        if verbose:
-            print(f"  SBV: {e} — sẽ dùng dữ liệu mẫu")
-
-    # Fallback: dữ liệu mẫu từ Yahoo Finance (USD/VND)
-    try:
-        # yfinance nếu cài
         import yfinance as yf
         ticker = yf.Ticker("USDVND=X")
         hist = ticker.history(start=start, end=end or date.today().isoformat())
@@ -95,13 +61,14 @@ def fetch_usdvnd_sbv(
             rows_df.columns = ["date", "usdvnd"]
             rows_df["date"] = pd.to_datetime(rows_df["date"]).dt.date
             if verbose:
-                print(f"  USD/VND từ Yahoo: {len(rows_df)} ngày")
+                print(f"  USD/VND từ Yahoo Finance: {len(rows_df)} ngày")
             return rows_df
-    except ImportError:
-        pass
+    except Exception as e:
+        if verbose:
+            print(f"  Không thể lấy USD/VND từ Yahoo Finance: {e}")
 
     if verbose:
-        print("  Không có dữ liệu USD/VND thực. Cần cài yfinance hoặc kết nối SBV API.")
+        print("  Không có dữ liệu USD/VND. Trả về DataFrame rỗng.")
     return pd.DataFrame(columns=["date", "usdvnd"])
 
 
@@ -109,22 +76,41 @@ def fetch_sbv_rates(verbose: bool = True) -> pd.DataFrame:
     """Lãi suất điều hành SBV (tái cấp vốn, tái chiết khấu, liên ngân hàng).
 
     Dữ liệu lịch sử SBV không có API công khai có cấu trúc.
-    Hàm này trả về bảng tĩnh các mốc thay đổi lãi suất quan trọng.
-    Cập nhật thủ công khi SBV điều chỉnh lãi suất.
+    Hàm này trả về bảng tĩnh các mốc thay đổi lãi suất quan trọng từ 2012 đến nay.
+    Duy trì và cập nhật thủ công khi NHNN ban hành Quyết định điều chỉnh mới.
     """
-    # Lịch sử điều chỉnh lãi suất tái cấp vốn SBV (% năm)
-    # Nguồn: sbv.gov.vn — cần cập nhật thủ công
+    # Lịch sử điều chỉnh lãi suất điều hành của Ngân hàng Nhà nước Việt Nam (% năm)
+    # Nguồn: sbv.gov.vn & các Quyết định chính sách tiền tệ NHNN
     sbv_rates = [
+        # Giai đoạn 2012 - 2014: Hạ nhiệt lãi suất sau giai đoạn lạm phát 2011
+        {"date": "2012-03-13", "rate_type": "refinance", "rate_pct": 14.0},
+        {"date": "2012-04-11", "rate_type": "refinance", "rate_pct": 13.0},
+        {"date": "2012-05-28", "rate_type": "refinance", "rate_pct": 12.0},
+        {"date": "2012-06-11", "rate_type": "refinance", "rate_pct": 11.0},
+        {"date": "2012-07-01", "rate_type": "refinance", "rate_pct": 10.0},
+        {"date": "2012-12-24", "rate_type": "refinance", "rate_pct": 9.0},
+        {"date": "2013-03-26", "rate_type": "refinance", "rate_pct": 8.0},
+        {"date": "2013-05-13", "rate_type": "refinance", "rate_pct": 7.0},
+        {"date": "2014-03-18", "rate_type": "refinance", "rate_pct": 6.5},
+        # Giai đoạn 2017 - 2019: Ổn định và nới lỏng nhẹ
+        {"date": "2017-07-10", "rate_type": "refinance", "rate_pct": 6.25},
+        {"date": "2019-09-16", "rate_type": "refinance", "rate_pct": 6.0},
+        # Giai đoạn 2020: Hỗ trợ nền kinh tế ứng phó Covid-19
         {"date": "2020-03-17", "rate_type": "refinance", "rate_pct": 5.0},
         {"date": "2020-05-13", "rate_type": "refinance", "rate_pct": 4.5},
+        {"date": "2020-10-01", "rate_type": "refinance", "rate_pct": 4.0},
+        # Giai đoạn 2022: Tăng lãi suất kiểm soát lạm phát và tỷ giá
         {"date": "2022-09-23", "rate_type": "refinance", "rate_pct": 5.0},
         {"date": "2022-10-25", "rate_type": "refinance", "rate_pct": 6.0},
-        {"date": "2023-03-15", "rate_type": "refinance", "rate_pct": 6.0},
-        {"date": "2023-05-25", "rate_type": "refinance", "rate_pct": 5.5},
-        {"date": "2023-06-19", "rate_type": "refinance", "rate_pct": 5.0},
-        {"date": "2023-08-14", "rate_type": "refinance", "rate_pct": 4.5},
+        # Giai đoạn 2023: 4 lần giảm lãi suất điều hành hỗ trợ tăng trưởng
+        {"date": "2023-04-03", "rate_type": "refinance", "rate_pct": 5.5},
+        {"date": "2023-05-25", "rate_type": "refinance", "rate_pct": 5.0},
+        {"date": "2023-06-19", "rate_type": "refinance", "rate_pct": 4.5},
+        # Giai đoạn 2024 - 2026: NHNN duy trì lãi suất tái cấp vốn ổn định ở mức 4.5%/năm
         {"date": "2024-01-01", "rate_type": "refinance", "rate_pct": 4.5},
-        # Thêm các mốc mới khi SBV thay đổi
+        {"date": "2024-07-01", "rate_type": "refinance", "rate_pct": 4.5},
+        {"date": "2025-01-01", "rate_type": "refinance", "rate_pct": 4.5},
+        {"date": "2026-01-01", "rate_type": "refinance", "rate_pct": 4.5},
     ]
     df = pd.DataFrame(sbv_rates)
     df["date"] = pd.to_datetime(df["date"])

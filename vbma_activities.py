@@ -47,7 +47,11 @@ from pathlib import Path
 import pandas as pd
 import requests
 
-from common import extract_all_tables
+try:
+    from pipeline.common import extract_all_tables
+except ImportError:
+    from common import extract_all_tables
+
 
 BASE_URL = "https://vbma.org.vn/vi/activities"
 ARTICLE_TITLE_RE = re.compile(
@@ -85,17 +89,35 @@ def _get(url: str) -> requests.Response:
 def _list_page_posts(page: int) -> list[dict]:
     """Danh sách bài trên 1 trang: [{"url":..., "title":...}, ...]."""
     r = _get(f"{BASE_URL}?page={page}")
-    hrefs = re.findall(r'<a[^>]+href="(/vi/activities/[^"]+)"[^>]*>(.*?)</a>',
-                       r.text, re.S | re.I)
+    # Trích xuất các bài trong activity-item (tiêu đề nằm trong h4, link trong thẻ a)
+    items = re.findall(
+        r'<div[^>]*class="[^"]*activity-item[^"]*"[^>]*>[\s\S]*?<h4[^>]*class="[^"]*activity-title[^"]*"[^>]*>(.*?)</h4>[\s\S]*?<a[^>]*href="([^"]+)"',
+        r.text, re.I
+    )
     tag = re.compile(r"<[^>]+>")
     out, seen_here = [], set()
-    for href, inner in hrefs:
-        title = " ".join(tag.sub("", inner).split())
-        if not title or href in seen_here:
+    for title_raw, href in items:
+        title = " ".join(tag.sub("", title_raw).split())
+        url = href if href.startswith("http") else ("https://vbma.org.vn" + href)
+        if not title or url in seen_here or "page=" in url:
             continue
-        seen_here.add(href)
-        out.append({"url": "https://vbma.org.vn" + href, "title": title})
+        seen_here.add(url)
+        out.append({"url": url, "title": title})
+
+    # Fallback nếu cấu trúc trang khác đi
+    if not out:
+        hrefs = re.findall(r'<a[^>]+href="([^"]*?/vi/activities/[^"]+)"[^>]*>(.*?)</a>',
+                           r.text, re.S | re.I)
+        for href, inner in hrefs:
+            title = " ".join(tag.sub("", inner).split())
+            url = href if href.startswith("http") else ("https://vbma.org.vn" + href)
+            if not title or title.lower() in ["xem thêm", "read more"] or url in seen_here or "page=" in url:
+                continue
+            seen_here.add(url)
+            out.append({"url": url, "title": title})
+
     return out
+
 
 
 def _extract_article(url: str) -> dict:

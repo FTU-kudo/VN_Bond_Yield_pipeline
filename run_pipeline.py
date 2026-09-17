@@ -205,6 +205,21 @@ def export_json(cache_dir: Path, exports_dir: Path, verbose: bool):
                 df[float_cols].notna(), other=None
             )
 
+        # Xử lý riêng cho fitted_curve_ns: lưu bản đầy đủ và bản tối ưu nhẹ cho dashboard
+        if parquet_name == "fitted_curve_ns.parquet":
+            full_data = df.to_dict(orient="records")
+            full_out = data_dir / "fitted_curve_ns_full.json"
+            with open(full_out, "w", encoding="utf-8") as f:
+                json.dump(full_data, f, ensure_ascii=False, default=str, indent=None)
+            if verbose:
+                ok(f"fitted_curve_ns_full.json: {len(full_data)} records → {full_out}")
+
+            # Cắt lấy ~1,000 ngày gần nhất (~4 năm) cho dashboard tải mượt mà
+            unique_dates = sorted(df["date"].dropna().unique())
+            if len(unique_dates) > 1000:
+                cutoff_date = unique_dates[-1000]
+                df = df[df["date"] >= cutoff_date].copy()
+
         data = df.to_dict(orient="records")
         out_path = data_dir / json_name
         with open(out_path, "w", encoding="utf-8") as f:
@@ -420,7 +435,7 @@ Ví dụ:
     # Xác định các bước cần chạy
     do_collect = args.mode in ["full", "daily", "collect"]
     do_analyze = args.mode in ["full", "daily", "analyze"]
-    do_export = args.mode in ["full", "daily", "export"]
+    do_export = args.mode in ["full", "daily", "export", "analyze"]
     do_charts = args.mode in ["full", "charts"]
 
     # Ngày bắt đầu cho daily mode

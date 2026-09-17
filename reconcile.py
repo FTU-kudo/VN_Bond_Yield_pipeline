@@ -29,7 +29,11 @@ from pathlib import Path
 
 import pandas as pd
 
-from common import strip_diacritics, vn_number
+try:
+    from pipeline.common import strip_diacritics, vn_number
+except ImportError:
+    from common import strip_diacritics, vn_number
+
 
 KEEP_COLS = ["date", "tenor", "rate_type", "value", "source", "confidence", "fetched_at"]
 
@@ -42,6 +46,8 @@ def _tenor_from_vn_text(s: str) -> str | None:
     m = re.match(r"(\d+)\s*nam", s)
     if m:
         return f"{m.group(1)}Y"
+    if s.isdigit():
+        return f"{s}Y"
     return None
 
 
@@ -92,15 +98,26 @@ def _from_vbma(cache_dir: Path) -> pd.DataFrame:
         header, body = table.get("header", []), table.get("rows", [])
         if not header or not body:
             continue
+
+        # Tìm vị trí cột kỳ hạn
+        tenor_idx = 0
+        for idx, col in enumerate(header):
+            col_clean = strip_diacritics(col).lower()
+            if "ki han" in col_clean or "ky han" in col_clean or "tenor" in col_clean:
+                tenor_idx = idx
+                break
+
         for row in body:
-            tenor = _tenor_from_vn_text(row[0]) if row else None
+            if tenor_idx >= len(row):
+                continue
+            tenor = _tenor_from_vn_text(row[tenor_idx])
             if not tenor:
                 continue
-            for i, col_name in enumerate(header[1:], start=1):
-                if i >= len(row):
+            for i, col_name in enumerate(header):
+                if i == tenor_idx or i >= len(row):
                     continue
                 val = vn_number(row[i])
-                if val == val:   # loại NaN
+                if val == val and val is not None:   # loại NaN
                     rate_type = "vbma_" + strip_diacritics(col_name).lower().replace(" ", "_")
                     rows.append({
                         "date": r["date"], "tenor": tenor, "rate_type": rate_type,
