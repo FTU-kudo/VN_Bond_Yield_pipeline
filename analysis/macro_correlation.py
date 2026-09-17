@@ -198,7 +198,7 @@ def correlation_matrix(
         fx = usdvnd_df[["date", "usdvnd"]].copy()
         fx["date"] = pd.to_datetime(fx["date"])
         base = base.merge(fx, on="date", how="left")
-        base["usdvnd_chg_20d"] = base["usdvnd"].pct_change(20) * 100
+        base["usdvnd_chg_20d"] = base["usdvnd"].pct_change(20, fill_method=None) * 100
 
     numeric_cols = [c for c in base.columns if c != "date"]
     corr = base[numeric_cols].corr().round(3)

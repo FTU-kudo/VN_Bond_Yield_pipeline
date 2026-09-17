@@ -46,7 +46,8 @@ COL_PLAN_VOL = "GT gọi thầu"          # Khối lượng kế hoạch (tỷ �
 COL_BID_VOL = "GT đặt thầu"          # Khối lượng đặt thầu
 COL_WIN_VOL = "GT trúng thầu"        # Khối lượng trúng thầu
 COL_WIN_RATE = "Lãi suất trúng thầu (%/Năm)"
-COL_STOP_RATE = "Lãi suất trúng thầu cao nhất (%/Năm)"  # Stop-out rate
+COL_STOP_RATE = "LS đăng ký cao nhất (%/Năm)"   # Stop-out rate (lãi suất đặt thầu cao nhất — đã xác nhận thực nghiệm)
+COL_LOW_RATE  = "LS đăng ký thấp nhất (%/Năm)"  # Lãi suất đặt thầu thấp nhất
 COL_SUCCESS = "auction_successful"
 COL_WIN_RATE_PARSED = "winning_rate_pct"
 COL_WIN_VOL_PARSED = "winning_volume"
@@ -102,8 +103,9 @@ def prepare_auction_df(df: pd.DataFrame) -> pd.DataFrame:
         elif target not in df.columns:
             df[target] = float("nan")
 
-    # Bid-to-cover ratio
-    df["bid_to_cover"] = df["bid_volume"] / df[COL_WIN_VOL_PARSED].replace(0, float("nan"))
+    # Bid-to-cover ratio — chuẩn quốc tế: GT đặt thầu / GT gọi thầu (chào bán)
+    # KHÔNG dùng GT trúng thầu vì khi trúng thầu rất ít sẽ cho BCR ảo (vd: 667x)
+    df["bid_to_cover"] = df["bid_volume"] / df["plan_volume"].replace(0, float("nan"))
 
     # Stop-out rate
     if COL_STOP_RATE in df.columns:
