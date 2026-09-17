@@ -34,7 +34,7 @@ import argparse
 import json
 import sys
 import time
-from datetime import date
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
 if sys.stdout and hasattr(sys.stdout, "reconfigure"):
@@ -309,6 +309,30 @@ def export_json(cache_dir: Path, exports_dir: Path, verbose: bool):
             json.dump(auction_summary, f, ensure_ascii=False, allow_nan=False)
         if verbose:
             ok(f"auction_stats.json → {out_path}")
+
+    # Export metadata.json lưu thông tin lần cập nhật gần nhất (chuẩn giờ ICT UTC+7)
+    ict = timezone(timedelta(hours=7))
+    now_ict = datetime.now(ict)
+    latest_date_str = None
+    curve_parquet = cache_dir / "fitted_curve_ns.parquet"
+    if curve_parquet.exists():
+        try:
+            df_c = pd.read_parquet(curve_parquet)
+            if "date" in df_c.columns:
+                latest_date_str = str(df_c["date"].max())[:10]
+        except Exception:
+            pass
+
+    meta_info = {
+        "last_updated": now_ict.strftime("%H:%M %d/%m/%Y"),
+        "last_updated_iso": now_ict.isoformat(),
+        "latest_data_date": latest_date_str,
+    }
+    meta_path = data_dir / "metadata.json"
+    with open(meta_path, "w", encoding="utf-8") as f:
+        json.dump(meta_info, f, ensure_ascii=False, indent=2)
+    if verbose:
+        ok(f"metadata.json → {meta_path}")
 
 
 # ── Bước 11: Charts ───────────────────────────────────────────────────────────

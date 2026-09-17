@@ -32,6 +32,7 @@ const state = {
   spreadData: null,    // spread_analysis.json
   foreignData: null,   // foreign_daily_flow.json
   paramsData: null,    // fitted_params_ns.json
+  metadata: null,      // metadata.json
   currentDate: null,
   selectedTenors: ['2Y', '5Y', '10Y'],
 };
@@ -49,13 +50,30 @@ async function loadJSON(filename) {
   }
 }
 
+function updateStatusBadges() {
+  const meta = state.metadata;
+  const currentDate = state.currentDate;
+  const badges = document.querySelectorAll('.status-badge.live, #update-badge');
+  badges.forEach(badge => {
+    // Chỉ cập nhật nếu là badge hiển thị thời gian cập nhật (không ghi đè Knowledge Base hoặc badge khác)
+    if (badge.id === 'update-badge' || badge.textContent.includes('Cập nhật')) {
+      if (meta && meta.last_updated) {
+        badge.textContent = `Cập nhật lúc ${meta.last_updated}`;
+      } else if (currentDate) {
+        badge.textContent = `Cập nhật: ${formatDateVN(currentDate)}`;
+      }
+    }
+  });
+}
+
 async function loadAllData() {
-  const [curve, spread, auction, foreign, params] = await Promise.all([
+  const [curve, spread, auction, foreign, params, meta] = await Promise.all([
     loadJSON('fitted_curve_ns.json'),
     loadJSON('spread_analysis.json'),
     loadJSON('auction_stats.json'),
     loadJSON('foreign_flow.json'),
     loadJSON('fitted_params_ns.json'),
+    loadJSON('metadata.json'),
   ]);
 
   state.curveData = curve;
@@ -63,11 +81,14 @@ async function loadAllData() {
   state.auctionData = auction;
   state.foreignData = foreign;
   state.paramsData = params;
+  state.metadata = meta;
 
   if (curve && curve.length > 0) {
     const dates = [...new Set(curve.map(d => d.date))].sort();
     state.currentDate = dates[dates.length - 1];
   }
+
+  updateStatusBadges();
 }
 
 /* ── Number Formatting ──────────────────────────────────────────────── */
@@ -905,4 +926,5 @@ window.VNBond = {
   downloadJSON,
   onResize,
   toggleTheme,
+  updateStatusBadges,
 };

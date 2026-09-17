@@ -57,7 +57,7 @@
       <p class="page-subtitle">Phân tích thị trường TPCP — Dữ liệu từ HNX & VBMA</p>
     </div>
     <div style="display: flex; align-items: center; gap: 1rem;">
-      <span class="status-badge live">Cập nhật hôm nay</span>
+      <span id="update-badge" class="status-badge live">Cập nhật lúc --:--</span>
       <button id="theme-toggle" class="theme-toggle-btn" aria-label="Toggle Theme" onclick="VNBond.toggleTheme()">Light mode 🌓</button>
       <span id="live-clock" style="font-size:0.8rem; color: var(--text-secondary); font-family: 'JetBrains Mono', monospace;"></span>
     </div>
@@ -321,7 +321,7 @@
 
 <!-- ── Scripts ─────────────────────────────────────────────────────── -->
 <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
-<script src="assets/app.js?v=1.4"></script>
+<script src="assets/app.js?v=1.5"></script>
 <script>
 // ── Page-specific initialization ─────────────────────────────────────
 (async function initHomePage() {
