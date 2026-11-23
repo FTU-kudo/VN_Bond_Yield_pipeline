@@ -98,8 +98,9 @@ VN_Bond_Yield_pipeline/
 │   ├── common.py                     # Tiện ích: parse HTML, parse số định dạng VN, cache dates
 │   └── hnx_foreign_daily.py          # Cào & bóc tách PDF giao dịch NĐTNN qua pdfplumber
 ├── 📁 analysis/                      # Động cơ phân tích định lượng (Quantitative Engine)
-│   ├── yield_curve_fitting.py        # Fitting Nelson-Siegel 4 tham số & Svensson 6 tham số
-│   ├── spread_analysis.py            # Term spread (10Y-2Y, 10Y-3M,...), Butterfly 2s5s10s, Inversion
+│   ├── yield_curve_fitting.py        # Fitting NS 4 tham số, Svensson 6 tham số, Cubic Spline, Spot/Par/Forward
+│   ├── bond_pricing.py               # Định giá TPCP (Clean/Dirty/ACT-ACT), YTM, Duration, DV01, Convexity, Roll-down
+│   ├── spread_analysis.py            # Term spreads, Butterfly 2s5s10s/5s10s15s, PCA Level/Slope/Curvature, Volatility
 │   ├── auction_statistics.py         # Thống kê đấu thầu: BCR, stop-out rate, tail, success rate
 │   ├── foreign_flow.py               # Phân tích dòng vốn khối ngoại mua/bán ròng
 │   └── macro_correlation.py          # Tương quan lãi suất điều hành SBV và tỷ giá USD/VND

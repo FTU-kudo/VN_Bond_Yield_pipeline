@@ -67,6 +67,7 @@
           <button class="btn btn-ghost btn-compare" id="btn-comp-1" style="font-size: 0.8rem; padding: 0.25rem 0.6rem;" onclick="setCompare(1)">1 Tháng Trước</button>
           <button class="btn btn-ghost btn-compare" id="btn-comp-6" style="font-size: 0.8rem; padding: 0.25rem 0.6rem;" onclick="setCompare(6)">6 Tháng Trước</button>
           <button class="btn btn-ghost btn-compare" id="btn-comp-12" style="font-size: 0.8rem; padding: 0.25rem 0.6rem;" onclick="setCompare(12)">1 Năm Trước</button>
+          <button class="btn btn-ghost btn-compare" id="btn-comp-60" style="font-size: 0.8rem; padding: 0.25rem 0.6rem;" onclick="setCompare(60)">5 Năm Trước</button>
         </div>
       </div>
       <p class="chart-subtitle" id="curve-info">Dữ liệu spot rate liên tục — kỳ hạn 1 tháng đến 30 năm</p>
@@ -159,11 +160,15 @@ let paramsDataGlobal = null;
 let currentSelectedDate = null;
 let nsParamState = { param: 'all', range: 'all' };
 
+let currentMethod = 'ns';
+
 const NS_COLORS = {
   b0: '#38bdf8',   // Cyan
   b1: '#f43f5e',   // Rose Pink
   b2: '#10b981',   // Emerald Green
+  b3: '#ec4899',   // Magenta (Svensson 2nd hump)
   lam1: '#f59e0b', // Amber Gold
+  lam2: '#06b6d4', // Teal (Svensson 2nd decay)
   rmse: '#a855f7', // Purple
 };
 
@@ -171,27 +176,19 @@ const NS_LABELS = {
   b0: { name: 'β₀ Level', desc: 'Long-term yield asymptote (m → ∞)', unit: '%' },
   b1: { name: 'β₁ Slope', desc: 'Curve slope (negative = normal upward)', unit: '%' },
   b2: { name: 'β₂ Curvature', desc: 'Medium-term hump curvature (2Y – 7Y)', unit: '%' },
-  lam1: { name: 'λ Decay', desc: 'Decay rate / Scale parameter', unit: '' },
+  b3: { name: 'β₃ Hump 2', desc: 'Svensson long-term hump (10Y – 20Y)', unit: '%' },
+  lam1: { name: 'λ₁ Decay', desc: 'Decay rate / Scale parameter', unit: '' },
+  lam2: { name: 'λ₂ Decay 2', desc: 'Svensson 2nd decay scale', unit: '' },
   rmse: { name: 'RMSE', desc: 'Root Mean Square Error (Fit)', unit: ' bps' },
 };
 
-(async function init() {
-  await VNBond.loadAllData();
-  curveDataGlobal = VNBond.state.curveData;
-  spreadDataGlobal = VNBond.state.spreadData;
-  paramsDataGlobal = VNBond.state.paramsData;
-
-  if (!curveDataGlobal) {
-    // Render demo
-    curveDataGlobal = generateDemoCurve();
-  }
-
-  // Init slider
+function bindCurveSlider() {
   allDates = VNBond.initDateSlider('date-slider', curveDataGlobal, (date) => {
     currentSelectedDate = date;
     document.getElementById('slider-date-display').textContent = VNBond.formatDateVN(date);
-    let subtitle = `Nelson-Siegel fitting — Ngày ${VNBond.formatDateVN(date)}`;
-    
+    const modelLabel = currentMethod === 'nss' ? 'Svensson (6 tham số)' : 'Nelson-Siegel (4 tham số)';
+    let subtitle = `${modelLabel} — Ngày ${VNBond.formatDateVN(date)}`;
+
     let compData = null;
     if (compareMonths > 0) {
       const d = new Date(date);
@@ -206,12 +203,50 @@ const NS_LABELS = {
       compData = curveDataGlobal.filter(item => item.date === closestDate);
       subtitle += ` (so với ${VNBond.formatDateVN(closestDate)})`;
     }
-    
+
     document.getElementById('curve-info').textContent = subtitle;
     VNBond.drawYieldCurve('yield-curve-main', curveDataGlobal, date, compData);
     updateNSParamsMarker(date);
     renderPercentileTable(curveDataGlobal, spreadDataGlobal, date);
   });
+}
+
+(async function init() {
+  await VNBond.loadAllData();
+  curveDataGlobal = VNBond.state.curveDataNS || VNBond.state.curveData;
+  spreadDataGlobal = VNBond.state.spreadData;
+  paramsDataGlobal = VNBond.state.paramsDataNS || VNBond.state.paramsData;
+
+  if (!curveDataGlobal) {
+    curveDataGlobal = generateDemoCurve();
+  }
+
+  bindCurveSlider();
+
+  // Kích hoạt bộ chọn mô hình Nelson-Siegel (NS) vs Svensson (NSS)
+  const methodSel = document.getElementById('method-select');
+  if (methodSel) {
+    methodSel.addEventListener('change', (e) => {
+      currentMethod = e.target.value;
+      if (currentMethod === 'nss' && VNBond.state.curveDataNSS && VNBond.state.curveDataNSS.length) {
+        curveDataGlobal = VNBond.state.curveDataNSS;
+        paramsDataGlobal = VNBond.state.paramsDataNSS || VNBond.state.paramsDataNS;
+      } else {
+        currentMethod = 'ns';
+        curveDataGlobal = VNBond.state.curveDataNS || VNBond.state.curveData;
+        paramsDataGlobal = VNBond.state.paramsDataNS || VNBond.state.paramsData;
+      }
+      // Clone slider element to clear old listeners cleanly before rebinding
+      const oldSlider = document.getElementById('date-slider');
+      const newSlider = oldSlider.cloneNode(true);
+      oldSlider.parentNode.replaceChild(newSlider, oldSlider);
+      bindCurveSlider();
+      const targetIdx = currentSelectedDate ? Math.max(0, allDates.indexOf(currentSelectedDate)) : (allDates.length - 1);
+      newSlider.value = targetIdx >= 0 ? targetIdx : (allDates.length - 1);
+      drawNSParams(paramsDataGlobal);
+      newSlider.dispatchEvent(new Event('input'));
+    });
+  }
 
   // Initial render
   const latestDate = allDates[allDates.length - 1];
@@ -342,6 +377,17 @@ function renderNSMetricsBar(latest) {
 
   const rmseVal = (latest.rmse * 100).toFixed(4);
 
+  const extraNSSCards = (currentMethod === 'nss' && latest.b3 != null) ? `
+    <div style="background:var(--bg-surface); padding:0.55rem 0.65rem; border-radius:6px; border:1px solid var(--border-subtle); border-left:3px solid ${NS_COLORS.b3}; min-width:0; overflow:hidden;">
+      <div style="font-size:0.7rem; color:var(--text-secondary); display:flex; justify-content:space-between; gap:0.2rem;">
+        <span style="white-space:nowrap;">β₃ Hump 2</span><span style="white-space:nowrap;">Svensson</span>
+      </div>
+      <div style="font-size:1.15rem; font-weight:700; color:${NS_COLORS.b3}; font-family:'JetBrains Mono',monospace; margin:2px 0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+        ${latest.b3.toFixed(3)}%
+      </div>
+      <div style="font-size:0.68rem; color:var(--text-muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="λ₂ = ${latest.lam2 != null ? latest.lam2.toFixed(2) : '—'}">λ₂ = ${latest.lam2 != null ? latest.lam2.toFixed(2) : '—'}</div>
+    </div>` : '';
+
   bar.innerHTML = `
     <div style="background:var(--bg-surface); padding:0.55rem 0.65rem; border-radius:6px; border:1px solid var(--border-subtle); border-left:3px solid ${NS_COLORS.b0}; min-width:0; overflow:hidden;">
       <div style="font-size:0.7rem; color:var(--text-secondary); display:flex; justify-content:space-between; gap:0.2rem;">
@@ -373,9 +419,11 @@ function renderNSMetricsBar(latest) {
       <div style="font-size:0.68rem; color:var(--text-muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="Medium-term Hump (2Y – 7Y)">Medium-term Hump (2Y – 7Y)</div>
     </div>
 
+    ${extraNSSCards}
+
     <div style="background:var(--bg-surface); padding:0.55rem 0.65rem; border-radius:6px; border:1px solid var(--border-subtle); border-left:3px solid ${NS_COLORS.lam1}; min-width:0; overflow:hidden;">
       <div style="font-size:0.7rem; color:var(--text-secondary); display:flex; justify-content:space-between; gap:0.2rem;">
-        <span style="white-space:nowrap;">λ Decay</span><span style="white-space:nowrap;">Decay Rate</span>
+        <span style="white-space:nowrap;">λ₁ Decay</span><span style="white-space:nowrap;">Decay Rate</span>
       </div>
       <div style="font-size:1.15rem; font-weight:700; color:${NS_COLORS.lam1}; font-family:'JetBrains Mono',monospace; margin:2px 0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
         ${latest.lam1.toFixed(3)}
@@ -402,7 +450,7 @@ function updateNSLegend() {
   const activeParam = nsParamState.param;
   let items = [];
   if (activeParam === 'all') {
-    items = ['b0', 'b1', 'b2', 'lam1'];
+    items = currentMethod === 'nss' ? ['b0', 'b1', 'b2', 'b3', 'lam1', 'lam2'] : ['b0', 'b1', 'b2', 'lam1'];
   } else {
     items = [activeParam];
   }
@@ -521,7 +569,9 @@ function renderNSParamsChart() {
   }
 
   // Lines
-  const activeSeries = paramKey === 'all' ? ['b0', 'b1', 'b2', 'lam1'] : [paramKey];
+  const activeSeries = paramKey === 'all'
+    ? (currentMethod === 'nss' ? ['b0', 'b1', 'b2', 'b3', 'lam1', 'lam2'] : ['b0', 'b1', 'b2', 'lam1'])
+    : [paramKey];
   activeSeries.forEach(p => {
     const valFn = d => p === 'rmse' ? d.rmse * 100 : d[p];
     const lineGen = d3.line()

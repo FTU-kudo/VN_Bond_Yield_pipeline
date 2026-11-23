@@ -94,6 +94,7 @@
     <!-- Quick Navigation Pills -->
     <div class="glossary-nav-pills fade-in">
       <a href="#sec-curve" class="glossary-pill active">📈 Mô Hình Nelson-Siegel & Svensson</a>
+      <a href="#sec-pricing" class="glossary-pill">🛡️ Định Giá, Duration, DV01 & Roll-down</a>
       <a href="#sec-spread" class="glossary-pill">↕️ Term Spread & Butterfly</a>
       <a href="#sec-auction" class="glossary-pill">🏷️ Đấu Thầu Sơ Cấp (BCR, Tail, Stop-out)</a>
       <a href="#sec-foreign" class="glossary-pill">🌏 Dòng Vốn Khối Ngoại (Foreign Flow)</a>
@@ -466,6 +467,87 @@
               <li>Khi $\Delta r < 0$ (Lãi suất VND thấp hơn USD): Các tổ chức tín dụng có động cơ găm giữ USD $\implies$ Tỷ giá USD/VND leo thang $\implies$ SBV buộc phải can thiệp hút tiền hoặc bán ngoại tệ.</li>
               <li>Lợi suất TPCP Việt Nam có mối tương quan dương mật thiết với tỷ giá USD/VND: Khi tỷ giá chịu áp lực mất giá mạnh, lợi suất trái phiếu thường tăng theo để bù đắp rủi ro tiền tệ.</li>
             </ul>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- SECTION 5B: ĐỊNH GIÁ TPCP, DURATION, DV01, CONVEXITY & ROLL-DOWN -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <section id="sec-pricing">
+      <div class="glossary-section-title">
+        <span>🛡️ Định Giá Trái Phiếu, Rủi Ro Lãi Suất (Duration / DV01 / Convexity) &amp; Roll-down</span>
+      </div>
+
+      <div class="glossary-grid">
+
+        <div class="glossary-card" data-keywords="clean price dirty price accrued interest act/act thong tu 30 hnx dinh gia">
+          <div class="glossary-card-header">
+            <div>
+              <div class="glossary-term-name">Giá Sạch, Giá Kèm Lãi &amp; Quy Ước Ngày Đếm</div>
+              <div class="glossary-term-en">Clean Price, Dirty Price &amp; Actual/Actual (ICMA)</div>
+            </div>
+            <span class="glossary-tag curve">Định Giá TPCP</span>
+          </div>
+          <div class="glossary-body">
+            <p>
+              Theo chuẩn <strong>Thông tư 30/2023/TT-BTC</strong> và quy chế giao dịch TPCP tại HNX (mệnh giá $M = 100.000\text{ VNĐ}$, trả lãi định kỳ $f=1$ lần/năm), quy ước ngày đếm chuẩn là <strong>Actual/Actual (ICMA)</strong>.
+            </p>
+            <div class="formula-box">
+              <div class="formula-label">Công thức định giá chuẩn HNX:</div>
+              $$P_{\text{dirty}}(y) = \sum_{j=0}^{N-1} \frac{CF_j}{(1 + y)^{v + j}}, \quad v = \frac{d_{\text{next}}}{E}, \quad AI = C \cdot \frac{d_{\text{accrued}}}{E}$$
+              $$P_{\text{clean}} = P_{\text{dirty}} - AI$$
+            </div>
+            <p>
+              Trong đó $E = (t_{\text{next}} - t_{\text{prev}})$ là số ngày thực tế của kỳ tính lãi hiện hành ($365$ hoặc $366$ ngày nếu đi qua ngày 29/02 năm nhuận).
+            </p>
+          </div>
+        </div>
+
+        <div class="glossary-card" data-keywords="duration macaulay modified dv01 pv01 convexity do nhay lai suat">
+          <div class="glossary-card-header">
+            <div>
+              <div class="glossary-term-name">Duration, DV01 &amp; Convexity</div>
+              <div class="glossary-term-en">Interest Rate Sensitivity &amp; 2nd-Order Risk</div>
+            </div>
+            <span class="glossary-tag curve">Quản Trị Rủi Ro</span>
+          </div>
+          <div class="glossary-body">
+            <p>
+              Bộ ba thước đo cốt lõi của bàn giao dịch trái phiếu (Fixed Income Desk) dùng để phòng vệ rủi ro lãi suất và thiết kế danh mục:
+            </p>
+            <div class="formula-box">
+              <div class="formula-label">Độ nhạy bậc 1 và bậc 2:</div>
+              $$D_{\text{Mod}} = \frac{D_{\text{Mac}}}{1 + y/f}, \quad \text{DV01} = \frac{P(y - 1\text{bp}) - P(y + 1\text{bp})}{2}$$
+              $$\frac{\Delta P}{P_{\text{dirty}}} \approx -D_{\text{Mod}} \cdot \Delta y + \frac{1}{2}\text{Convexity} \cdot (\Delta y)^2$$
+            </div>
+            <p>
+              Trên thị trường liên ngân hàng Việt Nam, một lô giao dịch chuẩn <strong>100 tỷ VNĐ</strong> kỳ hạn 10Y có $\text{DV01} \approx 79\text{ triệu VNĐ/bps}$.
+            </p>
+          </div>
+        </div>
+
+        <div class="glossary-card" data-keywords="par yield spot rate forward rate carry rolldown return pca">
+          <div class="glossary-card-header">
+            <div>
+              <div class="glossary-term-name">Spot, Par, Implied Forward &amp; Roll-down Return</div>
+              <div class="glossary-term-en">Term Structure &amp; Horizon Total Return</div>
+            </div>
+            <span class="glossary-tag macro">Chiến Lược Danh Mục</span>
+          </div>
+          <div class="glossary-body">
+            <p>
+              Phân biệt rạch ròi 3 đường cong: <strong>Spot Rate $z_a(t)$</strong> (chiết khấu dòng tiền đơn), <strong>Par Yield $c_{\text{par}}(N)$</strong> (coupon để trái phiếu giao dịch ngang giá $100$), và <strong>Implied Forward Rate $f(t_1, t_2)$</strong> (lãi suất kỳ hạn hòa vốn tương lai).
+            </p>
+            <div class="formula-box">
+              <div class="formula-label">Cấu trúc kỳ hạn &amp; Roll-down:</div>
+              $$(1 + f_{t_1, t_2})^{t_2 - t_1} = \frac{(1 + z_2)^{t_2}}{(1 + z_1)^{t_1}}, \quad R_{\text{total}} = R_{\text{carry}} + R_{\text{rolldown}}$$
+            </div>
+            <p>
+              Khi đường cong dốc lên, nắm giữ TPCP ở sườn dốc (5Y–10Y) mang lại thêm lợi nhuận vốn tự nhiên (Roll-down) ngay cả khi mặt bằng lãi suất đi ngang.
+            </p>
           </div>
         </div>
 

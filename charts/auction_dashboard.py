@@ -265,7 +265,7 @@ def create_dashboard(data: dict) -> go.Figure:
         gridcolor="rgba(148,163,184,0.1)",
         zerolinecolor="rgba(148,163,184,0.2)",
         tickfont=dict(color="#94a3b8"),
-        titlefont=dict(color="#94a3b8"),
+        title_font=dict(color="#94a3b8"),
     )
 
     fig.update_layout(

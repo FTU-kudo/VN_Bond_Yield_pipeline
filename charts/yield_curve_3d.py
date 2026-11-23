@@ -107,8 +107,7 @@ def create_figure(
             x=X, y=Y, z=Z,
             colorscale="RdYlGn_r",   # Đỏ = cao, xanh = thấp (giống bond market)
             colorbar=dict(
-                title="Lợi suất (%)",
-                titlefont=dict(color="#e2e8f0"),
+                title=dict(text="Lợi suất (%)", font=dict(color="#e2e8f0")),
                 tickfont=dict(color="#e2e8f0"),
                 bgcolor="rgba(0,0,0,0)",
                 bordercolor="rgba(255,255,255,0.1)",
@@ -135,16 +134,14 @@ def create_figure(
         scene=dict(
             bgcolor="#0f172a",
             xaxis=dict(
-                title="Kỳ hạn (năm)",
-                titlefont=dict(color="#94a3b8"),
+                title=dict(text="Kỳ hạn (năm)", font=dict(color="#94a3b8")),
                 tickfont=dict(color="#94a3b8"),
                 gridcolor="rgba(148,163,184,0.15)",
                 showbackground=True,
                 backgroundcolor="#1e293b",
             ),
             yaxis=dict(
-                title="Thời gian",
-                titlefont=dict(color="#94a3b8"),
+                title=dict(text="Thời gian", font=dict(color="#94a3b8")),
                 tickfont=dict(color="#94a3b8", size=9),
                 tickvals=y_tickvals,
                 ticktext=y_ticktext,
@@ -153,8 +150,7 @@ def create_figure(
                 backgroundcolor="#1e293b",
             ),
             zaxis=dict(
-                title="Lợi suất (%)",
-                titlefont=dict(color="#94a3b8"),
+                title=dict(text="Lợi suất (%)", font=dict(color="#94a3b8")),
                 tickfont=dict(color="#94a3b8"),
                 gridcolor="rgba(148,163,184,0.15)",
                 showbackground=True,
