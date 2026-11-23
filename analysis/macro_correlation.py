@@ -38,7 +38,10 @@ if sys.stderr and hasattr(sys.stderr, "reconfigure"):
 
 import numpy as np
 import pandas as pd
-import requests
+try:
+    import requests
+except ImportError:
+    requests = None
 
 
 # ── Lấy dữ liệu vĩ mô công khai ─────────────────────────────────────────────

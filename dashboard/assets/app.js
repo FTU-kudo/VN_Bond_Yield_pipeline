@@ -27,11 +27,17 @@ const TENOR_COLORS = {
 /* ── State ──────────────────────────────────────────────────────────── */
 const state = {
   yieldData: null,     // combined_tpcp_yields.json
-  curveData: null,     // fitted_curve_ns.json
+  curveData: null,     // active fitted curve (NS or NSS)
+  curveDataNS: null,   // fitted_curve_ns.json
+  curveDataNSS: null,  // fitted_curve_nss.json
   auctionData: null,   // hnx_auctions_daily.json
   spreadData: null,    // spread_analysis.json
   foreignData: null,   // foreign_daily_flow.json
-  paramsData: null,    // fitted_params_ns.json
+  paramsData: null,    // active fitted params (NS or NSS)
+  paramsDataNS: null,  // fitted_params_ns.json
+  paramsDataNSS: null, // fitted_params_nss.json
+  riskLadder: null,    // bond_risk_ladder.json
+  curvePCA: null,      // curve_pca.json
   metadata: null,      // metadata.json
   currentDate: null,
   selectedTenors: ['2Y', '5Y', '10Y'],
@@ -67,24 +73,34 @@ function updateStatusBadges() {
 }
 
 async function loadAllData() {
-  const [curve, spread, auction, foreign, params, meta] = await Promise.all([
+  const [curveNS, curveNSS, spread, auction, foreign, paramsNS, paramsNSS, riskLadder, curvePCA, meta] = await Promise.all([
     loadJSON('fitted_curve_ns.json'),
+    loadJSON('fitted_curve_nss.json'),
     loadJSON('spread_analysis.json'),
     loadJSON('auction_stats.json'),
     loadJSON('foreign_flow.json'),
     loadJSON('fitted_params_ns.json'),
+    loadJSON('fitted_params_nss.json'),
+    loadJSON('bond_risk_ladder.json'),
+    loadJSON('curve_pca.json'),
     loadJSON('metadata.json'),
   ]);
 
-  state.curveData = curve;
+  state.curveData = curveNS;
+  state.curveDataNS = curveNS;
+  state.curveDataNSS = curveNSS;
   state.spreadData = spread;
   state.auctionData = auction;
   state.foreignData = foreign;
-  state.paramsData = params;
+  state.paramsData = paramsNS;
+  state.paramsDataNS = paramsNS;
+  state.paramsDataNSS = paramsNSS;
+  state.riskLadder = riskLadder;
+  state.curvePCA = curvePCA;
   state.metadata = meta;
 
-  if (curve && curve.length > 0) {
-    const dates = [...new Set(curve.map(d => d.date))].sort();
+  if (curveNS && curveNS.length > 0) {
+    const dates = [...new Set(curveNS.map(d => d.date))].sort();
     state.currentDate = dates[dates.length - 1];
   }
 
@@ -360,9 +376,12 @@ const SPREAD_PRESETS = {
   'spread_10y_2y': { labelA: '10Y', labelB: '2Y', tenorA: 10, tenorB: 2, keyA: 'y_10y', keyB: 'y_2y' },
   'spread_10y_3m': { labelA: '10Y', labelB: '3M', tenorA: 10, tenorB: 0.25, keyA: 'y_10y', keyB: 'y_3m' },
   'spread_5y_2y': { labelA: '5Y', labelB: '2Y', tenorA: 5, tenorB: 2, keyA: 'y_5y', keyB: 'y_2y' },
+  'spread_10y_5y': { labelA: '10Y', labelB: '5Y', tenorA: 10, tenorB: 5, keyA: 'y_10y', keyB: 'y_5y' },
   'spread_10y_1y': { labelA: '10Y', labelB: '1Y', tenorA: 10, tenorB: 1, keyA: 'y_10y', keyB: 'y_1y' },
+  'spread_15y_10y': { labelA: '15Y', labelB: '10Y', tenorA: 15, tenorB: 10, keyA: 'y_15y', keyB: 'y_10y' },
   'spread_30y_10y': { labelA: '30Y', labelB: '10Y', tenorA: 30, tenorB: 10, keyA: 'y_30y', keyB: 'y_10y' },
   'butterfly_2s5s10s': { isButterfly: true, label: 'Butterfly 2s5s10s', key2: 'y_2y', key5: 'y_5y', key10: 'y_10y' },
+  'butterfly_5s10s15s': { isButterfly: true, label: 'Butterfly 5s10s15s', key2: 'y_5y', key5: 'y_10y', key10: 'y_15y' },
 };
 
 /* ── Spread Line Chart ──────────────────────────────────────────────── */

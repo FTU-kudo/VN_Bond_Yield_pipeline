@@ -144,8 +144,7 @@ def create_heatmap_figure(
             [1.0, "#7f1d1d"],    # Đỏ đậm: cao nhất
         ],
         colorbar=dict(
-            title="Lợi suất (%)",
-            titlefont=dict(color="#e2e8f0"),
+            title=dict(text="Lợi suất (%)", font=dict(color="#e2e8f0")),
             tickfont=dict(color="#e2e8f0"),
             bgcolor="rgba(0,0,0,0)",
         ),
@@ -166,8 +165,7 @@ def create_heatmap_figure(
         paper_bgcolor="#0f172a",
         plot_bgcolor="#0f172a",
         xaxis=dict(
-            title="Thời gian",
-            titlefont=dict(color="#94a3b8"),
+            title=dict(text="Thời gian", font=dict(color="#94a3b8")),
             tickfont=dict(color="#94a3b8", size=9),
             tickvals=x_tick_idx,
             ticktext=x_tick_text,
@@ -175,8 +173,7 @@ def create_heatmap_figure(
             gridcolor="rgba(0,0,0,0)",
         ),
         yaxis=dict(
-            title="Kỳ hạn",
-            titlefont=dict(color="#94a3b8"),
+            title=dict(text="Kỳ hạn", font=dict(color="#94a3b8")),
             tickfont=dict(color="#94a3b8"),
             gridcolor="rgba(0,0,0,0)",
         ),
@@ -224,8 +221,7 @@ def create_spread_heatmap(spreads_df: pd.DataFrame) -> go.Figure:
         plot_bgcolor="#0f172a",
         xaxis=dict(tickfont=dict(color="#94a3b8"), gridcolor="rgba(148,163,184,0.1)"),
         yaxis=dict(
-            title="Spread (bps)",
-            titlefont=dict(color="#94a3b8"),
+            title=dict(text="Spread (bps)", font=dict(color="#94a3b8")),
             tickfont=dict(color="#94a3b8"),
             gridcolor="rgba(148,163,184,0.1)",
             zerolinecolor="rgba(255,255,255,0.3)",

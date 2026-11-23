@@ -145,6 +145,7 @@
         <div class="btn-group" id="spread-preset-group">
           <span style="font-size: 0.75rem; color: var(--text-secondary); font-weight: 600;">Chuẩn:</span>
           <button class="btn btn-primary" id="btn-spread-10y2y" onclick="selectPresetSpread('spread_10y_2y', '10Y - 2Y', this)">10Y-2Y</button>
+          <button class="btn btn-ghost" id="btn-spread-10y5y" onclick="selectPresetSpread('spread_10y_5y', '10Y - 5Y', this)">10Y-5Y</button>
           <button class="btn btn-ghost" id="btn-spread-10y3m" onclick="selectPresetSpread('spread_10y_3m', '10Y - 3M', this)">10Y-3M</button>
           <button class="btn btn-ghost" id="btn-spread-5y2y" onclick="selectPresetSpread('spread_5y_2y', '5Y - 2Y', this)">5Y-2Y</button>
           <button class="btn btn-ghost" id="btn-spread-10y1y" onclick="selectPresetSpread('spread_10y_1y', '10Y - 1Y', this)">10Y-1Y</button>
@@ -268,6 +269,40 @@
     </div>
 
     <!-- ── Filter Bar: Mốc thời gian Đấu thầu & Khối ngoại ───────────── -->
+    <!-- ── Sovereign Bond Risk & Carry/Roll-down Ladder (3Y - 15Y Core & Full Curve) ── -->
+    <div class="chart-card chart-card-full fade-in" style="margin-bottom: 1.5rem;">
+      <div class="chart-title" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem;">
+        <div style="display:flex; align-items:center; gap:0.5rem;">
+          <span>🛡️ Thang Định Giá, Độ Nhạy Lãi Suất (Duration / DV01 / Convexity) &amp; Roll-down TPCP</span>
+          <span id="risk-ladder-date-badge" class="spread-stat-pill" style="font-size:0.72rem;">ACT/ACT · Mệnh giá 100k VNĐ</span>
+        </div>
+        <div class="btn-group" id="risk-ladder-filter">
+          <button class="btn btn-primary" style="font-size:0.75rem; padding:0.25rem 0.65rem;" onclick="toggleRiskLadderView('core', this)">Kỳ hạn chủ đạo (3Y–15Y)</button>
+          <button class="btn btn-ghost" style="font-size:0.75rem; padding:0.25rem 0.65rem;" onclick="toggleRiskLadderView('all', this)">Toàn bộ 12 kỳ hạn (3M–30Y)</button>
+        </div>
+      </div>
+      <p class="chart-subtitle">
+        Chuẩn niêm yết HNX (Thông tư 30/2023/TT-BTC, coupon 1 lần/năm, Actual/Actual ICMA) · DV01 quy đổi cho lô chuẩn <strong>100 tỷ VNĐ</strong> mệnh giá · Expected 1Y Return = Carry + Roll-down.
+      </p>
+      <div id="risk-ladder-table-wrap" style="overflow-x:auto; margin-top:0.5rem;">
+        <div class="skeleton" style="height: 160px; border-radius: 8px;"></div>
+      </div>
+    </div>
+
+    <!-- ── Bảng Lịch Sử Lợi Suất 20 Phiên Gần Nhất (Kỳ Hạn Chủ Đạo 3Y–15Y) ── -->
+    <div class="chart-card chart-card-full fade-in" style="margin-bottom: 1.5rem;">
+      <div class="chart-title" style="display:flex; justify-content:space-between; align-items:center;">
+        <span>📋 Lịch Sử Lợi Suất TPCP (20 Phiên Giao Dịch Gần Nhất — Nhóm Kỳ Hạn Thanh Khoản Chủ Đạo)</span>
+        <span class="spread-stat-pill" style="font-size:0.72rem;">Spot Annual % · HNX</span>
+      </div>
+      <p class="chart-subtitle">
+        Theo dõi trực diện nhóm kỳ hạn chiếm &gt;85% thanh khoản thứ cấp &amp; gọi thầu KBNN (3Y, 5Y, 7Y, 10Y, 15Y) kèm Term Spread 10Y-2Y &amp; 10Y-1Y.
+      </p>
+      <div id="recent-20d-yield-table" style="overflow-x:auto; margin-top:0.5rem;">
+        <div class="skeleton" style="height: 180px; border-radius: 8px;"></div>
+      </div>
+    </div>
+
     <div class="date-filter-bar fade-in">
       <div class="date-filter-group">
         <span style="font-size: 0.85rem; font-weight: 600; color: var(--text-primary);">📅 Mốc thời gian:</span>
@@ -346,10 +381,14 @@
     drawDemoYieldCurve();
   }
 
-  // Tenor table
+  // Tenor table (với biến động 1 phiên DoD thực tế tính bằng bps)
   if (curveData && currentDate) {
     renderTenorTable(curveData, currentDate);
   }
+
+  // Render Thang Rủi Ro TPCP (Duration / DV01 / Convexity / Roll-down) & Bảng 20 phiên gần nhất
+  renderRiskLadder(VNBond.state.riskLadder, 'core');
+  renderRecent20DaysTable(spreadData);
 
   // Metric cards
   if (spreadData && spreadData.length > 0) {
@@ -776,35 +815,175 @@ function renderTenorTable(curveData, date) {
 
   if (!dayData.length) return;
 
+  // Tìm phiên giao dịch liền trước để tính biến động DoD (bps)
+  const allDatesSorted = [...new Set(curveData.map(d => d.date))].sort();
+  const curIdx = allDatesSorted.indexOf(date);
+  const prevDate = curIdx > 0 ? allDatesSorted[curIdx - 1] : null;
+  const prevMap = {};
+  if (prevDate) {
+    curveData.filter(d => d.date === prevDate).forEach(d => {
+      prevMap[d.tenor_yr] = d.yield_pct;
+    });
+  }
+
   const tbody = document.getElementById('tenor-table-body');
   const html = `
-    <table class="data-table">
+    <div class="table-scroll-container" style="max-height: 350px;">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Kỳ Hạn</th>
+            <th>Spot (%)</th>
+            <th>Biến Động (1D)</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${dayData.map(d => {
+            const label = VNBond.tenorLabel(d.tenor_yr);
+            const colorClass = label.endsWith('M') ? 't-3m'
+              : d.tenor_yr <= 1 ? 't-1y'
+              : d.tenor_yr <= 2 ? 't-2y'
+              : d.tenor_yr <= 5 ? 't-5y'
+              : d.tenor_yr <= 10 ? 't-10y' : 't-30y';
+            const prevVal = prevMap[d.tenor_yr];
+            let chgHtml = '<span class="mono text-muted">—</span>';
+            if (prevVal != null) {
+              const diffBps = (d.yield_pct - prevVal) * 100;
+              const cls = Math.abs(diffBps) < 0.05 ? 'neutral' : (diffBps > 0 ? 'up' : 'down');
+              const sign = diffBps > 0.05 ? '+' : '';
+              chgHtml = `<span class="metric-change ${cls} mono" style="font-size:0.75rem;">${sign}${diffBps.toFixed(1)} bps</span>`;
+            }
+            return `
+            <tr>
+              <td><span class="tenor-tag ${colorClass}">${label}</span></td>
+              <td class="mono text-accent">${VNBond.fmt.rate(d.yield_pct)}</td>
+              <td>${chgHtml}</td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>
+  `;
+  tbody.innerHTML = html;
+}
+
+let currentRiskLadderMode = 'core';
+function toggleRiskLadderView(mode, btn) {
+  currentRiskLadderMode = mode;
+  const grp = document.getElementById('risk-ladder-filter');
+  if (grp) {
+    grp.querySelectorAll('button').forEach(b => b.className = 'btn btn-ghost');
+  }
+  if (btn) btn.className = 'btn btn-primary';
+  renderRiskLadder(VNBond.state.riskLadder, mode);
+}
+
+function renderRiskLadder(ladder, mode = 'core') {
+  const wrap = document.getElementById('risk-ladder-table-wrap');
+  const badge = document.getElementById('risk-ladder-date-badge');
+  if (!wrap) return;
+  if (!ladder || !ladder.length) {
+    wrap.innerHTML = `<div style="padding:1.5rem; text-align:center; color:var(--text-muted); font-size:0.85rem;">Chưa có dữ liệu bond_risk_ladder.json. Hãy chạy <code>python run_pipeline.py --mode analyze</code>.</div>`;
+    return;
+  }
+
+  if (badge && ladder[0].date) {
+    badge.textContent = `Ngày ${VNBond.formatDateVN(ladder[0].date)} · ACT/ACT · Lô 100 Tỷ VNĐ`;
+  }
+
+  const rows = mode === 'core' ? ladder.filter(r => r.is_core_liquid) : ladder;
+  wrap.innerHTML = `
+    <table class="data-table" style="width:100%; margin:0;">
       <thead>
         <tr>
           <th>Kỳ Hạn</th>
-          <th>Lợi Suất</th>
-          <th>Biến Động</th>
+          <th>Spot Annual</th>
+          <th>Par Yield (Cpn)</th>
+          <th>1Y Forward</th>
+          <th>Mod. Duration</th>
+          <th>DV01 / 100 Tỷ</th>
+          <th>Convexity</th>
+          <th>Roll-down (1Y)</th>
+          <th>Expected 1Y Ret</th>
+          <th>Đệm Breakeven</th>
         </tr>
       </thead>
       <tbody>
-        ${dayData.map(d => {
-          const label = VNBond.tenorLabel(d.tenor_yr);
-          const colorClass = label.endsWith('M') ? 't-3m'
-            : d.tenor_yr <= 1 ? 't-1y'
-            : d.tenor_yr <= 2 ? 't-2y'
-            : d.tenor_yr <= 5 ? 't-5y'
-            : d.tenor_yr <= 10 ? 't-10y' : 't-30y';
+        ${rows.map(r => {
+          const dv01M = r.dv01_per_100bn_vnd != null ? (r.dv01_per_100bn_vnd / 1e6).toFixed(2) + ' tr' : '—';
+          const rollStr = r.rolldown_1y_pct != null && r.tenor_yr >= 2
+            ? (r.rolldown_1y_pct >= 0 ? '+' : '') + r.rolldown_1y_pct.toFixed(2) + '%'
+            : '—';
+          const rollCls = (r.rolldown_1y_pct || 0) >= 0 ? 'var(--color-up)' : 'var(--color-down)';
+          const beStr = r.breakeven_spike_bps != null ? '+' + r.breakeven_spike_bps.toFixed(0) + ' bps' : '—';
           return `
-          <tr>
-            <td><span class="tenor-tag ${colorClass}">${label}</span></td>
-            <td class="mono text-accent">${VNBond.fmt.rate(d.yield_pct)}</td>
-            <td class="mono text-muted">—</td>
-          </tr>`;
+            <tr>
+              <td><span class="tenor-tag ${r.is_core_liquid ? 't-10y' : 't-2y'}">${r.tenor}</span></td>
+              <td class="mono">${r.spot_annual_pct.toFixed(3)}%</td>
+              <td class="mono text-accent" style="font-weight:600;">${r.par_yield_pct.toFixed(3)}%</td>
+              <td class="mono">${r.forward_1y_pct != null ? r.forward_1y_pct.toFixed(3) + '%' : '—'}</td>
+              <td class="mono">${r.modified_duration_yr.toFixed(2)}Y</td>
+              <td class="mono" style="font-weight:600;">${dv01M}</td>
+              <td class="mono">${r.convexity_yr2.toFixed(1)}</td>
+              <td class="mono" style="color:${rollCls}; font-weight:500;">${rollStr}</td>
+              <td class="mono" style="color:var(--color-up); font-weight:700;">${r.total_return_1y_pct.toFixed(2)}%</td>
+              <td class="mono text-muted">${beStr}</td>
+            </tr>`;
         }).join('')}
       </tbody>
     </table>
   `;
-  tbody.innerHTML = html;
+}
+
+function renderRecent20DaysTable(spreadData) {
+  const wrap = document.getElementById('recent-20d-yield-table');
+  if (!wrap) return;
+  if (!spreadData || !spreadData.length) {
+    wrap.innerHTML = `<div style="padding:1.5rem; text-align:center; color:var(--text-muted); font-size:0.85rem;">Chưa có dữ liệu lịch sử.</div>`;
+    return;
+  }
+
+  const recent = spreadData.slice(-20).reverse();
+  const fmtPct = v => v != null ? v.toFixed(3) + '%' : '—';
+  const fmtBps = v => v != null ? (v >= 0 ? '+' : '') + (v * 100).toFixed(1) + ' bps' : '—';
+
+  wrap.innerHTML = `
+    <div class="table-scroll-container" style="max-height: 420px;">
+      <table class="data-table" style="width:100%; margin:0;">
+        <thead>
+          <tr>
+            <th>Ngày GD</th>
+            <th>Kỳ hạn 3Y</th>
+            <th>Kỳ hạn 5Y</th>
+            <th>Kỳ hạn 7Y</th>
+            <th>Kỳ hạn 10Y</th>
+            <th>Kỳ hạn 15Y</th>
+            <th>Spread 10Y-2Y</th>
+            <th>Spread 10Y-1Y</th>
+            <th>Trạng Thái Curve</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${recent.map(r => {
+            const sp2 = r.spread_10y_2y;
+            const spColor = sp2 != null && sp2 < 0 ? 'var(--color-down)' : 'var(--color-up)';
+            return `
+              <tr>
+                <td class="mono" style="font-weight:600;">${VNBond.formatDateVN(r.date)}</td>
+                <td class="mono">${fmtPct(r.y_3y)}</td>
+                <td class="mono">${fmtPct(r.y_5y)}</td>
+                <td class="mono">${fmtPct(r.y_7y)}</td>
+                <td class="mono text-accent" style="font-weight:700;">${fmtPct(r.y_10y)}</td>
+                <td class="mono">${fmtPct(r.y_15y)}</td>
+                <td class="mono" style="color:${spColor}; font-weight:600;">${fmtBps(sp2)}</td>
+                <td class="mono">${fmtBps(r.spread_10y_1y)}</td>
+                <td style="font-size:0.78rem;">${r.curve_regime || '—'}</td>
+              </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>
+  `;
 }
 
 // ── Metric helper ────────────────────────────────────────────────────────

@@ -123,41 +123,47 @@ def run_collection(start: str, end: str | None, cache_dir: Path, verbose: bool):
 
 # ── Bước 5-9: Phân tích định lượng ───────────────────────────────────────────
 
-def run_analysis(cache_dir: Path, verbose: bool):
+def run_analysis(cache_dir: Path, verbose: bool, strict: bool = False):
     """Chạy các module phân tích từ cache."""
     info("Phase 2/2: Phân tích định lượng")
 
-    # 5. Yield curve fitting
-    step("Yield Curve Fitting (NS)",
+    # 5. Yield curve fitting (NS + NSS)
+    step("Yield Curve Fitting (NS & NSS)",
          lambda: __import__('analysis.yield_curve_fitting', fromlist=['fit_all_history'])
          .fit_all_history(
              cache_dir / "combined_tpcp_yields.parquet",
-             method="NS", cache_dir=cache_dir, verbose=verbose
-         ))
+             method="NS", cache_dir=cache_dir, also_fit_nss=True, verbose=verbose
+         ), strict=strict)
 
-    # 6. Spread analysis
-    step("Spread Analysis",
+    # 6. Spread analysis & PCA Curve Dynamics
+    step("Spread & PCA Curve Dynamics",
          lambda: __import__('analysis.spread_analysis', fromlist=['run']).run(
              cache_dir, use_fitted=True, verbose=verbose
-         ))
+         ), strict=strict)
+
+    # 6b. Sovereign Bond Pricing, Duration, DV01, Convexity & Roll-down Engine
+    step("Bond Pricing & Risk Ladder (Duration/DV01/Convexity/Rolldown)",
+         lambda: __import__('analysis.bond_pricing', fromlist=['run']).run(
+             cache_dir, verbose=verbose
+         ), strict=strict)
 
     # 7. Auction statistics
     step("Auction Statistics",
          lambda: __import__('analysis.auction_statistics', fromlist=['run']).run(
              cache_dir, verbose=verbose
-         ))
+         ), strict=strict)
 
     # 8. Foreign flow
     step("Foreign Flow",
          lambda: __import__('analysis.foreign_flow', fromlist=['run']).run(
              cache_dir, verbose=verbose
-         ))
+         ), strict=strict)
 
     # 9. Macro correlation
     step("Macro Correlation",
          lambda: __import__('analysis.macro_correlation', fromlist=['run']).run(
              cache_dir, verbose=verbose
-         ))
+         ), strict=strict)
 
 
 # ── Bước 10: Export JSON cho Dashboard ────────────────────────────────────────
@@ -172,11 +178,15 @@ def export_json(cache_dir: Path, exports_dir: Path, verbose: bool):
     data_dir = exports_dir / "data"
     data_dir.mkdir(exist_ok=True)
 
-    # Export fitted curve, spread, và fitted params NS (flat array) — frontend dùng trực tiếp
+    # Export fitted curve, spread, và fitted params NS/NSS + Bond Risk Ladder — frontend dùng trực tiếp
     simple_files = {
         "fitted_curve_ns.parquet": "fitted_curve_ns.json",
+        "fitted_curve_nss.parquet": "fitted_curve_nss.json",
         "spread_analysis.parquet": "spread_analysis.json",
         "fitted_params_ns.parquet": "fitted_params_ns.json",
+        "fitted_params_nss.parquet": "fitted_params_nss.json",
+        "bond_risk_ladder.parquet": "bond_risk_ladder.json",
+        "bond_rolldown_history.parquet": "bond_rolldown_history.json",
     }
 
     for parquet_name, json_name in simple_files.items():
@@ -205,14 +215,15 @@ def export_json(cache_dir: Path, exports_dir: Path, verbose: bool):
                 df[float_cols].notna(), other=None
             )
 
-        # Xử lý riêng cho fitted_curve_ns: lưu bản đầy đủ và bản tối ưu nhẹ cho dashboard
-        if parquet_name == "fitted_curve_ns.parquet":
-            full_data = df.to_dict(orient="records")
-            full_out = data_dir / "fitted_curve_ns_full.json"
-            with open(full_out, "w", encoding="utf-8") as f:
-                json.dump(full_data, f, ensure_ascii=False, default=str, indent=None)
-            if verbose:
-                ok(f"fitted_curve_ns_full.json: {len(full_data)} records → {full_out}")
+        # Xử lý riêng cho fitted_curve_ns / fitted_curve_nss: lưu bản đầy đủ (cho NS) và bản tối ưu 1,000 ngày
+        if parquet_name in ("fitted_curve_ns.parquet", "fitted_curve_nss.parquet"):
+            if parquet_name == "fitted_curve_ns.parquet":
+                full_data = df.to_dict(orient="records")
+                full_out = data_dir / "fitted_curve_ns_full.json"
+                with open(full_out, "w", encoding="utf-8") as f:
+                    json.dump(full_data, f, ensure_ascii=False, default=str, indent=None)
+                if verbose:
+                    ok(f"fitted_curve_ns_full.json: {len(full_data)} records → {full_out}")
 
             # Cắt lấy ~1,000 ngày gần nhất (~4 năm) cho dashboard tải mượt mà
             unique_dates = sorted(df["date"].dropna().unique())
@@ -223,9 +234,31 @@ def export_json(cache_dir: Path, exports_dir: Path, verbose: bool):
         data = df.to_dict(orient="records")
         out_path = data_dir / json_name
         with open(out_path, "w", encoding="utf-8") as f:
-            json.dump(data, f, ensure_ascii=False, default=str, indent=None)
+            json.dump(data, f, ensure_ascii=False, default=str, indent=None, allow_nan=False)
         if verbose:
             ok(f"{json_name}: {len(data)} records → {out_path}")
+
+    # Export curve_pca.json tổng hợp kết quả PCA 3 nhân tố (Level, Slope, Curvature)
+    pca_sum_path = cache_dir / "curve_pca_summary.parquet"
+    pca_load_path = cache_dir / "curve_pca_loadings.parquet"
+    pca_score_path = cache_dir / "curve_pca_scores.parquet"
+    if pca_sum_path.exists() and pca_load_path.exists():
+        df_sum = pd.read_parquet(pca_sum_path)
+        df_load = pd.read_parquet(pca_load_path)
+        pca_payload = {
+            "summary": df_sum.iloc[0].to_dict() if len(df_sum) else {},
+            "loadings": df_load.to_dict(orient="records"),
+        }
+        if pca_score_path.exists():
+            df_sc = pd.read_parquet(pca_score_path)
+            if "date" in df_sc.columns:
+                df_sc["date"] = pd.to_datetime(df_sc["date"]).dt.strftime("%Y-%m-%d")
+            pca_payload["recent_scores"] = df_sc.tail(500).to_dict(orient="records")
+        pca_out = data_dir / "curve_pca.json"
+        with open(pca_out, "w", encoding="utf-8") as f:
+            json.dump(pca_payload, f, ensure_ascii=False, allow_nan=False)
+        if verbose:
+            ok(f"curve_pca.json → {pca_out}")
 
     # Export foreign_flow.json — cần wrap thành {daily:[...]} và đổi tên cột
     # Frontend (index.html + foreign_flows.html) đều kỳ vọng: data.daily[i].date
@@ -248,11 +281,11 @@ def export_json(cache_dir: Path, exports_dir: Path, verbose: bool):
         # Sắp xếp theo ngày tăng dần
         if "date" in df_f.columns:
             df_f = df_f.sort_values("date").reset_index(drop=True)
-        daily_records = df_f.to_dict(orient="records")
+        daily_records = df_f.where(df_f.notna(), other=None).to_dict(orient="records")
         foreign_out = {"daily": daily_records}
         out_path = data_dir / "foreign_flow.json"
         with open(out_path, "w", encoding="utf-8") as f:
-            json.dump(foreign_out, f, ensure_ascii=False, default=str, indent=None)
+            json.dump(foreign_out, f, ensure_ascii=False, default=str, indent=None, allow_nan=False)
         if verbose:
             ok(f"foreign_flow.json: {{daily: [{len(daily_records)} records]}} → {out_path}")
     else:
@@ -453,7 +486,7 @@ Ví dụ:
             warn("Chưa có combined_tpcp_yields.parquet — bỏ qua phần phân tích")
             warn("Hãy chạy với --mode collect trước để thu thập dữ liệu")
         else:
-            run_analysis(cache_dir, verbose)
+            run_analysis(cache_dir, verbose, strict=args.strict)
 
     if do_export:
         export_json(cache_dir, exports_dir, verbose)
