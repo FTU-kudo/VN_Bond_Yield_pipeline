@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Giải Thích Thuật Ngữ & Công Thức — VN Bond Pipeline</title>
-  <link rel="stylesheet" href="assets/style.css?v=1.3">
+  <link rel="stylesheet" href="assets/style.css?v=1.4">
   <!-- KaTeX for beautiful math formula rendering -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
   <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
@@ -76,8 +76,11 @@
           <h2 style="font-size: 1.35rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.35rem;">
             📚 Tra Cứu Toàn Diện Kiến Thức Trái Phiếu
           </h2>
-          <p style="font-size: 0.85rem; color: var(--text-secondary); max-width: 680px;">
-            Hệ thống cung cấp đầy đủ định nghĩa, công thức toán học, bản chất tài chính và ứng dụng thực tiễn trong giao dịch (trading & portfolio management) trên thị trường TPCP Việt Nam.
+          <p style="font-size: 0.85rem; color: var(--text-secondary); max-width: 760px;">
+            Cẩm nang định lượng chính thức của hệ thống: <strong>8 chuyên đề · toàn bộ công thức KaTeX</strong> — từ mô hình Nelson-Siegel/PCA,
+            định giá Thông tư 30/2023 (Duration/DV01/Convexity/Roll-down), phân tích Term Spread & Butterfly, thống kê đấu thầu HNX
+            (BCR/Stop-out/Tail), dòng vốn khối ngoại, cơ chế truyền dẫn vĩ mô SBV – USD/VND, cho tới <strong>từ điển-widget</strong> hướng dẫn
+            đọc từng thẻ chỉ số, biểu đồ và bảng trên cả 5 trang Dashboard.
           </p>
         </div>
       </div>
@@ -86,34 +89,39 @@
       <div class="glossary-search-wrap">
         <span class="glossary-search-icon">🔍</span>
         <input type="text" id="glossary-search" class="glossary-search-input"
-          placeholder="Tìm nhanh thuật ngữ (ví dụ: Nelson-Siegel, BCR, Tail, Butterfly, SBV, Stop-out...)"
+          placeholder="Tìm nhanh thuật ngữ (ví dụ: Nelson-Siegel, DV01, BCR, Tail, Butterfly, Roll-down, OMO, percentile...)"
           oninput="filterGlossary(this.value)">
+      </div>
+      <div class="glossary-search-meta">
+        <span id="glossary-count" class="glossary-count"></span>
+        <span class="glossary-search-hint">Nhấn <kbd class="glossary-kbd">/</kbd> để nhảy tới ô tìm kiếm · <kbd class="glossary-kbd">Esc</kbd> để xóa &amp; đóng</span>
       </div>
     </div>
 
     <!-- Quick Navigation Pills -->
     <div class="glossary-nav-pills fade-in">
-      <a href="#sec-curve" class="glossary-pill active">📈 Mô Hình Nelson-Siegel & Svensson</a>
-      <a href="#sec-pricing" class="glossary-pill">🛡️ Định Giá, Duration, DV01 & Roll-down</a>
-      <a href="#sec-spread" class="glossary-pill">↕️ Term Spread & Butterfly</a>
-      <a href="#sec-auction" class="glossary-pill">🏷️ Đấu Thầu Sơ Cấp (BCR, Tail, Stop-out)</a>
-      <a href="#sec-foreign" class="glossary-pill">🌏 Dòng Vốn Khối Ngoại (Foreign Flow)</a>
+      <a href="#sec-curve" class="glossary-pill active">📈 Mô Hình Đường Cong &amp; PCA</a>
+      <a href="#sec-pricing" class="glossary-pill">🛡️ Định Giá, DV01 &amp; Roll-down</a>
+      <a href="#sec-spread" class="glossary-pill">↕️ Term Spread &amp; Butterfly</a>
+      <a href="#sec-auction" class="glossary-pill">🏷️ Đấu Thầu Sơ Cấp (BCR, Tail)</a>
+      <a href="#sec-foreign" class="glossary-pill">🌏 Dòng Vốn Khối Ngoại</a>
       <a href="#sec-macro" class="glossary-pill">🏦 Tương Quan Vĩ Mô (SBV, USD/VND)</a>
+      <a href="#sec-metrics" class="glossary-pill">🧭 Chỉ Số &amp; Biểu Đồ Dashboard</a>
       <a href="#sec-table" class="glossary-pill">📋 Bảng Tra Cứu Nhanh</a>
     </div>
 
     <!-- ═══════════════════════════════════════════════════════════════ -->
-    <!-- SECTION 1: MÔ HÌNH ĐƯỜNG CONG LỢI SUẤT                        -->
+    <!-- SECTION 1: MÔ HÌNH ĐƯỜNG CONG LỢI SUẤT & PCA                   -->
     <!-- ═══════════════════════════════════════════════════════════════ -->
     <section id="sec-curve">
       <div class="glossary-section-title">
-        <span>📈 1. Mô Hình Nội Suy Đường Cong Lợi Suất (Yield Curve Fitting)</span>
+        <span>📈 1. Mô Hình Nội Suy Đường Cong Lợi Suất & Phân Tích Thành Phần Chính (Yield Curve Modelling &amp; PCA)</span>
       </div>
 
       <div class="glossary-grid">
 
-        <!-- Card: Nelson-Siegel -->
-        <div class="glossary-card" data-keywords="nelson siegel ns duong cong loi suat yield curve beta0 beta1 beta2 lambda noi suy">
+        <!-- Card 1.1: Nelson-Siegel -->
+        <div class="glossary-card" data-keywords="nelson siegel ns duong cong loi suat yield curve beta0 beta1 beta2 lambda noi suy 1987">
           <div class="glossary-card-header">
             <div>
               <div class="glossary-term-name">Mô Hình Nelson-Siegel (NS)</div>
@@ -123,7 +131,10 @@
           </div>
           <div class="glossary-body">
             <p>
-              Mô hình toán học tham số được phát triển bởi Charles Nelson và Andrew Siegel (1987), là tiêu chuẩn toàn cầu được <strong>Cục Dự trữ Liên bang Mỹ (Fed)</strong>, <strong>Ngân hàng Trung ương châu Âu (ECB)</strong> và <strong>Ngân hàng Thanh toán Quốc tế (BIS)</strong> sử dụng để nội suy đường cong lợi suất giao ngay (spot yield curve) từ các điểm kỳ hạn rời rạc.
+              Mô hình tham số do <strong>Charles Nelson &amp; Andrew Siegel (1987)</strong> đề xuất, là tiêu chuẩn thị trường được
+              <strong>Fed, ECB, BIS</strong> dùng để nội suy đường cong lợi suất giao ngay (spot yield curve) liên tục từ các điểm kỳ hạn
+              rời rạc (1M, 3M, 6M, 1Y, 2Y, 3Y, 5Y, 7Y, 10Y, 15Y, 20Y, 30Y) — trang <em>Đường Cong Lợi Suất</em> khớp mô hình này cho
+              <strong>3.436 phiên giao dịch</strong> (trung vị sai số <strong>RMSE ≈ 0,83 bps</strong>).
             </p>
 
             <div class="formula-box">
@@ -131,23 +142,23 @@
               $$y(m) = \beta_0 + \beta_1 \left(\frac{1 - e^{-m/\lambda}}{m/\lambda}\right) + \beta_2 \left(\frac{1 - e^{-m/\lambda}}{m/\lambda} - e^{-m/\lambda}\right)$$
             </div>
 
-            <p><strong>Ý nghĩa kinh tế của các tham số:</strong></p>
+            <p><strong>Ý nghĩa kinh tế &amp; giới hạn toán học của các tham số:</strong></p>
             <ul style="padding-left: 1.25rem; margin-bottom: 0.75rem;">
-              <li><strong>$\beta_0$ (Mức độ - Level):</strong> Đại diện cho mức lợi suất dài hạn khi kỳ hạn $m \to \infty$. Khi toàn bộ đường cong dịch chuyển song song (parallel shift), $\beta_0$ sẽ thay đổi.</li>
-              <li><strong>$\beta_1$ (Độ dốc - Slope):</strong> Trọng số ngắn hạn. Vì khi $m \to 0$, $y(0) = \beta_0 + \beta_1$, nên $\beta_1$ quyết định độ nghiêng của đường cong. Khi $\beta_1 < 0$, đường cong dốc lên (bình thường); khi $\beta_1 > 0$, đường cong dốc xuống (đảo ngược).</li>
-              <li><strong>$\beta_2$ (Độ cong/Bướu - Curvature):</strong> Trọng số trung hạn, tạo ra độ lồi hoặc lõm (hump/trough) ở khoảng kỳ hạn 2Y – 7Y.</li>
-              <li><strong>$\lambda$ (Hệ số suy giảm - Decay factor):</strong> Quyết định tốc độ phân rã của trọng số ngắn hạn và vị trí kỳ hạn mà tại đó độ cong $\beta_2$ đạt cực trị.</li>
+              <li><strong>$\beta_0$ (Level – Mức độ):</strong> Tiệm cận dài hạn — $y(\infty) = \beta_0$. Đường cong dịch chuyển song song (parallel shift) chủ yếu do $\beta_0$.</li>
+              <li><strong>$\beta_1$ (Slope – Độ dốc):</strong> At $m \to 0$, $y(0) = \beta_0 + \beta_1$ nên $\beta_1 = y(0) - y(\infty)$. Thực tế $\beta_1 &lt; 0$ (đường cong dốc lên bình thường); $\beta_1 &gt; 0$ là đường cong dốc xuống.</li>
+              <li><strong>$\beta_2$ (Curvature – Độ cong):</strong> Trọng số trung hạn, tạo bướu lồi/lõm ở vùng 2Y – 7Y; ảnh hưởng mạnh nhất tại $m \approx \lambda$.</li>
+              <li><strong>$\lambda$ (Decay – Hệ số suy giảm, năm):</strong> Quyết định tốc độ phân rã của trọng số; $\lambda$ càng nhỏ, bướu $\beta_2$ càng dồn về ngắn hạn. $\lambda$ typical 1–3 năm.</li>
             </ul>
 
             <div class="interpretation-box">
               <div class="interpretation-title">💡 Tại sao không dùng đa thức bậc cao (Polynomials)?</div>
-              Đa thức bậc cao (bậc 4, bậc 5) dễ bị hiện tượng <em>Runge's phenomenon</em> (dao động hoang dã ở hai đầu biên kỳ hạn ngắn và siêu dài). Nelson-Siegel đảm bảo đường cong luôn trơn mượt, tiệm cận thực tế kinh tế và có lời giải ổn định.
+              Đa thức bậc 4–5 gặp <em>Runge's phenomenon</em>: dao động hoang dãi ở hai biên kỳ hạn (1M và 30Y) và tiệm cận vô lý. Nelson-Siegel luôn cho đường cong trơn, tiệm cận đúng bản chất kinh tế ($y \to \beta_0$) và nghiệm ổn định qua từng ngày — điều kiện tiên quyết để vẽ chuỗi tham số thời gian (trang <em>Đường Cong Lợi Suất → Parameter Evolution</em>).
             </div>
           </div>
         </div>
 
-        <!-- Card: Svensson Extension -->
-        <div class="glossary-card" data-keywords="svensson nss mo rong svensson 6 tham so beta3 lambda2 2 buou">
+        <!-- Card 1.2: Svensson -->
+        <div class="glossary-card" data-keywords="svensson nss mo rong 6 tham so beta3 lambda2 hai buou two humps 1994 rmse">
           <div class="glossary-card-header">
             <div>
               <div class="glossary-term-name">Mô Hình Mở Rộng Svensson (NSS)</div>
@@ -157,23 +168,165 @@
           </div>
           <div class="glossary-body">
             <p>
-              Lars Svensson (1994) bổ sung thêm thành phần thứ tư vào mô hình Nelson-Siegel nhằm cho phép đường cong có <strong>hai bướu (two humps/troughs)</strong> độc lập. Điều này cực kỳ hữu ích tại các thị trường mới nổi như Việt Nam, nơi thanh khoản tập trung không đều giữa các kỳ hạn 5Y và 10Y–15Y.
+              <strong>Lars Svensson (1994)</strong> bổ sung cặp tham số thứ hai $(\beta_3, \lambda_2)$ để mô hình có <strong>hai bướu
+              độc lập</strong> — cực kỳ phù hợp với thị trường mới nổi như Việt Nam, nơi thanh khoản tập trung không đều ở “belly” 5Y
+              và cụm dài 10Y–15Y theo lịch phát hành của KBNN. Pipeline khớp NSS cho <strong>3.415 phiên</strong> với trung vị
+              <strong>RMSE ≈ 0,12 bps</strong> (gấp ~7 lần chính xác hơn NS), toàn bộ bộ đôi NS+NSS chỉ tốn ~3 giây nhờ ước lượng
+              vectorized (numpy grid OLS, không dùng tối ưu lặp từng ngày).
             </p>
 
             <div class="formula-box">
-              <div class="formula-label">Công thức toán học:</div>
-              $$y(m) = \text{NS}(m) + \beta_3 \left(\frac{1 - e^{-m/\lambda_2}}{m/\lambda_2} - e^{-m/\lambda_2}\right)$$
+              <div class="formula-label">Công thức đầy đủ 6 tham số:</div>
+              $$y(m) = \beta_0 + \beta_1\frac{1-e^{-m/\lambda_1}}{m/\lambda_1} + \beta_2\left(\frac{1-e^{-m/\lambda_1}}{m/\lambda_1}-e^{-m/\lambda_1}\right) + \beta_3\left(\frac{1-e^{-m/\lambda_2}}{m/\lambda_2}-e^{-m/\lambda_2}\right)$$
             </div>
 
             <p><strong>Cải tiến so với NS:</strong></p>
             <ul style="padding-left: 1.25rem; margin-bottom: 0.75rem;">
-              <li>Bổ sung thêm tham số $\beta_3$ và $\lambda_2$, tạo thêm một đỉnh lồi/lõm thứ hai ở vùng kỳ hạn dài (15Y – 30Y).</li>
-              <li>Giảm thiểu sai số bình phương trung bình (RMSE) khi thị trường xuất hiện cấu trúc kỳ hạn phức tạp do chính sách phát hành trái phiếu theo đợt.</li>
+              <li>Thành phần $(\beta_3, \lambda_2)$ tạo bướu <strong>thứ hai</strong> ở kỳ hạn dài (15Y–30Y), tách riêng “belly” với “tail” của đường cong.</li>
+              <li>Hai tham số $\lambda_1, \lambda_2$ cho phép mô tả đồng thời độ dốc ngắn hạn <em>và</em> độ cong trung–dài hạn.</li>
+              <li>Giảm RMSE đáng kể trong các giai đoạn đường cong có cấu trúc “mặt thang” (step-shaped) do KBNN phát hành theo đợt lớn ở kỳ hạn 10Y–15Y.</li>
             </ul>
 
             <div class="interpretation-box">
-              <div class="interpretation-title">🎯 Tối ưu hóa trong Pipeline</div>
-              Pipeline sử dụng thuật toán <code>scipy.optimize.curve_fit</code> với thuật toán Levenberg-Marquardt / Trust Region Reflective, có ràng buộc biên (bounds) $\beta_0 > 0, \lambda > 0$ để loại bỏ nghiệm phi thực tế.
+              <div class="interpretation-title">🎯 Khi nào chọn NS thay vì NSS?</div>
+              NS (4 tham số) ổn định hơn với dữ liệu mỏng (ít điểm kỳ hạn) và dễ diễn giải nhân tố; NSS (6 tham số) cho khớp chính xác hơn nhưng dễ <em>overfit</em> nếu chỉ có 3–4 điểm giao dịch. Trên Dashboard, bộ chọn <code>#method-select</code> cho phép đổi mô hình để so sánh trực tiếp đường cong hai phương pháp cùng ngày.
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 1.3: Parameter dictionary -->
+        <div class="glossary-card" data-keywords="beta0 beta1 beta2 beta3 lambda1 lambda2 rmse tham so level slope curvature decay bang tra cuu">
+          <div class="glossary-card-header">
+            <div>
+              <div class="glossary-term-name">Bảng Tra Cứu Tham Số NS / NSS</div>
+              <div class="glossary-term-en">Parameter Dictionary (β₀, β₁, β₂, β₃, λ₁, λ₂, RMSE)</div>
+            </div>
+            <span class="glossary-tag curve">Tham Số Dashboard</span>
+          </div>
+          <div class="glossary-body">
+            <p>Đối chiếu nhanh từng tham số với nút lọc tương ứng trong thẻ <strong>⚙️ Nelson-Siegel Parameter Evolution</strong> (trang Đường Cong Lợi Suất):</p>
+            <table class="glossary-mini-table">
+              <thead>
+                <tr><th>Tham số</th><th>Nút lọc</th><th>Vai trò</th><th>Đọc như thế nào</th></tr>
+              </thead>
+              <tbody>
+                <tr><td class="mono">$\beta_0$</td><td class="mono">β₀ Level</td><td>Mức độ dài hạn</td><td>Tăng = cả đường cong nâng lên (lạm phát / vốn cung dài hạn).</td></tr>
+                <tr><td class="mono">$\beta_1$</td><td class="mono">β₁ Slope</td><td>Độ dốc</td><td>Giảm sâu (đang âm) = dốc lên mạnh; vượt 0 = đảo ngược.</td></tr>
+                <tr><td class="mono">$\beta_2$</td><td class="mono">β₂ Curv</td><td>Bướu trung hạn</td><td>&gt; 0 = gù lên ở 2Y–7Y; &lt; 0 = lõm xuống.</td></tr>
+                <tr><td class="mono">$\beta_3$</td><td>chỉ có ở NSS</td><td>Bướu dài hạn thứ hai</td><td>Có giá trị = đường cong dài có cấu trúc riêng (15Y–30Y).</td></tr>
+                <tr><td class="mono">$\lambda_1, \lambda_2$</td><td class="mono">λ Decay</td><td>Vị trí &amp; độ rộng bướu</td><td>Đơn vị năm; $\lambda_1$ thấp = bướu dồn về ngắn hạn.</td></tr>
+                <tr><td class="mono">RMSE</td><td class="mono">RMSE</td><td>Sai số khớp</td><td>Đơn vị bps trên biểu đồ; spike = ngày thiếu dữ liệu điểm thị trường.</td></tr>
+              </tbody>
+            </table>
+
+            <div class="interpretation-box">
+              <div class="interpretation-title">💡 Gợi ý sử dụng</div>
+              Chọn nút <strong>Tất cả</strong> để so đồng thời cả 4 đường (β₀–β₂, λ) trên cùng trục thời gian — nút <strong>1N / 3N / 5N</strong> zoom cửa sổ; dọc trục giá trị, vạch dọc mốc ngày trên thanh trượt sẽ hiển thị tooltip chính xác từng tham số của ngày đó (RMSE ×100 để quy đổi % → bps).
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 1.4: Estimation & RMSE -->
+        <div class="glossary-card" data-keywords="rmse least squares profiled ols grid lambda estimation uoc luong chat luong khop sai so">
+          <div class="glossary-card-header">
+            <div>
+              <div class="glossary-term-name">Phương Pháp Ước Lượng &amp; Chất Lượng Khớp (RMSE)</div>
+              <div class="glossary-term-en">Curve Fitting Methodology & Goodness-of-Fit</div>
+            </div>
+            <span class="glossary-tag curve">Thuật Toán Pipeline</span>
+          </div>
+          <div class="glossary-body">
+            <p>
+              Pipeline ước lượng tham số đường cong theo từng ngày giao dịch bằng <strong>Profiled OLS trên lưới $\lambda$</strong>:
+              với mỗi $\lambda$ ứng viên trên lưới, các hệ số $\beta$ có lời giải đóng (OLS) — toàn bộ lưới chạy vectorized bằng
+              <code>numpy.einsum</code>, nên 2 mô hình × ~3.400 ngày hoàn thành trong ~3 giây. <code>scipy.optimize.least_squares</code>
+              (Levenberg–Marquardt, ràng buộc $\beta_0 &gt; 0, \lambda &gt; 0$) chỉ dùng làm fallback cho ngày khó hội tụ.
+            </p>
+
+            <div class="formula-box">
+              <div class="formula-label">Chỉ số chất lượng khớp:</div>
+              $$\text{RMSE} = \sqrt{\frac{1}{n}\sum_{i=1}^{n}\left(y_i^{obs} - y_i^{fit}\right)^2}$$
+            </div>
+
+            <p><strong>Thang đánh giá RMSE (bps):</strong></p>
+            <ul style="padding-left: 1.25rem; margin-bottom: 0.75rem;">
+              <li><strong>RMSE &lt; 0,5 bps:</strong> Khớp xuất sắc — mô hình đi qua gần như mọi điểm giao dịch thực (NSS trung vị 0,12 bps).</li>
+              <li><strong>0,5 – 2 bps:</strong> Tốt, dùng được cho định giá và chênh lệch kỳ hạn (NS trung vị 0,83 bps).</li>
+              <li><strong>&gt; 5 bps:</strong> Ngày bất thường — thường do thiếu điểm thị trường ở kỳ hạn dài hoặc dữ liệu đầu vào chứa outlier (pipeline đã khử outlier 2013–2016 ở khâu chuẩn hóa).</li>
+            </ul>
+
+            <div class="interpretation-box">
+              <div class="interpretation-title">⚙️ Đầu vào của mô hình</div>
+              Điểm quan sát từ lợi suất giao dịch thứ cấp TPCP (clean yield đã khử lãi suất đáo hạn), quy về zero-coupon spot curve; ngày không có đủ điểm quan sát sẽ được gắn cờ và loại khỏi thống kê tham số.
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 1.5: PCA -->
+        <div class="glossary-card" data-keywords="pca principal component analysis svd level slope curvature pc1 pc2 pc3 thanh phan chinh rui ro factor">
+          <div class="glossary-card-header">
+            <div>
+              <div class="glossary-term-name">Phân Tích Thành Phần Chính Đường Cong (Curve PCA)</div>
+              <div class="glossary-term-en">PCA on Daily Yield Changes — Level / Slope / Curvature</div>
+            </div>
+            <span class="glossary-tag curve">Phân Tích Yếu Tố</span>
+          </div>
+          <div class="glossary-body">
+            <p>
+              Pipeline thực hiện <strong>SVD</strong> trên ma trận biến thiên lợi suất hàng ngày $\Delta \mathbf{Y}_t$ (3.261 phiên ×
+              dải kỳ hạn) để bóc 3 nhân tố rủi ro thống trị — nền tảng cho quản trị rủi ro danh mục, hedging bằng swap/ETF và
+              kịch bản stress (kết quả nằm trong <code>exports/data/curve_pca.json</code>).
+            </p>
+
+            <div class="formula-box">
+              <div class="formula-label">Phân rã &amp; Tỷ lệ phương sai trích được:</div>
+              $$\Delta \mathbf{Y} = \mathbf{U}\,\boldsymbol{\Sigma}\,\mathbf{V}^\top, \qquad \text{Explained}_k = \frac{\sigma_k^2}{\sum_j \sigma_j^2}$$
+            </div>
+
+            <table class="glossary-mini-table">
+              <thead>
+                <tr><th>Thành phần</th><th>Tỷ lệ phương sai</th><th>Đặc điểm loading</th><th>Ý nghĩa thực chiến</th></tr>
+              </thead>
+              <tbody>
+                <tr><td><strong>PC1 – Level</strong></td><td class="mono">71,87%</td><td>Cùng dấu ở mọi kỳ hạn</td><td>Đà di chuyển chung của mặt bằng lãi suất (rủi ro duration tổng thể).</td></tr>
+                <tr><td><strong>PC2 – Slope</strong></td><td class="mono">11,16%</td><td>Đảo dấu ở khoảng 1Y–2Y</td><td>Biến động độ dốc — rủi ro của chiến lược steepener/flattener.</td></tr>
+                <tr><td><strong>PC3 – Curvature</strong></td><td class="mono">10,17%</td><td>Cực trị ở belly 5Y–7Y</td><td>Rủi ro bướu — chiến lược butterfly duration-neutral.</td></tr>
+                <tr><td><strong>Tổng 3 PC</strong></td><td class="mono">93,19%</td><td>—</td><td>Chỉ 3 nhân tố giải thích ~93% biến động đường cong → giảm chiều dữ liệu hiệu quả.</td></tr>
+              </tbody>
+            </table>
+
+            <div class="interpretation-box">
+              <div class="interpretation-title">🧮 Ứng dụng: Kịch bản rủi ro</div>
+              Sốc giả định = $k \times \sigma_k \times \text{loading}_k$ (ví dụ 2-sigma shock PC1) → tái tính DV01 &amp; P&amp;L danh mục tại từng kỳ hạn mà không cần mô hình lại đường cong.
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 1.6: Tenor grid & conventions -->
+        <div class="glossary-card" data-keywords="grid ky han tenor bootstrap interpolation log linear discount factor duong cong giao ngay convention">
+          <div class="glossary-card-header">
+            <div>
+              <div class="glossary-term-name">Lưới Kỳ Hạn &amp; Quy Ước Nội Suy</div>
+              <div class="glossary-term-en">Tenor Grid, Bootstrap & Interpolation Conventions</div>
+            </div>
+            <span class="glossary-tag curve">Quy Chuẩn Thị Trường</span>
+          </div>
+          <div class="glossary-body">
+            <p><strong>Hệ kỳ hạn chuẩn dùng xuyên suốt Dashboard:</strong></p>
+            <ul style="padding-left: 1.25rem; margin-bottom: 0.75rem;">
+              <li><strong>20 mốc cho công cụ Term Spread tùy chỉnh (trang Tổng Quan):</strong> 1M, 2M, 3M, 6M, 9M, 1Y, 18M, 2Y, 3Y, 4Y, 5Y, 6Y, 7Y, 8Y, 9Y, 10Y, 12Y, 15Y, 20Y, 30Y.</li>
+              <li><strong>12 mốc của Risk &amp; Carry Ladder:</strong> 3M, 6M, 9M, 1Y, 2Y, 3Y, 5Y, 7Y, 10Y, 15Y, 20Y, 30Y — trong đó nhóm <strong>core thanh khoản = 3Y–15Y</strong> (đánh dấu <code>is_core_liquid</code>, khớp nhóm kỳ hạn KBNN phát hành &amp; giao dịch dày nhất).</li>
+              <li><strong>Đơn vị:</strong> lợi suất = %/năm nominal; chênh lệch = bps ($1\% = 100\text{ bps}$); đường cong trong <code>fitted_curve_ns.json</code> ở dạng dài (date – tenor_yr – yield_pct – method).</li>
+            </ul>
+
+            <div class="formula-box">
+              <div class="formula-label">Phương pháp bootstrap &amp; nội suy:</div>
+              Từ trái phiếu coupon → dãy hệ số chiết khấu không đáo hạn: $DF(t) = \prod \frac{1}{1+z_i \Delta t_i}$; nội suy log-linear trên $DF$ giữa hai kỳ hạn; tiệm cận đuôi dài bằng forward phẳng của NS/NSS.
+            </div>
+
+            <div class="interpretation-box">
+              <div class="interpretation-title">📌 Vì sao quan trọng?</div>
+              Mọi chỉ số phía sau (DV01, forward, percentile, spread) đều đọc đúng cùng một lưới kỳ hạn — khi chọn “10Y” ở bất kỳ đâu (KPI, ladder, bảng percentile), hệ thống luôn ánh xạ về cùng một điểm $m = 10$ năm, tránh sai lệch đơn vị tháng/năm ($1M = 0{,}083$ năm ≈ $1/12$).
             </div>
           </div>
         </div>
@@ -182,308 +335,17 @@
     </section>
 
     <!-- ═══════════════════════════════════════════════════════════════ -->
-    <!-- SECTION 2: PHÂN TÍCH TERM SPREAD & BUTTERFLY                   -->
-    <!-- ═══════════════════════════════════════════════════════════════ -->
-    <section id="sec-spread">
-      <div class="glossary-section-title">
-        <span>↕️ 2. Phân Tích Term Spread & Cấu Trúc Kỳ Hạn (Term Structure Analytics)</span>
-      </div>
-
-      <div class="glossary-grid">
-
-        <!-- Card: Term Spread -->
-        <div class="glossary-card" data-keywords="term spread chênh lệch lợi suất 10y-2y 10y-3m dao nguoc inversion recession suy thoai">
-          <div class="glossary-card-header">
-            <div>
-              <div class="glossary-term-name">Chênh Lệch Lợi Suất (Term Spread)</div>
-              <div class="glossary-term-en">Yield Curve Spread / Slope Indicator</div>
-            </div>
-            <span class="glossary-tag macro">Chỉ Số Vĩ Mô</span>
-          </div>
-          <div class="glossary-body">
-            <p>
-              Term Spread là mức chênh lệch giữa lợi suất trái phiếu kỳ hạn dài và kỳ hạn ngắn, thường tính bằng đơn vị <strong>bps (basis points: $1\% = 100\text{ bps}$)</strong>. Đây là "hàn thử biểu" số một về kỳ vọng tăng trưởng kinh tế, lạm phát và chu kỳ chính sách tiền tệ.
-            </p>
-
-            <div class="formula-box">
-              <div class="formula-label">Công thức chuẩn:</div>
-              $$\text{Spread}(T_2, T_1) = Y_{T_2} - Y_{T_1} \quad (T_2 > T_1)$$
-              $$\text{Spread 10Y-2Y (bps)} = (Y_{10Y} - Y_{2Y}) \times 100$$
-            </div>
-
-            <p><strong>Các cặp Spread chuẩn trong tài chính:</strong></p>
-            <ul style="padding-left: 1.25rem; margin-bottom: 0.75rem;">
-              <li><strong>10Y - 2Y (Spread kinh điển):</strong> Đo lường độ dốc tổng thể của nền kinh tế. Khi Spread này âm (đảo ngược), lịch sử tài chính cho thấy 85% trường hợp xảy ra suy thoái kinh tế trong vòng 6–18 tháng tới.</li>
-              <li><strong>10Y - 3M (Thước đo NHTW):</strong> Đo lường áp lực thanh khoản ngắn hạn so với triển vọng dài hạn; được Cục Dự trữ Liên bang Mỹ (Fed) đánh giá là chỉ số dự báo suy thoái chính xác nhất.</li>
-              <li><strong>5Y - 2Y:</strong> Đo lường chính sách tiền tệ trung hạn và giai đoạn bắt đầu đảo chiều lãi suất điều hành.</li>
-              <li><strong>30Y - 10Y:</strong> Đo lường phần bù rủi ro kỳ hạn siêu dài (Ultra-long Term Premium) và nhu cầu đầu tư của các quỹ bảo hiểm, quỹ hưu trí.</li>
-            </ul>
-
-            <div class="interpretation-box">
-              <div class="interpretation-title">⚠️ Hiện tượng Đảo Ngược Đường Cong (Curve Inversion)</div>
-              Xảy ra khi lợi suất ngắn hạn cao hơn dài hạn ($Y_{10Y} < Y_{2Y} \implies \text{Spread} < 0$). Điều này phản ánh thị trường kỳ vọng NHTW sẽ buộc phải hạ mạnh lãi suất trong tương lai để cứu nền kinh tế suy giảm.
-            </div>
-          </div>
-        </div>
-
-        <!-- Card: Butterfly -->
-        <div class="glossary-card" data-keywords="butterfly canh buom 2s5s10s hump do cong curvature trading">
-          <div class="glossary-card-header">
-            <div>
-              <div class="glossary-term-name">Chỉ Số Cánh Bướm (Butterfly Spread)</div>
-              <div class="glossary-term-en">Butterfly Curvature (2s5s10s)</div>
-            </div>
-            <span class="glossary-tag curve">Chiến Lược Trading</span>
-          </div>
-          <div class="glossary-body">
-            <p>
-              Chỉ số Cánh bướm (Butterfly Spread) đo lường <strong>độ cong (curvature/hump)</strong> của đường cong lợi suất bằng cách so sánh kỳ hạn "thân" (Body) với hai kỳ hạn "cánh" (Wings).
-            </p>
-
-            <div class="formula-box">
-              <div class="formula-label">Công thức Butterfly 2s-5s-10s:</div>
-              $$\text{Butterfly}_{2s5s10s} = 2 \times Y_{5Y} - (Y_{2Y} + Y_{10Y})$$
-            </div>
-
-            <p><strong>Cơ chế phân tích:</strong></p>
-            <ul style="padding-left: 1.25rem; margin-bottom: 0.75rem;">
-              <li><strong>Butterfly tăng cao ($> 0$):</strong> Đường cong gồ lên ở giữa (5Y tăng nhanh hơn 2Y và 10Y). Điều này thường xảy ra khi áp lực phát hành tập trung lớn ở kỳ hạn 5 năm hoặc áp lực lạm phát trung hạn gia tăng.</li>
-              <li><strong>Butterfly giảm sâu ($< 0$):</strong> Đường cong lõm xuống ở giữa (5Y giảm mạnh hơn hai đầu), báo hiệu thanh khoản dồi dào ở phân khúc trung hạn.</li>
-            </ul>
-
-            <div class="interpretation-box">
-              <div class="interpretation-title">💡 Ứng dụng trong Giao Dịch Trái Phiếu</div>
-              Các tổ chức kinh doanh trái phiếu (Bond Desks) dùng chiến lược <em>Butterfly Trade</em> để kiếm lợi nhuận trung hòa thời lượng (Duration-neutral): Mua cánh (Long 2Y & 10Y) và Bán thân (Short 5Y) khi dự đoán độ cong sẽ hạ nhiệt mà không phụ thuộc vào việc toàn bộ mặt bằng lãi suất tăng hay giảm.
-            </div>
-          </div>
-        </div>
-
-      </div>
-    </section>
-
-    <!-- ═══════════════════════════════════════════════════════════════ -->
-    <!-- SECTION 3: THỐNG KÊ ĐẤU THẦU SƠ CẤP                            -->
-    <!-- ═══════════════════════════════════════════════════════════════ -->
-    <section id="sec-auction">
-      <div class="glossary-section-title">
-        <span>🏷️ 3. Thống Kê Đấu Thầu Sơ Cấp (Primary Market Auction Analytics)</span>
-      </div>
-
-      <div class="glossary-grid">
-
-        <!-- Card: BCR & Stop-out -->
-        <div class="glossary-card" data-keywords="bcr bid to cover ratio ty le bao phu stop out cut off lai suat trung thau">
-          <div class="glossary-card-header">
-            <div>
-              <div class="glossary-term-name">Tỷ Lệ Đặt Thầu (Bid-to-Cover Ratio) & Lãi Suất Trúng</div>
-              <div class="glossary-term-en">Bid-to-Cover Ratio (BCR) & Stop-out Yield</div>
-            </div>
-            <span class="glossary-tag auction">Đấu Thầu HNX</span>
-          </div>
-          <div class="glossary-body">
-            <p>
-              Kho bạc Nhà nước (KBNN) định kỳ tổ chức đấu thầu trái phiếu qua Sở Giao dịch Chứng khoán Hà Nội (HNX). <strong>Bid-to-Cover Ratio (BCR)</strong> là thước đo trực tiếp phản ánh mức độ quan tâm và sức cầu của các thành viên đấu thầu sơ cấp (Primary Dealers).
-            </p>
-
-            <div class="formula-box">
-              <div class="formula-label">Công thức tính BCR:</div>
-              $$\text{BCR} = \frac{\text{Tổng Khối Lượng Dự Thầu (Total Bids)}}{\text{Khối Lượng Gọi Thầu (Offering Volume)}}$$
-            </div>
-
-            <p><strong>Thang đánh giá sức cầu thị trường (BCR):</strong></p>
-            <ul style="padding-left: 1.25rem; margin-bottom: 0.75rem;">
-              <li><strong>BCR $\ge 2.5x$:</strong> Nhu cầu thị trường cực kỳ mạnh mẽ, phiên thầu thường trúng toàn bộ 100% với lãi suất thấp.</li>
-              <li><strong>$1.5x \le \text{BCR} < 2.5x$:</strong> Sức cầu ổn định, cân bằng giữa người mua và người bán.</li>
-              <li><strong>$\text{BCR} < 1.0x$:</strong> Sức cầu yếu ớt, giá trị đặt mua không đủ lượng gọi thầu $\implies$ Nguy cơ cao phiên thầu bị hủy một phần hoặc thất bại toàn bộ.</li>
-            </ul>
-
-            <div class="formula-box">
-              <div class="formula-label">Lãi suất trúng thầu (Stop-out / Cut-off Yield):</div>
-              Mức lãi suất cao nhất trong số các mức lãi suất đặt thầu được Kho bạc Nhà nước chấp nhận. Toàn bộ các nhà đầu tư đặt mức lãi suất bằng hoặc thấp hơn mức này đều được phân bổ mua trái phiếu.
-            </div>
-          </div>
-        </div>
-
-        <!-- Card: Auction Tail -->
-        <div class="glossary-card" data-keywords="tail auction tail do tre do le lai suat stop out weighted average primary secondary spread">
-          <div class="glossary-card-header">
-            <div>
-              <div class="glossary-term-name">Độ Trễ Lãi Suất Đấu Thầu (Auction Tail)</div>
-              <div class="glossary-term-en">Auction Tail / Stop-out Spread</div>
-            </div>
-            <span class="glossary-tag auction">Đấu Thầu Nâng Cao</span>
-          </div>
-          <div class="glossary-body">
-            <p>
-              <strong>Auction Tail (Đuôi đấu thầu)</strong> là khoảng cách giữa <em>Lãi suất trúng thầu cao nhất (Stop-out Rate)</em> và <em>Lãi suất bình quân gia quyền (Weighted Average Rate)</em> hoặc lợi suất thứ cấp giao dịch cùng kỳ hạn ngay trước thời điểm đấu thầu.
-            </p>
-
-            <div class="formula-box">
-              <div class="formula-label">Công thức xác định:</div>
-              $$\text{Tail} = \text{Lãi suất trúng thầu (Stop-out)} - \text{Lãi suất bình quân (Weighted Avg)}$$
-              hoặc:
-              $$\text{When-Issued Tail} = \text{Lãi suất trúng thầu} - \text{Lợi suất thứ cấp tham chiếu}$$
-            </div>
-
-            <p><strong>Ý nghĩa trong quản trị định lượng:</strong></p>
-            <ul style="padding-left: 1.25rem; margin-bottom: 0.75rem;">
-              <li><strong>Tail bằng 0 hoặc rất nhỏ ($\le 1\text{ bps}$):</strong> Phiên thầu "chặt chẽ" (Tight Auction), các thành viên đấu thầu đồng thuận cao về mức định giá hợp lý của trái phiếu.</li>
-              <li><strong>Tail lớn ($> 3–5\text{ bps}$):</strong> Cho thấy KBNN phải chấp nhận hạ giá (tăng lãi suất) ở những lô thầu cuối cùng để hoàn thành hạn mức gọi thầu, báo hiệu sự e ngại của các ngân hàng thương mại.</li>
-            </ul>
-          </div>
-        </div>
-
-      </div>
-    </section>
-
-    <!-- ═══════════════════════════════════════════════════════════════ -->
-    <!-- SECTION 4: DÒNG VỐN KHỐI NGOẠI                                 -->
-    <!-- ═══════════════════════════════════════════════════════════════ -->
-    <section id="sec-foreign">
-      <div class="glossary-section-title">
-        <span>🌏 4. Phân Tích Dòng Vốn Khối Ngoại (Foreign Investor Flow)</span>
-      </div>
-
-      <div class="glossary-grid">
-
-        <!-- Card: Foreign Net Flow -->
-        <div class="glossary-card" data-keywords="foreign flow dong von khoi ngoai net buy net sell mua ban rong ndtnn pdf hnx">
-          <div class="glossary-card-header">
-            <div>
-              <div class="glossary-term-name">Dòng Vốn Ngoại Ròng (Foreign Net Flow)</div>
-              <div class="glossary-term-en">Foreign Institutional Net Buying/Selling Flow</div>
-            </div>
-            <span class="glossary-tag curve">Thị Trường Thứ Cấp</span>
-          </div>
-          <div class="glossary-body">
-            <p>
-              Dòng vốn Nhà đầu tư nước ngoài (NĐTNN) trên thị trường TPCP Việt Nam chủ yếu là các quỹ đầu tư quốc tế, ngân hàng thương mại quốc tế (HSBC, Standard Chartered, Citibank, v.v.). Đây là dòng tiền mang tính chất chiến lược trung - dài hạn.
-            </p>
-
-            <div class="formula-box">
-              <div class="formula-label">Công thức tính Net Flow hàng ngày:</div>
-              $$\text{Net Flow (tỷ VNĐ)} = \frac{\text{Giá Trị Mua (VND)} - \text{Giá Trị Bán (VND)}}{1.000.000.000}$$
-            </div>
-
-            <p><strong>Cơ chế tác động tới thị trường:</strong></p>
-            <ul style="padding-left: 1.25rem; margin-bottom: 0.75rem;">
-              <li><strong>Mua ròng liên tục ($\text{Net} > 0$):</strong> Tạo thêm lực cầu hấp thụ trên thị trường thứ cấp, góp phần nén lợi suất TPCP đi xuống (đẩy giá trái phiếu tăng), đồng thời thể hiện niềm tin vào sự ổn định của tiền đồng (VND).</li>
-              <li><strong>Bán ròng đột biến ($\text{Net} < 0$):</strong> Thường liên quan đến áp lực tỷ giá căng thẳng, chênh lệch lãi suất USD-VND nới rộng khiến dòng vốn ngoại có xu hướng rút về tài sản định danh bằng USD.</li>
-            </ul>
-
-            <div class="interpretation-box">
-              <div class="interpretation-title">📑 Quy trình bóc tách dữ liệu HNX</div>
-              Dữ liệu giao dịch khối ngoại không có API công khai mà được HNX công bố dưới dạng file PDF hàng ngày trên FTP server <code>owa.hnx.vn</code>. Pipeline sử dụng module <code>pipeline/hnx_foreign_daily.py</code> với engine <code>pdfplumber</code> để tự động tải, bóc tách bảng số liệu và khử nhiễu tự động.
-            </div>
-          </div>
-        </div>
-
-        <!-- Card: Foreign Yield Correlation -->
-        <div class="glossary-card" data-keywords="tuong quan loi suat ngoai yield correlation foreign bond demand">
-          <div class="glossary-card-header">
-            <div>
-              <div class="glossary-term-name">Tương Quan Dòng Vốn & Lợi Suất</div>
-              <div class="glossary-term-en">Flow-Yield Dynamics & Market Impact</div>
-            </div>
-            <span class="glossary-tag macro">Phân Tích Định Lượng</span>
-          </div>
-          <div class="glossary-body">
-            <p>
-              Mô hình định lượng đo lường độ trễ (lead-lag effect) và hệ số tương quan Pearson/Spearman giữa dòng vốn mua/bán ròng của khối ngoại với mức biến thiên $\Delta Y$ của lợi suất TPCP kỳ hạn 5Y và 10Y.
-            </p>
-
-            <div class="formula-box">
-              <div class="formula-label">Hệ số tương quan biến thiên lợi suất:</div>
-              $$\rho = \text{Corr}\left(\text{Net Flow}_{t}, \Delta Y_{10Y, t+k}\right)$$
-            </div>
-
-            <p>
-              Theo kết quả thực nghiệm tại Việt Nam: Hệ số $\rho$ mang giá trị âm có ý nghĩa thống kê ở độ trễ $k=1$ đến $k=3$ ngày. Khi khối ngoại mua ròng quy mô lớn ($> 500$ tỷ/phiên), lợi suất 10Y có xu hướng hạ trung bình $2 - 4\text{ bps}$ trong 3 phiên tiếp theo.
-            </p>
-          </div>
-        </div>
-
-      </div>
-    </section>
-
-    <!-- ═══════════════════════════════════════════════════════════════ -->
-    <!-- SECTION 5: TƯƠNG QUAN VĨ MÔ (SBV, USD/VND, OMO)               -->
-    <!-- ═══════════════════════════════════════════════════════════════ -->
-    <section id="sec-macro">
-      <div class="glossary-section-title">
-        <span>🏦 5. Tương Quan Vĩ Mô (Macro Dynamics: SBV & USD/VND)</span>
-      </div>
-
-      <div class="glossary-grid">
-
-        <!-- Card: SBV Policy Rates & OMO -->
-        <div class="glossary-card" data-keywords="sbv ngan hang nha nuoc lai suat dieu hanh omo tin phieu bills repo">
-          <div class="glossary-card-header">
-            <div>
-              <div class="glossary-term-name">Lãi Suất Điều Hành & Nghiệp Vụ OMO</div>
-              <div class="glossary-term-en">SBV Policy Rates & Open Market Operations</div>
-            </div>
-            <span class="glossary-tag macro">Chính Sách Tiền Tệ</span>
-          </div>
-          <div class="glossary-body">
-            <p>
-              Ngân hàng Nhà nước Việt Nam (SBV) điều tiết thanh khoản hệ thống ngân hàng thương mại thông qua <strong>Nghiệp vụ thị trường mở (OMO)</strong> và khung lãi suất điều hành:
-            </p>
-
-            <ul style="padding-left: 1.25rem; margin-bottom: 0.75rem;">
-              <li><strong>Lãi suất Tái cấp vốn (Refinancing Rate) & Tái chiết khấu (Discount Rate):</strong> Đóng vai trò là trần/sàn hành lang lãi suất của nền kinh tế.</li>
-              <li><strong>Phát hành Tín phiếu NHNN (SBV Bills):</strong> Hút bớt thanh khoản VND dư thừa khỏi hệ thống liên ngân hàng nhằm nâng lãi suất VND ngắn hạn (qua đêm - 1 tuần), kiềm chế tỷ giá USD/VND.</li>
-              <li><strong>Mua kỳ hạn (Reverse Repo / Bơm thanh khoản):</strong> Cung ứng vốn ngắn hạn cho các ngân hàng khi thanh khoản gặp căng thẳng mùa cao điểm (cuối năm, Tết).</li>
-            </ul>
-
-            <div class="interpretation-box">
-              <div class="interpretation-title">⚡ Cơ chế truyền dẫn tới TPCP</div>
-              Khi SBV phát hành tín phiếu với lãi suất cao hơn, chi phí vốn liên ngân hàng tăng lên $\implies$ Lợi suất TPCP kỳ hạn ngắn (1M – 1Y) sẽ tăng trước tiên, làm cho đường cong lợi suất phẳng ra (Bear Flattening).
-            </div>
-          </div>
-        </div>
-
-        <!-- Card: USD/VND & FX Pressure -->
-        <div class="glossary-card" data-keywords="ty gia usd/vnd interest rate differential chenh lech lai suat ap luc ty gia">
-          <div class="glossary-card-header">
-            <div>
-              <div class="glossary-term-name">Tỷ Giá USD/VND & Chênh Lệch Lãi Suất</div>
-              <div class="glossary-term-en">FX Pressure & USD-VND Interest Rate Differential</div>
-            </div>
-            <span class="glossary-tag macro">Kinh Tế Vĩ Mô</span>
-          </div>
-          <div class="glossary-body">
-            <p>
-              Chênh lệch giữa lãi suất VND liên ngân hàng và lãi suất USD (SOFR/Fed Funds Rate) là yếu tố chi phối hàng đầu đối với dòng tiền đầu cơ tỷ giá (Carry Trade) và định giá TPCP.
-            </p>
-
-            <div class="formula-box">
-              <div class="formula-label">Chênh lệch lãi suất liên ngân hàng:</div>
-              $$\Delta r = r_{\text{VND, ON}} - r_{\text{USD, SOFR}}$$
-            </div>
-
-            <p><strong>Quy luật vận động:</strong></p>
-            <ul style="padding-left: 1.25rem; margin-bottom: 0.75rem;">
-              <li>Khi $\Delta r < 0$ (Lãi suất VND thấp hơn USD): Các tổ chức tín dụng có động cơ găm giữ USD $\implies$ Tỷ giá USD/VND leo thang $\implies$ SBV buộc phải can thiệp hút tiền hoặc bán ngoại tệ.</li>
-              <li>Lợi suất TPCP Việt Nam có mối tương quan dương mật thiết với tỷ giá USD/VND: Khi tỷ giá chịu áp lực mất giá mạnh, lợi suất trái phiếu thường tăng theo để bù đắp rủi ro tiền tệ.</li>
-            </ul>
-          </div>
-        </div>
-
-      </div>
-    </section>
-
-    <!-- ═══════════════════════════════════════════════════════════════ -->
-    <!-- SECTION 5B: ĐỊNH GIÁ TPCP, DURATION, DV01, CONVEXITY & ROLL-DOWN -->
+    <!-- SECTION 2: ĐỊNH GIÁ, DURATION, DV01, CONVEXITY & ROLL-DOWN      -->
     <!-- ═══════════════════════════════════════════════════════════════ -->
     <section id="sec-pricing">
       <div class="glossary-section-title">
-        <span>🛡️ Định Giá Trái Phiếu, Rủi Ro Lãi Suất (Duration / DV01 / Convexity) &amp; Roll-down</span>
+        <span>🛡️ 2. Định Giá TPCP, Độ Nhạy Lãi Suất & Chiến Lược Carry / Roll-down (Pricing &amp; Risk)</span>
       </div>
 
       <div class="glossary-grid">
 
-        <div class="glossary-card" data-keywords="clean price dirty price accrued interest act/act thong tu 30 hnx dinh gia">
+        <!-- Card 2.1: Clean / Dirty / ACT-ACT -->
+        <div class="glossary-card" data-keywords="clean price dirty price accrued interest thong tu 30 2023 act/act icma lai tich luy gia sach gia kem lai hnx">
           <div class="glossary-card-header">
             <div>
               <div class="glossary-term-name">Giá Sạch, Giá Kèm Lãi &amp; Quy Ước Ngày Đếm</div>
@@ -493,61 +355,201 @@
           </div>
           <div class="glossary-body">
             <p>
-              Theo chuẩn <strong>Thông tư 30/2023/TT-BTC</strong> và quy chế giao dịch TPCP tại HNX (mệnh giá $M = 100.000\text{ VNĐ}$, trả lãi định kỳ $f=1$ lần/năm), quy ước ngày đếm chuẩn là <strong>Actual/Actual (ICMA)</strong>.
+              Theo <strong>Thông tư 30/2023/TT-BTC</strong> và quy chế giao dịch TPCP tại HNX: mệnh giá $M = 100.000\ \text{VND}$,
+              trả lãi <strong>$f = 1$ lần/năm</strong>, quy ước ngày đếm <strong>Actual/Actual (ICMA)</strong> — số ngày thực tế
+              trong kỳ tính lãi $E$ (365, hoặc 366 nếu kỳ đi qua 29/02 năm nhuận), không dùng quy ước 30/360.
             </p>
+
             <div class="formula-box">
               <div class="formula-label">Công thức định giá chuẩn HNX:</div>
               $$P_{\text{dirty}}(y) = \sum_{j=0}^{N-1} \frac{CF_j}{(1 + y)^{v + j}}, \quad v = \frac{d_{\text{next}}}{E}, \quad AI = C \cdot \frac{d_{\text{accrued}}}{E}$$
               $$P_{\text{clean}} = P_{\text{dirty}} - AI$$
             </div>
-            <p>
-              Trong đó $E = (t_{\text{next}} - t_{\text{prev}})$ là số ngày thực tế của kỳ tính lãi hiện hành ($365$ hoặc $366$ ngày nếu đi qua ngày 29/02 năm nhuận).
-            </p>
+
+            <p><strong>Ví dụ tính lãi suất lũy kế:</strong> trái phiếu coupon $6\%$/năm, đã qua $75$ ngày trong kỳ tính $E = 182$ ngày:</p>
+            <div class="formula-box">
+              $$AI = 100.000 \times 6\% \times \frac{75}{182} \approx 2.472\ \text{VND}$$
+            </div>
+
+            <div class="interpretation-box">
+              <div class="interpretation-title">📌 Clean hay Dirty khi đọc Dashboard?</div>
+              Giá giao dịch niêm yết &amp; biểu đồ giá là <strong>clean price</strong> (so sánh được giữa các ngày); dòng tiền thanh toán thực tế = dirty price. Lợi suất (yield) trên toàn bộ Dashboard là yield đóng gói toàn bộ dòng tiền theo ACT/ACT — nhất quán với máy tính giá của HNX.
+            </div>
           </div>
         </div>
 
-        <div class="glossary-card" data-keywords="duration macaulay modified dv01 pv01 convexity do nhay lai suat">
+        <!-- Card 2.2: Duration -->
+        <div class="glossary-card" data-keywords="macaulay modified duration thoi luong do doc gia tri hien tai pv weighted">
           <div class="glossary-card-header">
             <div>
-              <div class="glossary-term-name">Duration, DV01 &amp; Convexity</div>
-              <div class="glossary-term-en">Interest Rate Sensitivity &amp; 2nd-Order Risk</div>
+              <div class="glossary-term-name">Macaulay &amp; Modified Duration</div>
+              <div class="glossary-term-en">Duration — First-Order Price Sensitivity (Years)</div>
             </div>
             <span class="glossary-tag curve">Quản Trị Rủi Ro</span>
           </div>
           <div class="glossary-body">
             <p>
-              Bộ ba thước đo cốt lõi của bàn giao dịch trái phiếu (Fixed Income Desk) dùng để phòng vệ rủi ro lãi suất và thiết kế danh mục:
+              <strong>Macaulay Duration</strong> = trung bình gia quyền thời gian nhận dòng tiền, đo bằng <em>năm</em>.
+              <strong>Modified Duration</strong> = độ dốc tương đối của giá so với lợi suất — “thước đo” chuẩn của bàn giao dịch
+              trái phiếu để ước lượng % biến động giá khi lãi suất dịch chuyển.
             </p>
+
             <div class="formula-box">
-              <div class="formula-label">Độ nhạy bậc 1 và bậc 2:</div>
-              $$D_{\text{Mod}} = \frac{D_{\text{Mac}}}{1 + y/f}, \quad \text{DV01} = \frac{P(y - 1\text{bp}) - P(y + 1\text{bp})}{2}$$
-              $$\frac{\Delta P}{P_{\text{dirty}}} \approx -D_{\text{Mod}} \cdot \Delta y + \frac{1}{2}\text{Convexity} \cdot (\Delta y)^2$$
+              <div class="formula-label">Định nghĩa &amp; chuyển đổi:</div>
+              $$D_{\text{Mac}} = \frac{\sum t_j \cdot PV(CF_j)}{P_{\text{dirty}}}, \qquad D_{\text{Mod}} = \frac{D_{\text{Mac}}}{1 + y/f}$$
+              $$\frac{\Delta P}{P} \approx -D_{\text{Mod}} \cdot \Delta y$$
             </div>
-            <p>
-              Trên thị trường liên ngân hàng Việt Nam, một lô giao dịch chuẩn <strong>100 tỷ VNĐ</strong> kỳ hạn 10Y có $\text{DV01} \approx 79\text{ triệu VNĐ/bps}$.
-            </p>
+
+            <p><strong>Thực tế trên Risk Ladder (dữ liệu phiên 20/11/2026):</strong></p>
+            <ul style="padding-left: 1.25rem; margin-bottom: 0.75rem;">
+              <li>3Y: $D_{\text{Mod}} \approx 2{,}77$ năm — lãi suất +100 bps ⇒ giá giảm ~2,8%.</li>
+              <li>10Y: $D_{\text{Mod}} \approx 7{,}91$ năm (Macaulay 8,27) — rủi ro ~8% giá / 100 bps.</li>
+              <li>30Y: $D_{\text{Mod}} \approx 16{,}2$ năm — đòn bẩy lãi suất mạnh nhất, chỉ dành cho danh mục dài hạn.</li>
+            </ul>
+
+            <div class="interpretation-box">
+              <div class="interpretation-title">💡 Liên hệ tới trang Tổng Quan</div>
+              Cột <strong>Mod. Duration</strong> trong bảng <em>Sovereign Bond Risk Ladder</em> lấy trực tiếp từ số liệu ACT/ACT mệnh giá 100k — dùng để so mức rủi ro giữa các kỳ hạn trước khi quyết định lô giao dịch.
+            </div>
           </div>
         </div>
 
-        <div class="glossary-card" data-keywords="par yield spot rate forward rate carry rolldown return pca">
+        <!-- Card 2.3: DV01 -->
+        <div class="glossary-card" data-keywords="dv01 pv01 bpv point value bps trieu vnd 100 ty hedge pnl do nhay mot diem co ban">
           <div class="glossary-card-header">
             <div>
-              <div class="glossary-term-name">Spot, Par, Implied Forward &amp; Roll-down Return</div>
-              <div class="glossary-term-en">Term Structure &amp; Horizon Total Return</div>
+              <div class="glossary-term-name">DV01 — Giá Trị Của 1 Điểm Cơ Bản</div>
+              <div class="glossary-term-en">DV01 / PV01 (Dollar Value of a Basis Point)</div>
+            </div>
+            <span class="glossary-tag curve">Quản Trị Rủi Ro</span>
+          </div>
+          <div class="glossary-body">
+            <p>
+              <strong>DV01</strong> = số tiền lời/lỗ tuyệt đối bằng VNĐ khi lợi suất đổi <strong>1 bps</strong> ($0{,}01\%$).
+              Đây là “ngôn ngữ tiền tệ” của desk — mọi hedging, bù đắp rủi ro và P&amp;L attribution đều quy về DV01.
+            </p>
+
+            <div class="formula-box">
+              <div class="formula-label">Công thức &amp; ước lượng:</div>
+              $$\text{DV01} = \frac{P(y - 1\text{bp}) - P(y + 1\text{bp})}{2} \approx D_{\text{Mod}} \times P_{\text{dirty}} \times 0{,}0001$$
+            </div>
+
+            <p><strong>Bảng DV01 / lô chuẩn 100 tỷ VNĐ mệnh giá (phiên 20/11/2026):</strong></p>
+            <table class="glossary-mini-table">
+              <thead>
+                <tr><th>Kỳ hạn</th><th>Mod Duration</th><th>DV01 / 100 tỷ</th><th>Đọc P&amp;L</th></tr>
+              </thead>
+              <tbody>
+                <tr><td class="mono">2Y</td><td class="mono">1,89</td><td class="mono">≈ 18,9 tr VNĐ/bps</td><td>Lãi suất +10 bps ⇒ lỗ ~189 tr.</td></tr>
+                <tr><td class="mono">5Y</td><td class="mono">4,41</td><td class="mono">≈ 44,1 tr VNĐ/bps</td><td>—</td></tr>
+                <tr><td class="mono"><strong>10Y</strong></td><td class="mono"><strong>7,91</strong></td><td class="mono"><strong>≈ 79,1 tr VNĐ/bps</strong></td><td>−5 bps ⇒ lãi ~396 tr / lô.</td></tr>
+                <tr><td class="mono">30Y</td><td class="mono">16,20</td><td class="mono">≈ 162,0 tr VNĐ/bps</td><td>Rủi ro gấp ~2 lần 10Y.</td></tr>
+              </tbody>
+            </table>
+
+            <div class="interpretation-box">
+              <div class="interpretation-title">⚖️ Hedging bằng DV01</div>
+              Để trung hòa rủi ro 100 tỷ 10Y (79,1 tr/bps), desk có thể short cùng DV01 ở 5Y: $79{,}1 / 44{,}1 \approx 1{,}79$ lần khối lượng 5Y (giả định chưa điều chỉnh trị số convexity chênh lệch).
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 2.4: Convexity -->
+        <div class="glossary-card" data-keywords="convexity do loi bac hai second order quadratic gia tang giam lech xung doi">
+          <div class="glossary-card-header">
+            <div>
+              <div class="glossary-term-name">Convexity (Độ Lồi)</div>
+              <div class="glossary-term-en">Second-Order Price Sensitivity</div>
+            </div>
+            <span class="glossary-tag curve">Rủi Ro Bậc Hai</span>
+          </div>
+          <div class="glossary-body">
+            <p>
+              Duration chỉ đúng với cú sốc nhỏ; <strong>Convexity</strong> (đơn vị năm²) đo độ cong của đường giá–lãi suất, luôn
+              <strong>đối xứng có lợi</strong> cho người nắm giữ trái phiếu: lãi suất giảm ⇒ giá tăng “nhiều hơn” mô hình tuyến tính,
+              lãi suất tăng ⇒ giá giảm “ít hơn”.
+            </p>
+
+            <div class="formula-box">
+              <div class="formula-label">Mở rộng Taylor bậc hai:</div>
+              $$\frac{\Delta P}{P} \approx -D_{\text{Mod}} \cdot \Delta y + \frac{1}{2}\,\text{Conv} \cdot (\Delta y)^2$$
+            </div>
+
+            <p><strong>Ví dụ 10Y (D = 7,91 · Conv = 77,78):</strong></p>
+            <ul style="padding-left: 1.25rem; margin-bottom: 0.75rem;">
+              <li>Lãi suất <strong>−100 bps</strong>: $+7{,}91\% + \tfrac{1}{2}(77{,}78)(0{,}01)^2 = +7{,}91\% + 0{,}39\% \approx \mathbf{+8{,}30\%}$.</li>
+              <li>Lãi suất <strong>+100 bps</strong>: $-7{,}91\% + 0{,}39\% \approx \mathbf{-7{,}52\%}$ — lỗ ít hơn 78 bps giá so với ước lượng tuyến tính.</li>
+              <li>Convexity tăng nhanh theo kỳ hạn (30Y ≈ 380 năm²) ⇒ trái phiếu dài có “tấm khiên” lớn hơn nhưng DV01 cũng cao hơn.</li>
+            </ul>
+
+            <div class="interpretation-box">
+              <div class="interpretation-title">📌 Ở đâu trên Dashboard?</div>
+              Cột <strong>Convexity</strong> trong Risk Ladder — so sánh hai danh mục cùng DV01 nhưng khác convexity để chọn cấu trúc Bullet tối ưu khi dự báo biến động lớn.
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 2.5: Spot / Par / Forward -->
+        <div class="glossary-card" data-keywords="spot annual spot continuous par yield coupon forward rate implied discount factor zero curve">
+          <div class="glossary-card-header">
+            <div>
+              <div class="glossary-term-name">Spot, Par Yield &amp; Implied Forward</div>
+              <div class="glossary-term-en">Three Curves of the Term Structure</div>
+            </div>
+            <span class="glossary-tag macro">Cấu Trúc Kỳ Hạn</span>
+          </div>
+          <div class="glossary-body">
+            <p><strong>Phân biệt rạch ròi 3 đường cong</strong> (cùng phiên 20/11/2026 tại 10Y làm ví dụ):</p>
+            <ul style="padding-left: 1.25rem; margin-bottom: 0.75rem;">
+              <li><strong>Spot Annual $z_a(m)$</strong>: lợi suất chiết khấu dòng tiền đơn của zero-coupon — 10Y spot = <span class="mono">4,5383%</span>. Biến thể <strong>Spot Continuous</strong> $z_c = \ln(1 + z_a)$ = <span class="mono">4,4376%</span> (dùng cho so sánh với lãi kép liên tục quốc tế).</li>
+              <li><strong>Par Yield $c_{\text{par}}(m)$</strong>: coupon để trái phiếu giao ngang giá 100 — 10Y par = <span class="mono">4,5052%</span> (đây cũng là “lãi suất bình quân” tham chiếu cho auction pricing).</li>
+              <li><strong>Implied Forward $f(t_1,t_2)$</strong>: lãi suất kỳ hạn mà thị trường ngầm định cho tương lai — 1Y forward của 10Y = <span class="mono">4,7492%</span> &gt; spot ⇒ đường cong phản ánh kỳ vọng tăng nhẹ phía trước.</li>
+            </ul>
+
+            <div class="formula-box">
+              <div class="formula-label">Quan hệ định giá:</div>
+              $$(1 + f_{t_1,t_2})^{t_2-t_1} = \frac{(1+z_2)^{t_2}}{(1+z_1)^{t_1}}, \qquad c_{\text{par}}(m) \text{ solves } 100 = \sum \frac{100 \cdot c}{(1+z_i)^{t_i}} + \frac{100}{(1+z_m)^m}$$
+            </div>
+
+            <div class="interpretation-box">
+              <div class="interpretation-title">💡 Ứng dụng</div>
+              Forward curve dùng để tính <em>roll-down</em> (mục tiếp theo); Par yield so với lợi suất thứ cấp cùng kỳ hạn cho biết trái phiếu đang giao dịch <em>cao hơn / thấp hơn</em> par — công cụ định vị relative value giữa các đợt phát hành.
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 2.6: Carry & Roll-down & Breakeven -->
+        <div class="glossary-card" data-keywords="carry rolldown roll down return breakeven expected 1y return hoan von dom dam gain to roll horizon total">
+          <div class="glossary-card-header">
+            <div>
+              <div class="glossary-term-name">Carry, Roll-down &amp; Đệm Breakeven</div>
+              <div class="glossary-term-en">Horizon 1Y Total Return &amp; Break-even Yield Shift</div>
             </div>
             <span class="glossary-tag macro">Chiến Lược Danh Mục</span>
           </div>
           <div class="glossary-body">
             <p>
-              Phân biệt rạch ròi 3 đường cong: <strong>Spot Rate $z_a(t)$</strong> (chiết khấu dòng tiền đơn), <strong>Par Yield $c_{\text{par}}(N)$</strong> (coupon để trái phiếu giao dịch ngang giá $100$), và <strong>Implied Forward Rate $f(t_1, t_2)$</strong> (lãi suất kỳ hạn hòa vốn tương lai).
+              <strong>Lợi suất kỳ vọng 1 năm</strong> của việc nắm giữ TPCP = hai nguồn lợi nhuận, tách bạch trên cột
+              <em>Expected 1Y Ret</em> của Risk Ladder:
             </p>
+
             <div class="formula-box">
-              <div class="formula-label">Cấu trúc kỳ hạn &amp; Roll-down:</div>
-              $$(1 + f_{t_1, t_2})^{t_2 - t_1} = \frac{(1 + z_2)^{t_2}}{(1 + z_1)^{t_1}}, \quad R_{\text{total}} = R_{\text{carry}} + R_{\text{rolldown}}$$
+              <div class="formula-label">Phân bổ lợi nhuận:</div>
+              $$R_{1Y}^{\text{expected}} = \underbrace{y_{\text{par}}}_{\text{carry}} + \underbrace{\text{Roll-down}}_{\text{roll}}, \qquad \text{Breakeven} = \frac{R_{1Y}^{\text{expected}} - y_{\text{new}}}{D_{\text{Mod}}}$$
             </div>
-            <p>
-              Khi đường cong dốc lên, nắm giữ TPCP ở sườn dốc (5Y–10Y) mang lại thêm lợi nhuận vốn tự nhiên (Roll-down) ngay cả khi mặt bằng lãi suất đi ngang.
-            </p>
+
+            <p><strong>Ví dụ 10Y (20/11/2026):</strong> Carry = <span class="mono">4,505%</span> + Roll-down = <span class="mono">0,164%</span> ⇒ <strong>Expected 1Y Return = 4,670%</strong>. Giả định đường cong đứng yên, sau 1 năm trái phiếu “trượt” xuống kỳ hạn 9Y ở lợi suất thấp hơn ⇒ ăn thêm phần chênh lệch đó.</p>
+
+            <ul style="padding-left: 1.25rem; margin-bottom: 0.75rem;">
+              <li><strong>Roll-down &gt; 0</strong>: đường cong dốc lên — nắm giữ có lợi ngay cả khi lãi suất đi ngang (3Y: +21 bps; 10Y: +16 bps; 30Y: âm nhẹ −3 bps).</li>
+              <li><strong>Đệm Breakeven</strong> = lợi suất thị trường được phép <em>tăng</em> tối đa trong 1 năm mà khoản đầu tư vẫn không bị lỗ vốn. 10Y đệm <strong>64 bps</strong>; 2Y đệm tới <strong>433 bps</strong> (ngắn hạn gần như không còn rủi ro giá).</li>
+              <li>Breakeven nhỏ (&lt; 30 bps, thường thấy ở 20Y–30Y khi đường cong phẳng/dốc ngược vùng dài) = đầu tư dài chỉ thắng nếu lợi suất <em>giảm</em> tiếp.</li>
+            </ul>
+
+            <div class="interpretation-box">
+              <div class="interpretation-title">📌 Cách đọc trên Dashboard</div>
+              Cột <strong>Roll-down (1Y)</strong>, <strong>Expected 1Y Ret</strong>, <strong>Đệm Breakeven</strong> trong bảng Risk Ladder (trang Tổng Quan). Chế độ “Kỳ hạn chủ đạo 3Y–15Y” so sánh nhóm core; “Tất cả 12 kỳ hạn” mở rộng 3M–30Y.
+            </div>
           </div>
         </div>
 
@@ -555,95 +557,1197 @@
     </section>
 
     <!-- ═══════════════════════════════════════════════════════════════ -->
-    <!-- SECTION 6: BẢNG TRA CỨU NHANH THUẬT NGỮ                         -->
+    <!-- SECTION 3: TERM SPREAD, ĐẢO NGƯỢC & BUTTERFLY                    -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <section id="sec-spread">
+      <div class="glossary-section-title">
+        <span>↕️ 3. Term Spread, Đảo Ngược Đường Cong &amp; Butterfly (Curve Analytics)</span>
+      </div>
+
+      <div class="glossary-grid">
+
+        <!-- Card 3.1: Term Spread -->
+        <div class="glossary-card" data-keywords="term spread chenh lech loi suat 10y-2y 10y-3m 10y-1y do doc slope bps">
+          <div class="glossary-card-header">
+            <div>
+              <div class="glossary-term-name">Chênh Lệch Lợi Suất (Term Spread)</div>
+              <div class="glossary-term-en">Yield Curve Spread / Slope Indicator</div>
+            </div>
+            <span class="glossary-tag macro">Chỉ Số Vĩ Mô</span>
+          </div>
+          <div class="glossary-body">
+            <p>
+              Term Spread = lợi suất kỳ hạn dài − kỳ hạn ngắn, đo bằng <strong>bps</strong> ($1\% = 100\text{ bps}$). Đây là
+              “hàn thử biểu” kỳ vọng tăng trưởng, lạm phát và chu kỳ chính sách tiền tệ — hiển thị ở gần như mọi trang:
+              thẻ KPI Tổng Quan, cột <em>Spread 10Y-2Y</em> trong bảng 20 phiên, và biểu đồ lịch sử riêng.
+            </p>
+
+            <div class="formula-box">
+              <div class="formula-label">Công thức chuẩn:</div>
+              $$\text{Spread}(T_2, T_1) = Y_{T_2} - Y_{T_1} \quad (T_2 &gt; T_1), \qquad \text{10Y-2Y (bps)} = (Y_{10Y} - Y_{2Y}) \times 100$$
+            </div>
+
+            <p><strong>Các cặp Spread chuẩn trên Dashboard (preset công cụ Term Spread):</strong></p>
+            <ul style="padding-left: 1.25rem; margin-bottom: 0.75rem;">
+              <li><strong>10Y – 2Y</strong> (mặc định): độ dốc tổng thể — chỉ báo kinh điển; tại Mỹ gần như mọi đợt suy thoái 50 năm qua đều có tiền lệ đường cong đảo ngược 6–18 tháng trước.</li>
+              <li><strong>10Y – 3M / 10Y – 1Y</strong>: so lãi suất điều hành–dài; Fed coi 10Y–3M là chỉ báo suy thoái chính xác nhất.</li>
+              <li><strong>5Y – 2Y</strong>: chính sách trung hạn; nhạy với tín hiệu đảo chiều lãi suất điều hành.</li>
+              <li><strong>15Y – 10Y, 30Y – 10Y</strong>: phần bù rủi ro kỳ hạn siêu dài — khẩu vị quỹ bảo hiểm &amp; hưu trí.</li>
+              <li><strong>Tùy chỉnh A − B</strong>: bất kỳ cặp nào trong 20 kỳ hạn 1M→30Y (thanh trượt ngày &amp; bong bóng ngày kiểu nổi trên trang Tổng Quan).</li>
+            </ul>
+
+            <div class="interpretation-box">
+              <div class="interpretation-title">🏷️ Trạng thái đường cong (classify_curve_regime)</div>
+              Pipeline gán nhãn: <strong>Inverted</strong> (spread &lt; 0) · <strong>Flat</strong> (0 – 0,25%) · <strong>Normal</strong> (0,25% – 1,00%) · <strong>Steep</strong> (&gt; 1,00%) — hiển thị trong cột <em>Trạng Thái Curve</em> của bảng 20 phiên gần nhất.
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 3.2: Inversion -->
+        <div class="glossary-card" data-keywords="inversion dao nguoc inverted yield curve canh bao suy thoai bear flattening bull steepening policy">
+          <div class="glossary-card-header">
+            <div>
+              <div class="glossary-term-name">Hiện Tượng Đảo Ngược Đường Cong</div>
+              <div class="glossary-term-en">Yield Curve Inversion (Spread &lt; 0)</div>
+            </div>
+            <span class="glossary-tag macro">Cảnh Báo Hệ Thống</span>
+          </div>
+          <div class="glossary-body">
+            <p>
+              Xảy ra khi $Y_{\text{long}} &lt; Y_{\text{short}}$ — ví dụ 10Y &lt; 2Y. Trang Tổng Quan có <strong>thanh cảnh báo đỏ</strong>
+              tự bật khi điều kiện này xảy ra; cột <em>Trạng Thái Curve</em> đổi thành “Inverted (Đảo ngược)”.
+            </p>
+
+            <div class="formula-box">
+              <div class="formula-label">Điều kiện:</div>
+              $$\text{Spread}_{10Y-2Y} &lt; 0 \;\text{bps} \iff Y_{10Y} &lt; Y_{2Y}$$
+            </div>
+
+            <p><strong>Hai cơ chế đảo ngược — đọc theo bối cảnh Việt Nam:</strong></p>
+            <ul style="padding-left: 1.25rem; margin-bottom: 0.75rem;">
+              <li><strong>Kỳ vọng suy thoái (US-style):</strong> thị trường tin NHTW sẽ <em>hạ</em> lãi suất mạnh tương lai → giá trái phiếu dài tăng, lợi suất dài rơi xuống dưới ngắn.</li>
+              <li><strong>Cú sốc thanh khoản VND (VN-style):</strong> SBV <em>nâng</em> lãi suất / hút tín phiếu để ứng phó áp lực tỷ giá (giai đoạn 2022–2023) → đầu ngắn nhảy vọt trước, tạo đảo ngược mang tính kỹ thuật thanh khoản liên ngân hàng nhiều hơn là dự báo GDP.</li>
+              <li><strong>Re-steepening</strong>: giai đoạn sau đảo ngược thường diễn ra “bull steepening” khi chính sách nới lỏng trở lại (đầu ngắn giảm nhanh hơn) — tín hiệu chu kỳ phục hồi.</li>
+            </ul>
+
+            <div class="interpretation-box">
+              <div class="interpretation-title">⚠️ Cách dùng trên Dashboard</div>
+              Kết hợp 3 nơi: (1) thanh cảnh báo Tổng Quan, (2) biểu đồ <em>Term Spread 10Y-2Y</em> (vùng &lt; 0 được tô đỏ) ở trang Đường Cong, (3) bảng lịch sử 20 phiên với cột trạng thái — xác nhận tín hiệu đa khung thời gian trước khi ra quyết định duration.
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 3.3: Butterfly -->
+        <div class="glossary-card" data-keywords="butterfly 2s5s10s canh buom curvature hump belly barbell bullet duration neutral">
+          <div class="glossary-card-header">
+            <div>
+              <div class="glossary-term-name">Chỉ Số Cánh Bướm (Butterfly Spread)</div>
+              <div class="glossary-term-en">Butterfly Curvature (2s5s10s)</div>
+            </div>
+            <span class="glossary-tag curve">Chiến Lược Trading</span>
+          </div>
+          <div class="glossary-body">
+            <p>
+              Đo <strong>độ cong (hump)</strong> của đường cong bằng cách so kỳ hạn “thân” (belly — 5Y) với hai “cánh”
+              (wings — 2Y &amp; 10Y): thân đắt/rẻ tương đối so với trung bình hai cánh.
+            </p>
+
+            <div class="formula-box">
+              <div class="formula-label">Công thức (bản bps trên Dashboard):</div>
+              $$\text{Butterfly}_{2s5s10s} = 2 \times Y_{5Y} - (Y_{2Y} + Y_{10Y})$$
+            </div>
+
+            <p><strong>Cơ chế &amp; chiến lược:</strong></p>
+            <ul style="padding-left: 1.25rem; margin-bottom: 0.75rem;">
+              <li><strong>BF &gt; 0 (gù lên):</strong> 5Y đắt hơn đường thẳng 2Y–10Y — thường do áp lực phát hành tập trung belly hoặc lạm phát trung hạn tăng → chiến lược <em>sell butterfly</em> (Short thân, Long cánh).</li>
+              <li><strong>BF &lt; 0 (lõm xuống):</strong> 5Y rẻ — thanh khoản dồi dào ở trung hạn → <em>buy butterfly</em> (Long thân, Short cánh).</li>
+              <li><strong>Butterfly trade trung hòa duration</strong>: bucket DV01 Long 2Y + Long 10Y ≈ Short 2×5Y (bản desk nghiêm ngặt cân theo <strong>DV01-weight</strong>, không chỉ trọng số bps 2:1 như công thức thẻ chỉ báo) → kiếm lợi từ biến động độ cong mà không đặt cược direction của lãi suất.</li>
+              <li>Trang Tổng Quan &amp; Đường Cong đều có thẻ KPI <em>Butterfly 2s5s10s</em> + biểu đồ lịch sử riêng.</li>
+            </ul>
+
+            <div class="interpretation-box">
+              <div class="interpretation-title">🧩 Liên hệ với PCA</div>
+              Butterfly gần như trùng với nhân tố <strong>PC3 – Curvature</strong> (10,17% phương sai) — đảo chiều BF mạnh thường đi cùng spike RMSE mô hình NSS khi đường cong đổi hình dạng đột ngột.
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 3.4: Curve shift glossary -->
+        <div class="glossary-card" data-keywords="bull bear steepening flattening parallel shift twist dich chuyen duong cong classify shift regime">
+          <div class="glossary-card-header">
+            <div>
+              <div class="glossary-term-name">Phân Loại Dịch Chuyển Đường Cong</div>
+              <div class="glossary-term-en">Curve Shift Taxonomy (classify_shift_regime)</div>
+            </div>
+            <span class="glossary-tag curve">Thuật Ngữ Trading</span>
+          </div>
+          <div class="glossary-body">
+            <p>Pipeline tự động gán chế độ dịch chuyển mỗi ngày dựa trên $\Delta y_{\text{short}}$, $\Delta y_{\text{long}}$
+              (ngưỡng $10^{-4}$ = 0,01%) — đúng bộ 4 nhãn kinh điển của bàn Fixed Income:</p>
+
+            <table class="glossary-mini-table">
+              <thead>
+                <tr><th>Chế độ</th><th>Điều kiện</th><th>Nguyên nhân thường gặp</th></tr>
+              </thead>
+              <tbody>
+                <tr><td><strong>Bull Steepening</strong></td><td>Lãi suất ↓, đầu ngắn ↓ mạnh hơn</td><td>SBV hạ lãi suất / bơm thanh khoản OMO.</td></tr>
+                <tr><td><strong>Bull Flattening</strong></td><td>Lãi suất ↓, đầu dài ↓ mạnh hơn</td><td>Lạm phát hạ nhiệt, cầu bảo hiểm – NH gom dài hạn.</td></tr>
+                <tr><td><strong>Bear Steepening</strong></td><td>Lãi suất ↑, đầu dài ↑ nhanh hơn</td><td>Áp lực cung sơ cấp kỳ hạn dài, kỳ vọng lạm phát.</td></tr>
+                <tr><td><strong>Bear Flattening</strong></td><td>Lãi suất ↑, đầu ngắn ↑ nhanh hơn</td><td>SBV hút tín phiếu, căng thẳng thanh khoản liên ngân hàng.</td></tr>
+                <tr><td><strong>Parallel Shift</strong></td><td>Cùng dịch chuyển ~ đều</td><td>Thay đổi kỳ vọng chính sách toàn khung.</td></tr>
+                <tr><td><strong>Twist</strong></td><td>Một đoạn đổi, đoạn khác đứng</td><td>Tái cân danh mục tập trung một kỳ hạn (rebalancing quỹ ETF/bond index).</td></tr>
+                <tr><td><strong>Unchanged</strong></td><td>Biên độ &lt; 0,01%</td><td>Phiên đi ngang.</td></tr>
+              </tbody>
+            </table>
+
+            <div class="interpretation-box">
+              <div class="interpretation-title">📌 Ứng dụng</div>
+              Gắn nhãn mỗi phiên → thống kê tần suất “Bull/Bear flattening” theo quý giúp xác định regime thị trường đang do <em>chính sách</em> (đầu ngắn) hay do <em>nguồn cung/vốn ngoại</em> (đầu dài) chi phối.
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 3.5: Percentile -->
+        <div class="glossary-card" data-keywords="percentile rank 252 phien rolling min max overbought oversold vi tri phan vi 1 nam">
+          <div class="glossary-card-header">
+            <div>
+              <div class="glossary-term-name">Xếp Hạng Bách Phân Vị (Percentile Rank)</div>
+              <div class="glossary-term-en">Rolling 252-Session Percentile Rank</div>
+            </div>
+            <span class="glossary-tag curve">Chỉ Báo Định Vị</span>
+          </div>
+          <div class="glossary-body">
+            <p>
+              Bảng <strong>“Lợi Suất So Với Lịch Sử (Percentile 1 năm)”</strong> (trang Đường Cong Lợi Suất) đặt lợi suất hiện tại
+              của từng kỳ hạn vào phân phối <strong>252 phiên giao dịch gần nhất (~1 năm)</strong>:
+            </p>
+
+            <div class="formula-box">
+              <div class="formula-label">Công thức (rolling window, bỏ phiên thiếu dữ liệu):</div>
+              $$\text{Percentile}(y_t) = \frac{\text{rank}(y_t \mid \text{window } 252)}{252} \times 100\%$$
+            </div>
+
+            <p><strong>Đọc như thế nào:</strong></p>
+            <ul style="padding-left: 1.25rem; margin-bottom: 0.75rem;">
+              <li><strong>0%</strong> = lợi suất đang ở <em>đáy</em> 1 năm (giá trái phiếu cao nhất — vùng “đắt” theo giá).</li>
+              <li><strong>100%</strong> = lợi suất ở <em>đỉnh</em> 1 năm (giá rẻ nhất — vùng “rẻ” theo giá, thường gắn với cơ hội mua vào duration).</li>
+              <li><strong>50%</strong> = giữa vùng trung tính.</li>
+              <li>Cột hiển thị: <span class="mono">Chỉ Số | Giá Trị (ngày xem) | Vị Trí trong 252 Phiên</span> — luôn đổi theo ngày bạn kéo thanh trượt.</li>
+            </ul>
+
+            <div class="interpretation-box">
+              <div class="interpretation-title">⚠️ Lưu ý</div>
+              Percentile là <em>định vị lịch sử</em>, không phải dự báo: lợi suất 90% percentile vẫn có thể lên 95% nếu vĩ mô xấu đi. Dùng kết hợp với Breakeven (định giá) và trạng thái đường cong (regime) để ra quyết định.
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- SECTION 4: THỐNG KÊ ĐẤU THẦU SƠ CẤP                             -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <section id="sec-auction">
+      <div class="glossary-section-title">
+        <span>🏷️ 4. Thống Kê Đấu Thầu Sơ Cấp (Primary Market Auction Analytics — KBNN @ HNX)</span>
+      </div>
+
+      <div class="glossary-grid">
+
+        <!-- Card 4.1: BCR & Stop-out -->
+        <div class="glossary-card" data-keywords="bcr bid to cover ty le bao phu stop out cut off lai suat trung thau calling offering volume">
+          <div class="glossary-card-header">
+            <div>
+              <div class="glossary-term-name">Tỷ Lệ Đặt Thầu &amp; Lãi Suất Trúng Thầu</div>
+              <div class="glossary-term-en">Bid-to-Cover Ratio (BCR) & Stop-out Yield</div>
+            </div>
+            <span class="glossary-tag auction">Đấu Thầu HNX</span>
+          </div>
+          <div class="glossary-body">
+            <p>
+              KBNN định kỳ tổ chức đấu thầu TPCP qua HNX (hơn <strong>3.500 phiên</strong> trong lịch sử dữ liệu pipeline).
+              <strong>BCR</strong> phản ánh trực tiếp sức cầu sơ cấp của các thành viên (thương nhân chính / NHTM):
+            </p>
+
+            <div class="formula-box">
+              <div class="formula-label">Công thức:</div>
+              $$\text{BCR} = \frac{\text{Total Bids}}{\text{Offering Volume}}$$
+            </div>
+
+            <p><strong>Thang đọc BCR:</strong></p>
+            <ul style="padding-left: 1.25rem; margin-bottom: 0.75rem;">
+              <li><strong>≥ 2,5x</strong>: cầu cực mạnh — thường trúng 100% với lãi suất sát cạnh tranh (dưới trần KBNN).</li>
+              <li><strong>1,5x – 2,5x</strong>: cầu khỏe, ổn định (mức “bình thường” của TPCP Việt).</li>
+              <li><strong>1,0x – 1,5x</strong>: mỏng — KBNN có thể chỉ trúng một phần hạn mức.</li>
+              <li><strong>&lt; 1,0x</strong>: cầu không đủ hấp thụ — nguy cơ bỏ thầu / hủy phiên.</li>
+            </ul>
+
+            <div class="formula-box">
+              <div class="formula-label">Stop-out / Cut-off Rate:</div>
+              Mức lãi suất <strong>cao nhất trong các mức lãi suất được KBNN chấp nhận</strong>. Mọi hồ sơ đặt lãi suất ≤ stop-out đều được phân bổ (theo thứ tự ưu tiên); giá trị này là “lãi suất biên” của thị trường sơ cấp kỳ hạn đó.
+            </div>
+
+            <div class="interpretation-box">
+              <div class="interpretation-title">📌 Trên Dashboard</div>
+              Thẻ KPI <em>BCR Trung Bình 10Y</em> &amp; <em>Stop-out Rate 10Y</em>; biểu đồ <em>Lịch sử Stop-out Rate</em> (chips 2Y/5Y/10Y/Tất cả) và <em>BCR theo Tenor</em> (vạch tham chiếu 1,0x) ở trang Đấu Thầu Sơ Cấp.
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 4.2: Tail -->
+        <div class="glossary-card" data-keywords="auction tail do tre do le stop out weighted average when issued tight loose phan bo gia">
+          <div class="glossary-card-header">
+            <div>
+              <div class="glossary-term-name">Độ Trễ Lãi Suất Đấu Thầu (Auction Tail)</div>
+              <div class="glossary-term-en">Auction Tail / Stop-out Spread</div>
+            </div>
+            <span class="glossary-tag auction">Đấu Thầu Nâng Cao</span>
+          </div>
+          <div class="glossary-body">
+            <p>
+              <strong>Tail</strong> = khoảng cách giữa lãi suất trúng cao nhất và lãi suất bình quân gia quyền — thước đo
+              <em>mức độ đồng thuận giá</em> của các thành viên trong phiên:
+            </p>
+
+            <div class="formula-box">
+              <div class="formula-label">Công thức:</div>
+              $$\text{Tail (bps)} = \left(\text{Stop-out} - \text{Weighted Avg Rate}\right) \times 100$$
+              $$\text{When-Issued Tail} = \text{Stop-out} - \text{Secondary Yield (WI / same tenor)}$$
+            </div>
+
+            <p><strong>Thang đánh giá:</strong></p>
+            <ul style="padding-left: 1.25rem; margin-bottom: 0.75rem;">
+              <li><strong>Tail ≤ 1 bps:</strong> “Tight auction” — thị trường đồng thuận gần như tuyệt đối, KBNN huy động rẻ.</li>
+              <li><strong>Tail 1 – 3 bps:</strong> bình thường, phân bổ trải rộng nhẹ.</li>
+              <li><strong>Tail &gt; 3 – 5 bps:</strong> “lỏng” — KBNN phải chấp nhận lãi suất cao ở các lô cuối để lấp đủ hạn mức; báo hiệu NHTM e ngại giữ giá ở mức thấp (thường đi trước điều chỉnh lãi suất TTSC).</li>
+            </ul>
+
+            <div class="interpretation-box">
+              <div class="interpretation-title">📌 Trên Dashboard</div>
+              Cột <strong>Tail (bps)</strong> trong bảng <em>Các Phiên Giao Dịch Gần Nhất</em> (90 ngày) — sắp xếp giảm dần cột này để lọc ngay các phiên đấu thầu bất thường.
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 4.3: Auction process -->
+        <div class="glossary-card" data-keywords="quy trinh dau thau phat hanh so cap kbnn primary dealer thanh lap thi truong phuong thuc dat thau">
+          <div class="glossary-card-header">
+            <div>
+              <div class="glossary-term-name">Quy Trình &amp; Cơ Cấu Phiên Đấu Thầu Sơ Cấp</div>
+              <div class="glossary-term-en">Primary Issuance Mechanics at HNX</div>
+            </div>
+            <span class="glossary-tag auction">Thị Trường Sơ Cấp</span>
+          </div>
+          <div class="glossary-body">
+            <p><strong>Tra nhanh cách một phiên thầu diễn ra</strong> (để hiểu mọi cột dữ liệu trong bảng đấu thầu):</p>
+            <ol style="padding-left: 1.35rem; margin-bottom: 0.75rem; font-size: 0.85rem;">
+              <li><strong>KBNN ấn định hạn mức</strong> gọi thầu theo tuần/tháng cho từng kỳ hạn (2Y, 5Y, 10Y, 15Y, 20Y…) và lãi suất <em>trần</em> đặt thầu.</li>
+              <li><strong>Thành viên đấu thầu</strong> (thương nhân chính Primary Dealer, NHTM, CTCK) nộp hồ sơ gồm <em>lãi suất</em> và <em>khối lượng</em> — đặt thầu cạnh tranh (≤ trần) hoặc không cạnh tranh (nhận theo lãi suất bình quân trúng).</li>
+              <li><strong>HNX chốt phiên</strong>: xếp hồ sơ tăng dần lãi suất, phân bổ tới khi chạm hạn mức → ra <em>stop-out</em>, <em>weighted avg</em>, <em>BCR</em>, <em>KL trúng</em>.</li>
+              <li><strong>Thị trường thứ cấp “When-Issued”</strong> định giá song song trước phiên → làm tham chiếu tính Tail &amp; chênh lệch sơ cấp – thứ cấp (primary-secondary spread).</li>
+              <li>Sau T+ settlement, trái phiếu mới vào danh mục và xuất hiện ở dữ liệu giao dịch thứ cấp / risk ladder.</li>
+            </ol>
+
+            <div class="formula-box">
+              <div class="formula-label">Tỷ lệ thành công của phiên:</div>
+              $$\text{Success Rate} = \frac{N_{\text{sessions, allocated} &gt; 0}}{N_{\text{total sessions}}} \times 100\%$$
+            </div>
+
+            <div class="interpretation-box">
+              <div class="interpretation-title">💡 Ngữ nghĩa “thất bại”</div>
+              Phiên thất bại/không trúng toàn bộ gần như luôn do <em>trần lãi suất KBNN &lt; mức thị trường sẵn sàng chấp nhận</em> — không phải thiếu cầu về TPCP. Khi đó KBNN nâng trần ở phiên sau, kéo stop-out &amp; lợi suất TTSC điều chỉnh theo.
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 4.4: Heatmap & success -->
+        <div class="glossary-card" data-keywords="heatmap ty le thanh cong 4 quy xanh vang do congestion phat hanh quy stacked volume">
+          <div class="glossary-card-header">
+            <div>
+              <div class="glossary-term-name">Bản Đồ Thành Công &amp; Khối Lượng Phát Hành</div>
+              <div class="glossary-term-en">Success Rate Heatmap (4Q) & Quarterly Issuance Volume</div>
+            </div>
+            <span class="glossary-tag auction">Widget Dashboard</span>
+          </div>
+          <div class="glossary-body">
+            <p><strong>Bảng màu nhiệt “Tỷ Lệ Thành Công theo Tenor (4 quý gần nhất)”</strong> — mã giao thông:</p>
+            <ul style="padding-left: 1.25rem; margin-bottom: 0.75rem;">
+              <li><span class="mono" style="color:#34d399;">🟢 Xanh</span>: <strong>≥ 80%</strong> — phát hành trôi chảy ở kỳ hạn đó.</li>
+              <li><span class="mono" style="color:#fbbf24;">🟡 Vàng</span>: <strong>50% – 80%</strong> — trung bình, có phiên ế.</li>
+              <li><span class="mono" style="color:#f87171;">🔴 Đỏ</span>: <strong>&lt; 50%</strong> — ế thầu nghiêm trọng, kiểm tra lại trần lãi suất &amp; cung – cầu.</li>
+            </ul>
+
+            <p><strong>Biểu đồ cột chồng “Khối Lượng Phát Hành theo Quý (tỷ đồng)”</strong>:</p>
+            <ul style="padding-left: 1.25rem; margin-bottom: 0.75rem;">
+              <li>Mỗi cột = tổng giá trị TPCP trúng thầu trong quý; màu phân tầng theo kỳ hạn (stacked).</li>
+              <li>Đọc xu hướng <strong>kéo dài kỳ hạn</strong> (share 10Y–15Y tăng) = KBNN kéo dài average maturity → rủi ro lãi suất quỹ đạo dài hạn của nợ công &amp; nguồn cung dài dồi dào hơn (bearish cho sườn dài nếu cầu không theo kịp).</li>
+              <li>Quý có volume spike thường trùng lịch bù lỗ hụt thu / tái chính phủ — đối chiếu với biểu đồ stop-out cùng kỳ để đánh giá “cung” tác động “giá”.</li>
+            </ul>
+
+            <div class="interpretation-box">
+              <div class="interpretation-title">📌 Bộ lọc tổng</div>
+              Dropdown <strong>Tenor</strong> (Tất cả / 2Y / 5Y / 10Y / 15Y / 20Y) trên header trang Đấu Thầu ảnh hưởng toàn bộ 5 thẻ KPI + toàn bộ biểu đồ — chọn 10Y để tái tạo bộ chỉ số chuẩn của benchmark.
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 4.5: Auction tab KPI dictionary -->
+        <div class="glossary-card" data-keywords="kpi auctions tong phien ty le thanh cong bcr stop out tail table 90 ngay csv export widget">
+          <div class="glossary-card-header">
+            <div>
+              <div class="glossary-term-name">Từ Điển Widget Trang Đấu Thầu</div>
+              <div class="glossary-term-en">Auctions Page — All KPIs, Charts &amp; Table Columns</div>
+            </div>
+            <span class="glossary-tag auction">Widget Dashboard</span>
+          </div>
+          <div class="glossary-body">
+            <table class="glossary-mini-table">
+              <thead>
+                <tr><th>Thành phần</th><th>Đơn vị</th><th>Nghĩa / Cách đọc</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>Tổng Phiên</td><td class="mono">phiên</td><td>Tổng số phiên gọi thầu khớp bộ lọc tenor.</td></tr>
+                <tr><td>Tỷ Lệ Thành Công</td><td class="mono">%</td><td>Phiên có KL trúng &gt; 0 / tổng phiên.</td></tr>
+                <tr><td>BCR Trung Bình 10Y</td><td class="mono">x</td><td>Sức cầu bình quân của benchmark 10Y.</td></tr>
+                <tr><td>Stop-out Rate 10Y</td><td class="mono">%</td><td>Lãi suất trúng cao nhất phiên gần nhất.</td></tr>
+                <tr><td>Tail 10Y</td><td class="mono">bps</td><td>Độ lệch stop-out − bình quân (phiên gần nhất).</td></tr>
+                <tr><td>Biểu đồ Stop-out lịch sử</td><td class="mono">%</td><td>Chips chuyển 10Y / 5Y / 2Y / Tất cả.</td></tr>
+                <tr><td>BCR theo Tenor</td><td class="mono">x</td><td>So sức cầu giữa các kỳ hạn; vạch 1,0x = hòa vốn gọi thầu.</td></tr>
+                <tr><td>Heatmap 4 quý</td><td class="mono">%</td><td>Màu xanh ≥80 · vàng 50–80 · đỏ &lt;50.</td></tr>
+                <tr><td>Cột bảng 90 ngày</td><td>—</td><td>Ngày · Kỳ Hạn · Lãi Suất Trúng · Stop-out · Tail (bps) · BCR · KL Trúng (tỷ) · Kết Quả — bấm tiêu đề cột để sắp xếp.</td></tr>
+                <tr><td>Nút ⬇ CSV</td><td>—</td><td>Xuất bảng đang xem về file CSV cho Excel/Python.</td></tr>
+              </tbody>
+            </table>
+
+            <div class="interpretation-box">
+              <div class="interpretation-title">💡 Workflow gợi ý</div>
+              Lọc tenor 10Y → đọc 5 thẻ KPI → so sánh stop-out với lợi suất TTSC 10Y đang xem ở tab Tổng Quan (chênh lệch = primary-secondary spread, tín hiệu định giá tương đối) → sort cột Tail giảm dần để soát phiên bất thường.
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- SECTION 5: DÒNG VỐN KHỐI NGOẠI                                 -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <section id="sec-foreign">
+      <div class="glossary-section-title">
+        <span>🌏 5. Phân Tích Dòng Vốn Khối Ngoại (Foreign Investor Flow — Secondary Market)</span>
+      </div>
+
+      <div class="glossary-grid">
+
+        <!-- Card 5.1: Net Flow -->
+        <div class="glossary-card" data-keywords="foreign flow dong von ngoai net buy net sell mua ban rong pdf hnx ndtnn ty dong">
+          <div class="glossary-card-header">
+            <div>
+              <div class="glossary-term-name">Dòng Vốn Ngoại Ròng (Foreign Net Flow)</div>
+              <div class="glossary-term-en">Foreign Institutional Net Buying / Selling Flow</div>
+            </div>
+            <span class="glossary-tag curve">Thị Trường Thứ Cấp</span>
+          </div>
+          <div class="glossary-body">
+            <p>
+              NĐTNN trên TTTPC Việt Nam chủ yếu là quỹ đầu tư quốc tế &amp; chi nhánh NHTM nước ngoài (HSBC, Standard Chartered,
+              Citibank…) — dòng tiền trung – dài hạn, quy đổi chuẩn về <strong>tỷ đồng</strong> trên Dashboard. Dữ liệu &gt;
+              <strong>3.440 phiên từ 2013</strong> đến nay.
+            </p>
+
+            <div class="formula-box">
+              <div class="formula-label">Net Flow hàng ngày:</div>
+              $$\text{Net Flow (bn VND)} = \frac{\text{Buy Value (VND)} - \text{Sell Value (VND)}}{10^{9}}$$
+            </div>
+
+            <p><strong>Cơ chế tác động tới lợi suất:</strong></p>
+            <ul style="padding-left: 1.25rem; margin-bottom: 0.75rem;">
+              <li><strong>Mua ròng kéo dài ($\text{Net} &gt; 0$):</strong> cầu ngoại hấp thụ nguồn cung thứ cấp → nén lợi suất TPCP (giá tăng) &amp; củng cố niềm tin VND.</li>
+              <li><strong>Bán ròng đột biến ($\text{Net} &lt; 0$):</strong> thường gắn với áp lực tỷ giá, Fed hawkish, nới rộng chênh lệch VND–USD → dòng tiền rút về tài sản định danh USD / emerging-market de-risk.</li>
+              <li>Lưu ý <em>hướng giao dịch hai chiều</em>: cùng một ngày có thể mua lớn &amp; bán lớn (turnover cao) — luôn đối chiếu thêm thẻ <em>Tổng Giao Dịch</em> để phân biệt “chuyển vị chiến lược” vs “xoay vòng thanh khoản”.</li>
+            </ul>
+
+            <div class="interpretation-box">
+              <div class="interpretation-title">📑 ETL dữ liệu HNX</div>
+              HNX công bố giao dịch khối ngoại dưới dạng <strong>file PDF hàng ngày</strong> trên FTP <code>owa.hnx.vn</code> (không có API). Pipeline dùng <code>pipeline/hnx_foreign_daily.py</code> + engine <code>pdfplumber</code> để tải, bóc tách bảng và khử nhiễu tự động → <code>foreign_flow.json</code>.
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 5.2: Flow-Yield correlation -->
+        <div class="glossary-card" data-keywords="tuong quan dong von loi suat yield correlation pearson spearman lag lead lag foreign demand">
+          <div class="glossary-card-header">
+            <div>
+              <div class="glossary-term-name">Tương Quan Dòng Vốn &amp; Lợi Suất</div>
+              <div class="glossary-term-en">Flow-Yield Dynamics (Lead-Lag Correlation)</div>
+            </div>
+            <span class="glossary-tag macro">Phân Tích Định Lượng</span>
+          </div>
+          <div class="glossary-body">
+            <p>
+              Pipeline đo hệ số tương quan Pearson/Spearman giữa <em>Net Flow</em> và biến thiên lợi suất $\Delta Y_{5Y}, \Delta Y_{10Y}$
+              ở nhiều độ trễ $k$ (lead–lag), cho phép phân biệt “ngoại mua trước → lợi suất giảm” hay ngược lại “ngoại chạy theo đà”:
+            </p>
+
+            <div class="formula-box">
+              <div class="formula-label">Hệ số tương quan có độ trễ:</div>
+              $$\rho_k = \text{Corr}\left(\text{Net Flow}_{t},\; \Delta Y_{10Y,\;t+k}\right), \quad k \in \{0, 1, 2, 3, \dots\}$$
+            </div>
+
+            <p><strong>Kết quả thực nghiệm trên dữ liệu pipeline (tham chiếu):</strong></p>
+            <ul style="padding-left: 1.25rem; margin-bottom: 0.75rem;">
+              <li>$\rho$ mang giá trị <strong>âm có ý nghĩa</strong> tại độ trễ $k = 1 \to 3$ phiên: mua ròng → lợi suất 10Y hạ.</li>
+              <li>Phiên mua ròng lớn ($&gt; 500$ tỷ) thường đi kèm lợi suất 10Y giảm trung bình $2 - 4\text{ bps}$ trong 3 phiên kế tiếp.</li>
+              <li>Tương quan đổi dấu trong giai đoạn “risk-off toàn cầu” (cùng bán cả TPCP lẫn cổ phiếu) — luôn kiểm tra rolling correlation thay vì con số toàn mẫu.</li>
+            </ul>
+
+            <div class="interpretation-box">
+              <div class="interpretation-title">⚠️ Cẩn thận đọc nhân quả</div>
+              Tương quan không phải nhân quả: NĐTNN có thể mua ròng <em>because</em> lợi suất đang hấp thụ (giá thấp). Dùng kết hợp khối lượng, trạng thái đường cong và tin tức chính sách để kết luận.
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 5.3: Foreign tab widgets -->
+        <div class="glossary-card" data-keywords="kpi foreign net giai doan tong giao dich mua rong lon nhat ban rong lon nhat top 10 cumulative widget">
+          <div class="glossary-card-header">
+            <div>
+              <div class="glossary-term-name">Từ Điển Widget Trang Dòng Vốn Ngoại</div>
+              <div class="glossary-term-en">Foreign Flows Page — KPIs, Charts &amp; Filters</div>
+            </div>
+            <span class="glossary-tag curve">Widget Dashboard</span>
+          </div>
+          <div class="glossary-body">
+            <table class="glossary-mini-table">
+              <thead>
+                <tr><th>Thành phần</th><th>Đơn vị</th><th>Nghĩa / Cách đọc</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>Net Giai Đoạn</td><td class="mono">tỷ đồng</td><td>Cộng dồn mua − bán trong khoảng ngày đang lọc; + =net buyer.</td></tr>
+                <tr><td>Tổng Giao Dịch</td><td class="mono">tỷ đồng</td><td>Mua + Bán (hai chiều) — đo thanh khoản của khối ngoại.</td></tr>
+                <tr><td>Mua Ròng Lớn Nhất</td><td class="mono">tỷ/phiên</td><td>Phiên gom ròng kỷ lục + ngày xảy ra.</td></tr>
+                <tr><td>Bán Ròng Lớn Nhất</td><td class="mono">tỷ/phiên</td><td>Phiên xả ròng mạnh nhất + ngày xảy ra.</td></tr>
+                <tr><td>Bộ lọc nhanh</td><td class="mono">30D→3Y, YTD, Tất cả</td><td>Cùng cột KPI, biểu đồ và bảng đều tính lại theo khung đã chọn (hoặc Từ ngày → Đến ngày tùy chỉnh).</td></tr>
+                <tr><td>Bar chart Net hàng ngày</td><td class="mono">tỷ</td><td><span style="color:#34d399;">Cột xanh</span> = mua ròng · <span style="color:#f87171;">Cột đỏ</span> = bán ròng.</td></tr>
+                <tr><td>Cumulative Net Flow</td><td class="mono">tỷ</td><td>Đường tích lũy từ đầu giai đoạn — dốc lên bền = tích lũy chiến lược; dốc xuống = rút vốn.</td></tr>
+                <tr><td>Bảng Top 10 phiên</td><td>—</td><td>Cột: Ngày · Net (tỷ đồng) · Mua / Bán · Hướng — xếp theo |Net| tuyệt đối.</td></tr>
+              </tbody>
+            </table>
+
+            <div class="interpretation-box">
+              <div class="interpretation-title">🔗 Đối chiếu liên tab</div>
+              Chọn cùng khoảng 30–90 ngày ở tab Tổng Quan (hàng tóm tắt đấu thầu &amp; ngoại) và tab Dòng Vốn Ngoại để so “cung sơ cấp KBNN vs cầu ngoại hấp thụ” trong cùng một khung thời gian.
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 5.4: Interpretation playbook -->
+        <div class="glossary-card" data-keywords="playbook doc dong von su kien fed rebalancing embi risk on off ung dung giao dich">
+          <div class="glossary-card-header">
+            <div>
+              <div class="glossary-term-name">Sổ Tay Diễn Giải Dòng Vốn</div>
+              <div class="glossary-term-en">Foreign Flow Interpretation Playbook</div>
+            </div>
+            <span class="glossary-tag macro">Best Practice</span>
+          </div>
+          <div class="glossary-body">
+            <p><strong>4 mẫu hình thường gặp &amp; hàm ý giao dịch:</strong></p>
+            <ol style="padding-left: 1.35rem; margin-bottom: 0.75rem; font-size: 0.85rem;">
+              <li><strong>Tích lũy đều + turnover thấp</strong>: dòng tiền chiến lược (quỹ trung – dài hạn) — hỗ trợ giá, giảm volatility; favors giữ duration.</li>
+              <li><strong>Mua/bán ròng luân phiên mạnh + turnover cao</strong>: xoay vòng ngắn hạn / rebalancing chỉ số — không phải tín hiệu direction; tránh chase.</li>
+              <li><strong>Bán ròng 3–5 phiên liên tiếp</strong>: thường trùng đợt Fed hawkish / EMBI spread nới / tỷ giá USD/VND căng — xem lại lịch sử sell-off trước khi bắt đáy.</li>
+              <li><strong>Đảo chiều mua ròng trở lại</strong> khi TB yield 10Y ở percentile cao: dấu hiệu “value buyer” quốc tế quay lại — đối chiếu luôn bảng Percentile 252 phiên ở tab Đường Cong.</li>
+            </ol>
+
+            <p><strong>Sự kiện nên đối chiếu:</strong> quyết định lãi suất Fed &amp; SOFR, chênh lệch VND–USD, đợt phát hành lớn của KBNN, sự kiện tái cân danh mục chỉ số quốc tế, tin xếp hạng tín nhiệm.</p>
+
+            <div class="interpretation-box">
+              <div class="interpretation-title">📌 Chỉ số phụ trợ</div>
+              Biểu đồ <em>Tích Lũy Ròng</em> + 4 thẻ KPI “động” đã tính sẵn theo đúng khung lọc — không cần tự cộng tay; dùng preset nhanh 30D/90D/1Y để so cùng định dạng với lợi suất ở các tab khác.
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- SECTION 6: TƯƠNG QUAN VĨ MÔ (SBV, USD/VND, OMO)                -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <section id="sec-macro">
+      <div class="glossary-section-title">
+        <span>🏦 6. Tương Quan Vĩ Mô — SBV &amp; USD/VND (Macro Transmission &amp; Correlation)</span>
+      </div>
+
+      <div class="glossary-grid">
+
+        <!-- Card 6.1: Policy rates & OMO -->
+        <div class="glossary-card" data-keywords="sbv ngan hang nha nuoc lai suat dieu hanh omo tin phieu bills repo tai cap von tai chiet khau refinancing discount">
+          <div class="glossary-card-header">
+            <div>
+              <div class="glossary-term-name">Lãi Suất Điều Hành &amp; Nghiệp Vụ OMO</div>
+              <div class="glossary-term-en">SBV Policy Rates &amp; Open Market Operations</div>
+            </div>
+            <span class="glossary-tag macro">Chính Sách Tiền Tệ</span>
+          </div>
+          <div class="glossary-body">
+            <p>Ngân hàng Nhà nước (SBV) điều tiết thanh khoản NHTM bằng “khung lãi suất điều hành” + công cụ mở:</p>
+
+            <table class="glossary-mini-table">
+              <thead>
+                <tr><th>Công cụ</th><th>Hướng</th><th>Tác động tới TPCP</th></tr>
+              </thead>
+              <tbody>
+                <tr><td><strong>Lãi suất Tái cấp vốn (Refinancing)</strong></td><td>Trần hành lang</td><td>Nền tảng định giá toàn khung; lịch sử pipeline từ 14% (2012) → 4,5% (2024–2026).</td></tr>
+                <tr><td><strong>Lãi suất Tái chiết khấu (Discount)</strong></td><td>Trần ngắn</td><td>Tham chiếu chi phí vốn ngắn hạn chính thức.</td></tr>
+                <tr><td><strong>Phát hành Tín phiếu NHNN (SBV Bills)</strong></td><td><strong>Hút</strong> VND</td><td>Nâng O/N–1W liên ngân hàng → lợi suất TPCP 1M–1Y tăng trước → <em>Bear Flattening</em>.</td></tr>
+                <tr><td><strong>OMO Repo (mua kỳ hạn)</strong></td><td><strong>Bơm</strong> VND</td><td>Dội lại thanh khoản (cuối năm, Tết, căng thẳng) → hạ dần đầu ngắn.</td></tr>
+                <tr><td>Lãi suất tối đa huy động ngắn hạn</td><td>Ràng buộc NIM</td><td>Ép dòng tiền nhàn rỗi sang TPCP / tín phiếu → tăng cầu nội địa.</td></tr>
+              </tbody>
+            </table>
+
+            <div class="formula-box">
+              <div class="formula-label">Premium_policy (trong pipeline correlation):</div>
+              $$\text{Premium}_{2Y} = Y_{2Y}^{\text{TPCP}} - r_{\text{refinance}}^{\text{SBV}}$$
+            </div>
+
+            <div class="interpretation-box">
+              <div class="interpretation-title">⚡ Cơ chế truyền dẫn kinh điển</div>
+              SBV hút tín phiếu → chi phí vốn liên ngân hàng ↑ → đầu ngắn TPCP (1M–1Y) tăng đầu tiên → đường cong <strong>Bear Flattening</strong>; ngược lại bơm thanh khoản → <strong>Bull Steepening</strong>.
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 6.2: USD/VND -->
+        <div class="glossary-card" data-keywords="ty gia usd vnd sofr fed funds chenh lech lai suat swap points carry trade ap luc ty gia">
+          <div class="glossary-card-header">
+            <div>
+              <div class="glossary-term-name">Tỷ Giá USD/VND &amp; Chênh Lệch Lãi Suất</div>
+              <div class="glossary-term-en">FX Pressure &amp; USD–VND Interest Rate Differential</div>
+            </div>
+            <span class="glossary-tag macro">Kinh Tế Vĩ Mô</span>
+          </div>
+          <div class="glossary-body">
+            <p>
+              Chênh lệch VND–USD là biến chi phối dòng carry trade và lực bán/mua ròng của khối ngoại trên TPCP
+              (liên kết trực tiếp với trang Dòng Vốn Ngoại):
+            </p>
+
+            <div class="formula-box">
+              <div class="formula-label">Chênh lệch lãi suất &amp; biến động tỷ giá 20 ngày:</div>
+              $$\Delta r = r_{\text{VND, ON}} - r_{\text{USD, SOFR}}, \qquad \Delta_{20d}^{USD/VND} = \frac{FX_t - FX_{t-20}}{FX_{t-20}} \times 100\%$$
+            </div>
+
+            <p><strong>Quy luật vận động:</strong></p>
+            <ul style="padding-left: 1.25rem; margin-bottom: 0.75rem;">
+              <li>$\Delta r &lt; 0$ (VND rẻ hơn USD): động cơ găm USD tăng → áp lực USD/VND leo thang → SBV can thiệp (tín phiếu hút tiền / bán ngoại tệ / điều chỉnh tỷ giá trung tâm) → gián tiếp <strong>nới</strong> chênh lệch bằng cách nâng ngắn VND.</li>
+              <li>Lợi suất TPCP có tương quan dương với áp lực tỷ giá: rủi ro tiền tệ được bù qua phần premia dài hạn.</li>
+              <li>Swap points USD/VND trên liên ngân hàng phản ánh kỳ vọng tỷ giá “giá lên” (premium âm) — công cụ theo dõi kỳ vọng không cần can thiệp SBV.</li>
+            </ul>
+
+            <div class="interpretation-box">
+              <div class="interpretation-title">📌 Trong pipeline</div>
+              <code>macro_correlation.py</code> nạp tỷ giá SBV (<code>usdvnd</code>), tính <code>usdvnd_chg_20d</code> và join với chuỗi lợi suất 2Y/10Y/spread để tạo ma trận Pearson.
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 6.3: Transmission chain -->
+        <div class="glossary-card" data-keywords="co che truyen dan policy rate interbank short belly long term supply foreign transmission">
+          <div class="glossary-card-header">
+            <div>
+              <div class="glossary-term-name">Chuỗi Truyền Dẫn Chính Sách → Đường Cong</div>
+              <div class="glossary-term-en">Monetary Transmission to the Yield Curve</div>
+            </div>
+            <span class="glossary-tag macro">Khung Phân Tích</span>
+          </div>
+          <div class="glossary-body">
+            <p><strong>5 bước chuẩn</strong> — dùng để “trace” lại bất kỳ cú sốc lãi suất nào trên biểu đồ Dashboard:</p>
+            <ol class="glossary-steps" style="padding-left: 1.4rem; margin-bottom: 0.75rem; font-size: 0.85rem;">
+              <li><strong>SBV đổi công cụ điều hành</strong> (tín phiếu / OMO / tái cấp vốn / tín hiệu trần huy động).</li>
+              <li><strong>Lãi suất liên ngân hàng O/N – 1W</strong> phản ứng trong 1–3 phiên (thanh khoản VND).</li>
+              <li><strong>Đầu ngắn TPCP (1M–1Y) &amp; T-Bills</strong> repricing → thay đổi β₁ (Slope) &amp; Term Spread 10Y–1Y.</li>
+              <li><strong>Belly &amp; dài (2Y–30Y)</strong> điều chỉnh qua kỳ vọng lạm phát + premium_policy + <strong>nguồn cung KBNN</strong> (tab Đấu Thầu) → β₂/β₃, Breakeven, DV01 danh mục đổi theo.</li>
+              <li><strong>Dòng vốn ngoại &amp; tỷ giá</strong> (tab Ngoại + USD/VND) phản hồi, tạo vòng lặp tương quan (rolling 90 ngày).</li>
+            </ol>
+
+            <div class="formula-box">
+              <div class="formula-label">Nhịp độ lịch sử cần nhớ (pipeline SBV rates):</div>
+              Hạ mạnh 2019–2020 (6,0% → 4,0%) · nâng ứng phó 2022–2023 (4,0% → 6,0% rồi hạ dần 4,5%) · giữ 4,5% các năm 2024–2026.
+            </div>
+
+            <div class="interpretation-box">
+              <div class="interpretation-title">🧭 Cách dùng đa tab</div>
+              Bước nào cần số liệu thì mở đúng tab: bước 3–4 → tab Đường Cong (β, spread, percentile) &amp; Tổng Quan (ladder) · bước 4 → tab Đấu Thầu (stop-out, volume) · bước 5 → tab Ngoại (net, cumulative).
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 6.4: Macro correlation methodology -->
+        <div class="glossary-card" data-keywords="macro correlation matrix pearson lag 0 5 20 60 rolling 90 premium sbv usdvnd chg methodology">
+          <div class="glossary-card-header">
+            <div>
+              <div class="glossary-term-name">Phương Pháp Tương Quan Vĩ Mô Trong Pipeline</div>
+              <div class="glossary-term-en">macro_correlation.py — Methodology Notes</div>
+            </div>
+            <span class="glossary-tag macro">Kỹ Thuật Dữ Liệu</span>
+          </div>
+          <div class="glossary-body">
+            <p><strong>Biến số đưa vào ma trận Pearson</strong> (<code>correlation_matrix</code>):</p>
+            <ul style="padding-left: 1.25rem; margin-bottom: 0.75rem;">
+              <li><span class="mono">y_2y, y_10y, spread_10y_2y</span> — lợi suất &amp; slope TPCP.</li>
+              <li><span class="mono">refinance</span> — lãi suất tái cấp vốn SBV (mở rộng daily theo ngày hiệu lực, không interpolation ý nghĩa chính sách).</li>
+              <li><span class="mono">premium_2y_sbv, premium_10y_sbv</span> — chênh lệch TPCP − policy rate (real policy premium).</li>
+              <li><span class="mono">usdvnd, usdvnd_chg_20d</span> — tỷ giá &amp; momentum 20 phiên.</li>
+            </ul>
+
+            <div class="formula-box">
+              <div class="formula-label">Cấu hình độ trễ &amp; rolling:</div>
+              $$\text{lag configs} = \{0, 5, 20, 60\} \text{ sessions}, \qquad \text{rolling window} = 90 \text{ sessions}$$
+            </div>
+
+            <p><strong>Đọc kết quả đúng cách:</strong></p>
+            <ul style="padding-left: 1.25rem; margin-bottom: 0.75rem;">
+              <li>Tương quan <strong>−</strong> (net flow vs Δyield): mua ròng đi cùng lợi suất giảm (đúng kỳ vọng cung – cầu).</li>
+              <li>Tương quan <strong>+</strong> (usdvnd vs y): tỷ giá tăng (VND mất giá) đi cùng lợi suất tăng.</li>
+              <li>So sánh <strong>lag 0 vs lag 20/60</strong> để phân biệt phản ứng tức thì vs truyền dẫn chậm; <strong>rolling 90</strong> phát hiện thay đổi regime (thời COVID tương quan đổi dấu).</li>
+            </ul>
+
+            <div class="interpretation-box">
+              <div class="interpretation-title">⚙️ Đầu vào rời rạc</div>
+              Lãi suất SBV là chuỗi <em>step function</em> (chỉ đổi khi có quyết định) — khi phân tích cần nhớ “sống” trong giai đoạn hiệu lực, tránh gán giá trị hàng ngày là dữ kiện mới.
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- SECTION 7: TỪ ĐIỂN WIDGET DASHBOARD                              -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <section id="sec-metrics">
+      <div class="glossary-section-title">
+        <span>🧭 7. Cách Đọc Chỉ Số &amp; Biểu Đồ Trên Dashboard (Widget Dictionary Toàn Trang)</span>
+      </div>
+
+      <div class="glossary-grid">
+
+        <!-- Card 7.1: Overview KPIs -->
+        <div class="glossary-card" data-keywords="kpi tong quan 10y 2y spread butterfly dod thong bao dao nguoc alert widget index">
+          <div class="glossary-card-header">
+            <div>
+              <div class="glossary-term-name">Trang Tổng Quan — 4 Thẻ KPI &amp; Cảnh Báo</div>
+              <div class="glossary-term-en">Overview Page — Headline Metrics</div>
+            </div>
+            <span class="glossary-tag curve">Widget Dashboard</span>
+          </div>
+          <div class="glossary-body">
+            <table class="glossary-mini-table">
+              <thead>
+                <tr><th>Thẻ / Thành phần</th><th>Đơn vị</th><th>Nghĩa</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>Lợi Suất 10Y</td><td class="mono">% / bps DoD</td><td>Benchmark chuẩn; DoD = biến động so với phiên liền trước.</td></tr>
+                <tr><td>Lợi Suất 2Y</td><td class="mono">% / bps DoD</td><td>Nhạy chính sách tiền tệ ngắn hạn.</td></tr>
+                <tr><td>Spread 10Y-2Y</td><td class="mono">bps</td><td>&lt; 0 ⇒ bật thanh cảnh báo đỏ “đảo ngược”.</td></tr>
+                <tr><td>Butterfly 2s5s10s</td><td class="mono">bps</td><td>Độ gù/lõm belly 5Y.</td></tr>
+                <tr><td>Curve hiện tại + bảng tenor</td><td class="mono">%</td><td>Đường cong ngày mới nhất &amp; toàn bộ kỳ hạn 1M–30Y kèm Δ1 phiên.</td></tr>
+                <tr><td>Công cụ Term Spread</td><td>—</td><td>Presets (10Y-2Y, 10Y-3M, 10Y-1Y, 5Y-2Y, 10Y-5Y, 30Y-10Y, BF) + cặp tùy chọn 20 tenor + thanh trượt ngày có bong bóng ngày.</td></tr>
+                <tr><td>Bảng 20 phiên gần nhất</td><td class="mono">%</td><td>Cột 3Y · 5Y · 7Y · 10Y · 15Y · Spread 10Y-2Y · Spread 10Y-1Y · <strong>Trạng Thái Curve</strong>.</td></tr>
+                <tr><td>Hàng tóm tắt dưới cùng</td><td>—</td><td>Bảng đấu thầu (Ngày · Tenor · Lãi Suất · BCR · Kết Quả) + cột ngoại — đồng bộ bộ lọc khoảng ngày (30N→Tất cả / tùy chỉnh).</td></tr>
+              </tbody>
+            </table>
+
+            <div class="interpretation-box">
+              <div class="interpretation-title">⏱️ Đồng hồ &amp; trạng thái dữ liệu</div>
+              Badge <code>metadata.json</code> hiển thị <span class="mono">last_updated</span> (giờ ICT) và <span class="mono">latest_data_date</span> — nếu phiên chưa có dữ liệu, đối chiếu ngày này trước khi đọc “DoD”.
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 7.2: Risk ladder columns -->
+        <div class="glossary-card" data-keywords="risk ladder carry roll down table columns spot par forward mod duration dv01 convexity breakeven core liquid">
+          <div class="glossary-card-header">
+            <div>
+              <div class="glossary-term-name">Bảng Risk &amp; Carry Ladder — Giải Thích Từng Cột</div>
+              <div class="glossary-term-en">Sovereign Bond Risk Ladder (ACT/ACT, mệnh giá 100k)</div>
+            </div>
+            <span class="glossary-tag curve">Widget Dashboard</span>
+          </div>
+          <div class="glossary-body">
+            <p>Ví dụ hàng 10Y (phiên 20/11/2026):</p>
+            <table class="glossary-mini-table">
+              <thead>
+                <tr><th>Cột</th><th>Giá trị 10Y</th><th>Đọc</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>Spot Annual</td><td class="mono">4,5383%</td><td>Lợi suất zero-coupon.</td></tr>
+                <tr><td>Par Yield (Cpn)</td><td class="mono">4,5052%</td><td>Coupon ngang giá 100.</td></tr>
+                <tr><td>1Y Forward</td><td class="mono">4,7492%</td><td>Tỳ hạn 1 năm phía trước ngầm định.</td></tr>
+                <tr><td>Mod. Duration</td><td class="mono">7,91</td><td>Năm; % giá / 100 bps.</td></tr>
+                <tr><td>DV01 / 100 Tỷ</td><td class="mono">79,1 tr</td><td>VNĐ lỗ/lãi mỗi 1 bps trên lô 100 tỷ.</td></tr>
+                <tr><td>Convexity</td><td class="mono">77,78</td><td>Trị số bậc hai (năm²).</td></tr>
+                <tr><td>Roll-down (1Y)</td><td class="mono">0,16%</td><td>Lợi nhuận trượt kỳ hạn nếu đường cong đứng yên.</td></tr>
+                <tr><td>Expected 1Y Ret</td><td class="mono">4,67%</td><td>Carry + Roll-down.</td></tr>
+                <tr><td>Đệm Breakeven</td><td class="mono">64 bps</td><td>Lãi suất được tăng tối đa trước khi lỗ sau 1 năm.</td></tr>
+              </tbody>
+            </table>
+            <p style="margin-top:0.6rem;"><strong>Chế độ hiển thị:</strong> “Kỳ hạn chủ đạo 3Y–15Y” (core liquid, 5 hàng) ⇄ “Tất cả 12 kỳ hạn” (3M–30Y). Toàn bộ tính theo <strong>ACT/ACT ICMA</strong>, mệnh giá 100.000 VNĐ — khớp Thông tư 30/2023.</p>
+
+            <div class="interpretation-box">
+              <div class="interpretation-title">💡 Mẹo relative value</div>
+              Tìm kỳ hạn có <em>Expected 1Y Ret</em> cao nhất với <em>DV01</em> trong mức rủi ro cho phép của danh mục → biên độ “mua ôn hòa” khi chưa có view direction rõ ràng.
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 7.3: Curve page widgets -->
+        <div class="glossary-card" data-keywords="yield curve page method select ns nss slider overlay compare ns params percentile widget controls">
+          <div class="glossary-card-header">
+            <div>
+              <div class="glossary-term-name">Trang Đường Cong Lợi Suất — Điều Khiển &amp; Biểu Đồ</div>
+              <div class="glossary-term-en">Yield Curve Page — Interactive Controls</div>
+            </div>
+            <span class="glossary-tag curve">Widget Dashboard</span>
+          </div>
+          <div class="glossary-body">
+            <table class="glossary-mini-table">
+              <thead>
+                <tr><th>Điều khiển</th><th>Vị trí</th><th>Chức năng</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>Bộ chọn NS / NSS</td><td class="mono">Header phải</td><td>Đổi mô hình khớp (4 vs 6 tham số) cho toàn trang.</td></tr>
+                <tr><td>Thanh trượt ngày</td><td>Dưới chart</td><td><span class="mono">◀ ▶ Mới nhất</span> — tua từng phiên lịch sử.</td></tr>
+                <tr><td>Nút so sánh</td><td>Trên chart</td><td>1 Tháng / 6 Tháng / 1 Năm / 5 Năm Trước / Bỏ So Sánh — overlay nét đứt.</td></tr>
+                <tr><td>Term Spread &amp; Butterfly</td><td>Chart đôi</td><td>Chuỗi lịch sử bps; vùng đảo ngược tô đỏ.</td></tr>
+                <tr><td>NS Parameter Evolution</td><td>Card toàn khung</td><td>Nút Tất cả / β₀ Level / β₁ Slope / β₂ Curv / λ Decay / RMSE + range 1N / 3N / 5N / Tất cả; tooltip theo vạch ngày.</td></tr>
+                <tr><td>Bảng Percentile</td><td>Chart cuối</td><td>Cột: Chỉ Số · Giá Trị (ngày xem) · Vị Trí trong 252 Phiên.</td></tr>
+              </tbody>
+            </table>
+
+            <div class="interpretation-box">
+              <div class="interpretation-title">🔗 Gắn với Cẩm nang</div>
+              Không hiểu nút nào? Tra ngay mục <a href="#sec-curve" style="color: var(--accent-primary);">1. Mô hình đường cong</a> (β, λ, RMSE) hoặc <a href="#sec-spread" style="color: var(--accent-primary);">3. Percentile &amp; trạng thái curve</a>.
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 7.4: Auction page + Foreign page widgets quick recap -->
+        <div class="glossary-card" data-keywords="auctions foreign page recap widget control filter tenor dropdown date range presets csv">
+          <div class="glossary-card-header">
+            <div>
+              <div class="glossary-term-name">Hai Tab Sơ Cấp &amp; Ngoại — Điều Khiển Còn Lại</div>
+              <div class="glossary-term-en">Auctions &amp; Foreign Flows — Remaining Controls</div>
+            </div>
+            <span class="glossary-tag auction">Widget Dashboard</span>
+          </div>
+          <div class="glossary-body">
+            <p><strong>🏷️ Đấu Thầu Sơ Cấp:</strong></p>
+            <ul style="padding-left: 1.25rem; margin-bottom: 0.6rem;">
+              <li>Dropdown <strong>Tenor</strong> (Tất cả / 2Y / 5Y / 10Y / 15Y / 20Y) áp dụng cho cả trang.</li>
+              <li>5 thẻ KPI → biểu đồ Stop-out (chips kỳ hạn) → BCR theo Tenor → Heatmap 4 quý → cột phát hành theo Quý → bảng 90 ngày + <strong>⬇ CSV</strong>.</li>
+              <li>Sort bảng: bấm tiêu đề cột (ví dụ Tail giảm dần để tìm phiên bất thường).</li>
+            </ul>
+
+            <p><strong>🌏 Dòng Vốn Ngoại:</strong></p>
+            <ul style="padding-left: 1.25rem; margin-bottom: 0.6rem;">
+              <li>Preset <span class="mono">30D · 60D · 90D · 6M · 1Y · YTD · 3Y · Tất cả</span> + chọn <span class="mono">Từ ngày → Đến ngày</span> → <strong>Lọc</strong>; thanh trạng thái hiện khoảng ngày + Net + số phiên mua/bán ròng.</li>
+              <li>4 thẻ KPI <em>động</em> → bar Net hằng ngày → đường Tích lũy → bảng Top 10 (Ngày · Net · Mua/Bán · Hướng).</li>
+            </ul>
+
+            <div class="interpretation-box">
+              <div class="interpretation-title">🔄 Bộ lọc liên trang</div>
+              Khoảng ngày ở hàng tóm tắt trang Tổng Quan và bộ lọc tab Ngoại hoạt động độc lập — hãy tự chọn cùng khoảng khi so sánh chéo hai trang.
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 7.5: Units & color legend -->
+        <div class="glossary-card" data-keywords="don vi bps ty dong legend mau sac xanh do theme light dark badge metadata units color legend">
+          <div class="glossary-card-header">
+            <div>
+              <div class="glossary-term-name">Đơn Vị, Mã Màu &amp; Tiện Ích Chung</div>
+              <div class="glossary-term-en">Units, Color Legend & Global Utilities</div>
+            </div>
+            <span class="glossary-tag macro">Quy Ước Chung</span>
+          </div>
+          <div class="glossary-body">
+            <table class="glossary-mini-table">
+              <thead>
+                <tr><th>Ký hiệu</th><th>Đơn vị</th><th>Quy đổi</th></tr>
+              </thead>
+              <tbody>
+                <tr><td class="mono">%</td><td>Lợi suất/năm</td><td>4,50% = 450 bps.</td></tr>
+                <tr><td class="mono">bps</td><td>Điểm cơ bản</td><td>1 bps = 0,01% = 0,0001.</td></tr>
+                <tr><td class="mono">tỷ đồng</td><td>Tiền tệ</td><td>10⁹ VNĐ — mọi dòng tiền/đấu thầu.</td></tr>
+                <tr><td class="mono">tr</td><td>triệu VNĐ</td><td>DV01 per lô 100 tỷ.</td></tr>
+                <tr><td class="mono">x</td><td>Hệ số</td><td>BCR 2,3x = đặt thầu gấp 2,3 lần gọi.</td></tr>
+                <tr><td class="mono">năm / năm²</td><td>Duration / Convexity</td><td>—</td></tr>
+              </tbody>
+            </table>
+
+            <p style="margin-top: 0.7rem;"><strong>Mã màu thống nhất 5 trang:</strong></p>
+            <ul style="padding-left: 1.25rem; margin-bottom: 0.6rem;">
+              <li><span style="color:#34d399;">■ Xanh lá</span> = tăng giá / mua ròng / tỷ lệ ≥80% / nền “tích cực”.</li>
+              <li><span style="color:#f87171;">■ Đỏ</span> = giảm giá / bán ròng / ế thầu &lt;50% / cảnh báo đảo ngược.</li>
+              <li><span style="color:#fbbf24;">■ Vàng</span> = trung tính (50–80%, cảnh báo vừa).</li>
+              <li><span style="color:#38bdf8;">■ Xanh dương</span> = trục dữ liệu / chuỗi so sánh lịch sử (nét đứt).</li>
+            </ul>
+
+            <div class="interpretation-box">
+              <div class="interpretation-title">🌗 Tiện ích toàn hệ thống</div>
+              Nút <strong>Light/Dark mode</strong> (lưu vào localStorage, vẽ lại bảng màu D3) · <strong>Đồng hồ ICT</strong> trên mọi header · badge dữ liệu từ <code>metadata.json</code> · resize tự vẽ lại biểu đồ. Trang này: gõ <kbd class="glossary-kbd">/</kbd> để tìm, 8 viên pill nhảy mục, nội dung KaTeX render trực tiếp.
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 7.6: Data pipeline map -->
+        <div class="glossary-card" data-keywords="pipeline data flow json exports cache parquet run_pipeline modes etl map du lieu">
+          <div class="glossary-card-header">
+            <div>
+              <div class="glossary-term-name">Sơ Đồ Dữ Liệu — Từ Pipeline Đến Dashboard</div>
+              <div class="glossary-term-en">Data Lineage (run_pipeline.py → exports/data → app.js)</div>
+            </div>
+            <span class="glossary-tag curve">Kiến Trúc Hệ Thống</span>
+          </div>
+          <div class="glossary-body">
+            <ol style="padding-left: 1.35rem; margin-bottom: 0.75rem; font-size: 0.85rem;">
+              <li><strong>Thu thập &amp; cache</strong>: <code>cache/*.parquet</code> — giá/đầu tư các nguồn thị trường; <code>pipeline/hnx_foreign_daily.py</code> bóc PDF ngoại.</li>
+              <li><strong>Chạy pipeline</strong>: <code>python run_pipeline.py --mode analyze</code> → fit NS/NSS, PCA, spread, đấu thầu, tương quan vĩ mô; <code>--mode charts</code> → Plotly charts; <code>--strict</code> để fail-fast.</li>
+              <li><strong>Xuất feed</strong>: <code>exports/data/*.json</code> (curve, params, risk ladder, foreign, auction stats, PCA, spread, metadata) + <code>auction_stats.json</code>.</li>
+              <li><strong>Dashboard</strong>: <code>dashboard/assets/app.js</code> (loader <code>VNBond</code> + D3 renderers) đọc JSON → 5 trang HTML.</li>
+              <li><strong>Kiểm định</strong>: <code>tests/test_sovereign_quant.py</code> (unittest 8/8) chốt lại ACT/ACT, identities Spot–Par–Forward, DV01.</li>
+            </ol>
+
+            <div class="interpretation-box">
+              <div class="interpretation-title">📌 Nguồn sự thật (single source of truth)</div>
+              Dashboard không tự tính lại định lượng — mọi con số đều từ JSON xuất ra; khi file pipeline thay đổi, các thẻ chỉ số tự cập nhật theo, bảo đảm Cẩm nang này mô tả đúng những gì hiển thị.
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- SECTION 8: BẢNG TRA CỨU NHANH THUẬT NGỮ                         -->
     <!-- ═══════════════════════════════════════════════════════════════ -->
     <section id="sec-table" style="margin-top: 1rem;">
       <div class="glossary-section-title">
-        <span>📋 6. Bảng Tra Cứu Nhanh Thuật Ngữ (Quick Reference Table)</span>
+        <span>📋 8. Bảng Tra Cứu Nhanh Thuật Ngữ (Quick Reference Table — 49 mục)</span>
       </div>
 
-      <div class="table-scroll-container" style="max-height: 480px;">
+      <div class="table-scroll-container" style="max-height: 560px;">
         <table class="data-table" id="glossary-table">
           <thead>
             <tr>
-              <th style="min-width: 140px;">Thuật ngữ</th>
-              <th style="min-width: 130px;">Tên tiếng Anh</th>
-              <th style="min-width: 90px;">Phân loại</th>
-              <th>Ý nghĩa & Ứng dụng tóm tắt</th>
+              <th style="min-width: 150px;">Thuật ngữ</th>
+              <th style="min-width: 150px;">Tên tiếng Anh</th>
+              <th style="min-width: 95px;">Phân loại</th>
+              <th>Ý nghĩa &amp; Ứng dụng tóm tắt</th>
             </tr>
           </thead>
           <tbody>
-            <tr data-keywords="nelson siegel ns yield curve noi suy">
+            <!-- Nhóm: Cấu trúc kỳ hạn & mô hình -->
+            <tr data-keywords="nelson siegel ns yield curve noi suy model">
               <td><strong>Mô hình Nelson-Siegel</strong></td>
               <td class="mono">Nelson-Siegel Model</td>
               <td><span class="glossary-tag curve">Định lượng</span></td>
-              <td>Mô hình 4 tham số ($\beta_0, \beta_1, \beta_2, \lambda$) nội suy đường cong lợi suất liên tục từ các điểm kỳ hạn rời rạc.</td>
+              <td>Mô hình 4 tham số ($\beta_0, \beta_1, \beta_2, \lambda$) nội suy đường cong liên tục; trung vị RMSE 0,83 bps trên 3.436 phiên.</td>
             </tr>
-            <tr data-keywords="svensson nss model mo rong 6 tham so">
+            <tr data-keywords="svensson nss model mo rong 6 tham so two humps">
               <td><strong>Mô hình Svensson</strong></td>
               <td class="mono">Nelson-Siegel-Svensson</td>
               <td><span class="glossary-tag curve">Định lượng</span></td>
-              <td>Mở rộng của NS với 6 tham số, cho phép tạo 2 bướu (two humps) để biểu diễn các biến động phức tạp ở kỳ hạn dài.</td>
+              <td>Bản mở rộng 6 tham số, thêm $(\beta_3, \lambda_2)$ tạo bướu thứ hai; RMSE 0,12 bps trên 3.415 phiên.</td>
             </tr>
-            <tr data-keywords="term spread 10y 2y 10y 3m chenh lech do doc">
+            <tr data-keywords="pca principal component level slope curvature thanh phan chinh">
+              <td><strong>Curve PCA</strong></td>
+              <td class="mono">Principal Component Analysis</td>
+              <td><span class="glossary-tag curve">Định lượng</span></td>
+              <td>SVD trên Δy: PC1 Level 71,9% · PC2 Slope 11,2% · PC3 Curvature 10,2% (tổng 93,2%) — 3 nhân tố rủi ro trội.</td>
+            </tr>
+            <tr data-keywords="rmse root mean square error sai so khop">
+              <td><strong>RMSE</strong></td>
+              <td class="mono">Root Mean Square Error</td>
+              <td><span class="glossary-tag curve">Định lượng</span></td>
+              <td>Sai số bình phương trung bình giữa điểm thị trường &amp; đường cong mô hình, đọc theo bps; &lt; 1 bps = khớp tốt.</td>
+            </tr>
+            <tr data-keywords="percentile rank 252 phien rolling window">
+              <td><strong>Percentile Rank</strong></td>
+              <td class="mono">Rolling Percentile (252d)</td>
+              <td><span class="glossary-tag curve">Chỉ báo</span></td>
+              <td>Vị trí % lợi suất hiện tại trong 252 phiên gần nhất: 0% = đáy 1 năm, 100% = đỉnh 1 năm.</td>
+            </tr>
+            <!-- Nhóm: Spread & trading -->
+            <tr data-keywords="term spread 10y 2y chenh lech do doc slope">
               <td><strong>Term Spread</strong></td>
               <td class="mono">Yield Curve Spread</td>
               <td><span class="glossary-tag macro">Vĩ mô</span></td>
-              <td>Chênh lệch lợi suất kỳ hạn dài trừ ngắn (như 10Y - 2Y). Dùng để phát hiện nguy cơ suy thoái kinh tế và đảo ngược đường cong.</td>
+              <td>Chênh lệch lợi suất dài − ngắn (10Y-2Y, 10Y-3M, 10Y-1Y…) — chỉ báo chu kỳ &amp; chính sách tiền tệ.</td>
             </tr>
-            <tr data-keywords="butterfly spread 2s5s10s do cong canh buom">
-              <td><strong>Butterfly Spread</strong></td>
-              <td class="mono">Curvature (2s5s10s)</td>
-              <td><span class="glossary-tag curve">Trading</span></td>
-              <td>Đo độ cong/bướu của đường cong lợi suất: $2 \times Y_{5Y} - (Y_{2Y} + Y_{10Y})$. Ứng dụng trong giao dịch trung hòa thời lượng (Duration-neutral).</td>
-            </tr>
-            <tr data-keywords="bcr bid to cover ratio ty le bao phu dau thau">
-              <td><strong>Bid-to-Cover (BCR)</strong></td>
-              <td class="mono">Bid-to-Cover Ratio</td>
-              <td><span class="glossary-tag auction">Sơ cấp</span></td>
-              <td>Tỷ lệ giữa khối lượng đặt thầu và khối lượng gọi thầu tại HNX. Thể hiện sức cầu thị trường đối với từng kỳ hạn trái phiếu.</td>
-            </tr>
-            <tr data-keywords="stop out cut off rate lai suat trung thau">
-              <td><strong>Lãi suất Trúng thầu</strong></td>
-              <td class="mono">Stop-out / Cut-off Rate</td>
-              <td><span class="glossary-tag auction">Sơ cấp</span></td>
-              <td>Mức lãi suất trần cao nhất được Kho bạc Nhà nước chấp thuận để phân bổ trái phiếu trong phiên đấu thầu sơ cấp.</td>
-            </tr>
-            <tr data-keywords="auction tail do tre do le lai suat stop out">
-              <td><strong>Auction Tail</strong></td>
-              <td class="mono">Auction Tail Spread</td>
-              <td><span class="glossary-tag auction">Sơ cấp</span></td>
-              <td>Chênh lệch giữa lãi suất trúng thầu cao nhất và lãi suất bình quân gia quyền. Tail lớn báo hiệu nhà đầu tư thận trọng.</td>
-            </tr>
-            <tr data-keywords="foreign net flow dong von ngoai rong ndtnn">
-              <td><strong>Dòng vốn Ngoại ròng</strong></td>
-              <td class="mono">Foreign Net Flow</td>
-              <td><span class="glossary-tag curve">Thứ cấp</span></td>
-              <td>Giá trị mua trừ bán của nhà đầu tư nước ngoài. Phản ánh niềm tin vào tỷ giá VND và nhu cầu tài sản an toàn của dòng tiền quốc tế.</td>
-            </tr>
-            <tr data-keywords="sbv omo nghiep vu thi truong mo tin phieu bills">
-              <td><strong>Nghiệp vụ OMO</strong></td>
-              <td class="mono">Open Market Operations</td>
-              <td><span class="glossary-tag macro">Chính sách</span></td>
-              <td>Công cụ của SBV mua/bán tín phiếu hoặc repo để điều tiết cung tiền và lãi suất trên thị trường liên ngân hàng.</td>
-            </tr>
-            <tr data-keywords="inversion duong cong dao nguoc inverted yield curve">
+            <tr data-keywords="inversion duong cong dao nguoc inverted curve canh bao">
               <td><strong>Đường cong Đảo ngược</strong></td>
               <td class="mono">Inverted Yield Curve</td>
               <td><span class="glossary-tag macro">Cảnh báo</span></td>
-              <td>Hiện tượng lãi suất ngắn hạn cao hơn dài hạn ($Y_{10Y} < Y_{2Y}$), là tín hiệu cảnh báo suy thoái kinh tế kinh điển.</td>
+              <td>$Y_{10Y} &lt; Y_{2Y}$ (spread &lt; 0) — chỉ báo suy thoái kinh điển; tại VN phản ánh mạnh cú sốc thanh khoản VND.</td>
+            </tr>
+            <tr data-keywords="bull bear steepening flattening dich chuyen duong cong">
+              <td><strong>Steepening / Flattening</strong></td>
+              <td class="mono">Bull/Bear Steepening/Flattening</td>
+              <td><span class="glossary-tag curve">Trading</span></td>
+              <td>Bull = lãi suất ↓, Bear = ↑; steepening = dốc hơn, flattening = phẳng hơn — chỉ rõ đầu ngắn hay đầu dài dịch chuyển mạnh.</td>
+            </tr>
+            <tr data-keywords="butterfly spread 2s5s10s canh buom curvature hump">
+              <td><strong>Butterfly Spread</strong></td>
+              <td class="mono">Curvature (2s5s10s)</td>
+              <td><span class="glossary-tag curve">Trading</span></td>
+              <td>$2 \times Y_{5Y} - (Y_{2Y} + Y_{10Y})$ — đo độ gù/lõm belly; nền tảng chiến lược duration-neutral.</td>
+            </tr>
+            <tr data-keywords="parallel shift twist song song dich chuyen">
+              <td><strong>Parallel Shift / Twist</strong></td>
+              <td class="mono">Parallel Shift / Twist</td>
+              <td><span class="glossary-tag curve">Trading</span></td>
+              <td>Cả đường cong dịch chuyển cùng độ (parallel) / một đoạn dịch chuyển đoạn khác đứng yên (twist).</td>
+            </tr>
+            <!-- Nhóm: Định giá & rủi ro -->
+            <tr data-keywords="yield to maturity loi suat dao han ytm">
+              <td><strong>Lợi suất Đáo hạn</strong></td>
+              <td class="mono">Yield to Maturity (YTM)</td>
+              <td><span class="glossary-tag curve">Định giá</span></td>
+              <td>Tỷ suất nội sinh chiết khấu toàn bộ dòng tiền tới đáo hạn theo quy ước ACT/ACT — “lợi suất” mặc định trên Dashboard.</td>
+            </tr>
+            <tr data-keywords="coupon lai suat goc phan tram men gia">
+              <td><strong>Coupon</strong></td>
+              <td class="mono">Coupon Rate</td>
+              <td><span class="glossary-tag curve">Định giá</span></td>
+              <td>Lãi suất gộp niêm yết %/năm trên mệnh giá; TPCP Việt trả 1 lần/năm ($f=1$).</td>
+            </tr>
+            <tr data-keywords="par value men gia 100000 face value">
+              <td><strong>Mệnh giá</strong></td>
+              <td class="mono">Par / Face Value</td>
+              <td><span class="glossary-tag curve">Định giá</span></td>
+              <td>Giá gốc trái phiếu: TPCP tại HNX = 100.000 VNĐ/trái.</td>
+            </tr>
+            <tr data-keywords="clean price gia sach">
+              <td><strong>Giá Sạch</strong></td>
+              <td class="mono">Clean Price</td>
+              <td><span class="glossary-tag curve">Định giá</span></td>
+              <td>Giá không gồm lãi lũy kế — giá niêm yết &amp; so sánh giữa các ngày.</td>
+            </tr>
+            <tr data-keywords="dirty price gia kem lai gia thanh toan">
+              <td><strong>Giá Kèm Lãi</strong></td>
+              <td class="mono">Dirty Price (Full Price)</td>
+              <td><span class="glossary-tag curve">Định giá</span></td>
+              <td>Giá sạch + lãi lũy kế = số tiền thanh toán thực tế.</td>
+            </tr>
+            <tr data-keywords="accrued interest lai tich luy ai">
+              <td><strong>Lãi Tích Lũy</strong></td>
+              <td class="mono">Accrued Interest (AI)</td>
+              <td><span class="glossary-tag curve">Định giá</span></td>
+              <td>Lãi đã chạy từ ngày trả coupon gần nhất tới ngày giao dịch: $AI = C \cdot d_{\text{accrued}}/E$.</td>
+            </tr>
+            <tr data-keywords="act/act icma quy uoc ngay dem 30/360 thong tu 30">
+              <td><strong>ACT/ACT (ICMA)</strong></td>
+              <td class="mono">Actual/Actual Day Count</td>
+              <td><span class="glossary-tag curve">Quy chuẩn</span></td>
+              <td>Quy ước ngày đếm chuẩn Thông tư 30/2023/TT-BTC — đếm số ngày thực tế trong kỳ tính lãi.</td>
+            </tr>
+            <tr data-keywords="macaulay duration thoi luong">
+              <td><strong>Macaulay Duration</strong></td>
+              <td class="mono">Macaulay Duration</td>
+              <td><span class="glossary-tag curve">Rủi ro</span></td>
+              <td>Trung bình gia quyền thời gian nhận dòng tiền, đo bằng năm.</td>
+            </tr>
+            <tr data-keywords="modified duration do nhay gia lai suat">
+              <td><strong>Modified Duration</strong></td>
+              <td class="mono">Modified Duration</td>
+              <td><span class="glossary-tag curve">Rủi ro</span></td>
+              <td>$D_{\text{Mod}} = D_{\text{Mac}}/(1+y/f)$ — % biến động giá / 100 bps; 10Y ≈ 7,9 năm.</td>
+            </tr>
+            <tr data-keywords="dv01 pv01 dollar value basis point">
+              <td><strong>DV01</strong></td>
+              <td class="mono">DV01 / PV01</td>
+              <td><span class="glossary-tag curve">Rủi ro</span></td>
+              <td>Số VNĐ đổi được mỗi 1 bps; lô 100 tỷ 10Y ≈ 79,1 triệu VNĐ/bps — công cụ hedging &amp; P&amp;L.</td>
+            </tr>
+            <tr data-keywords="convexity do loi bac hai">
+              <td><strong>Convexity</strong></td>
+              <td class="mono">Convexity</td>
+              <td><span class="glossary-tag curve">Rủi ro</span></td>
+              <td>Đạo hàm bậc hai giá–lợi suất (năm²); bù đắp sai số tuyến tính của Duration ở cú sốc lớn.</td>
+            </tr>
+            <tr data-keywords="spot rate zero coupon giao ngay">
+              <td><strong>Spot Rate</strong></td>
+              <td class="mono">Spot Annual / Continuous</td>
+              <td><span class="glossary-tag curve">Cấu trúc</span></td>
+              <td>Lợi suất zero-coupon; bản liên tục $z_c = \ln(1+z_a)$ — nền tảng bootstrap đường cong.</td>
+            </tr>
+            <tr data-keywords="par yield coupon ngang gia">
+              <td><strong>Par Yield</strong></td>
+              <td class="mono">Par Yield Curve</td>
+              <td><span class="glossary-tag curve">Cấu trúc</span></td>
+              <td>Coupon để giá = 100; so sánh với lợi suất TTSC để định vị relative value.</td>
+            </tr>
+            <tr data-keywords="forward rate implied forward ky han">
+              <td><strong>Forward Rate</strong></td>
+              <td class="mono">Implied Forward Rate</td>
+              <td><span class="glossary-tag curve">Cấu trúc</span></td>
+              <td>Lãi suất kỳ hạn suy ra từ spot curve — đầu vào của roll-down &amp; kỳ vọng repricing.</td>
+            </tr>
+            <tr data-keywords="discount factor he so chiet khau df">
+              <td><strong>Hệ số Chiết khấu</strong></td>
+              <td class="mono">Discount Factor (DF)</td>
+              <td><span class="glossary-tag curve">Cấu trúc</span></td>
+              <td>Giá trị hiện tại của 1 VNĐ tương lai; nội suy log-linear giữa các kỳ hạn.</td>
+            </tr>
+            <tr data-keywords="carry return phan bo loi nhuan lai goc">
+              <td><strong>Carry</strong></td>
+              <td class="mono">Carry Return</td>
+              <td><span class="glossary-tag macro">Chiến lược</span></td>
+              <td>Lợi nhuận nắm giữ giả định đường cong đứng yên (~yield hiện tại) — nửa thứ nhất của Expected 1Y Return.</td>
+            </tr>
+            <tr data-keywords="rolldown truot ky han gain to roll">
+              <td><strong>Roll-down</strong></td>
+              <td class="mono">Roll-down Return</td>
+              <td><span class="glossary-tag macro">Chiến lược</span></td>
+              <td>Lãi vốn phát sinh khi trái phiếu “trượt” dọc sườn dốc của đường cong (10Y ≈ +16 bps/năm).</td>
+            </tr>
+            <tr data-keywords="breakeven spike buffer dom dam">
+              <td><strong>Đệm Breakeven</strong></td>
+              <td class="mono">Break-even Yield Shift</td>
+              <td><span class="glossary-tag macro">Chiến lược</span></td>
+              <td>Lãi suất được phép tăng tối đa trong 1 năm trước khi đầu tư lỗ vốn (10Y ≈ 64 bps).</td>
             </tr>
             <tr data-keywords="basis point bps diem co ban">
               <td><strong>Điểm cơ bản (bps)</strong></td>
               <td class="mono">Basis Point (bps)</td>
               <td><span class="glossary-tag curve">Đo lường</span></td>
-              <td>Đơn vị đo lường biến động lãi suất tài chính: $1\text{ bps} = 0.01\% = 0.0001$. Ví dụ: Lãi suất tăng từ $4.50\%$ lên $4.75\%$ là tăng $25\text{ bps}$.</td>
+              <td>$1\text{ bps} = 0{,}01\%$; 4,50% → 4,75% là +25 bps.</td>
             </tr>
-            <tr data-keywords="primary dealer thanh vien tao lap thi truong">
-              <td><strong>Nhà tạo lập thị trường</strong></td>
-              <td class="mono">Primary Dealer (PD)</td>
+            <!-- Nhóm: Đấu thầu -->
+            <tr data-keywords="primary market thi truong so cap phat hanh kbnn">
+              <td><strong>Thị trường Sơ cấp</strong></td>
+              <td class="mono">Primary Market</td>
+              <td><span class="glossary-tag auction">Sơ cấp</span></td>
+              <td>Phiên đấu thầu KBNN phát hành TPCP mới qua HNX (hơn 3.500 phiên trong dữ liệu).</td>
+            </tr>
+            <tr data-keywords="secondary market thi truong thu cap giao dich">
+              <td><strong>Thị trường Thứ cấp</strong></td>
+              <td class="mono">Secondary Market</td>
+              <td><span class="glossary-tag auction">Thứ cấp</span></td>
+              <td>Mua bán lại trái phiếu đã phát hành — nơi hình thành lợi suất giao dịch &amp; toàn bộ KPI đường cong.</td>
+            </tr>
+            <tr data-keywords="bcr bid to cover ratio ty le bao phu">
+              <td><strong>Bid-to-Cover (BCR)</strong></td>
+              <td class="mono">Bid-to-Cover Ratio</td>
+              <td><span class="glossary-tag auction">Sơ cấp</span></td>
+              <td>Khối lượng đặt thầu / gọi thầu; ≥1,5x khỏe, &lt;1,0x nguy cơ ế.</td>
+            </tr>
+            <tr data-keywords="stop out cut off rate lai suat trung thau">
+              <td><strong>Lãi suất Trúng thầu</strong></td>
+              <td class="mono">Stop-out / Cut-off Rate</td>
+              <td><span class="glossary-tag auction">Sơ cấp</span></td>
+              <td>Mức lãi suất cao nhất được KBNN chấp nhận — lãi suất biên của sơ cấp.</td>
+            </tr>
+            <tr data-keywords="auction tail do tre do le">
+              <td><strong>Auction Tail</strong></td>
+              <td class="mono">Auction Tail Spread</td>
+              <td><span class="glossary-tag auction">Sơ cấp</span></td>
+              <td>Stop-out − lãi suất bình quân (bps); ≤1 = tight, &gt;3–5 = lỏng, KBNN nhượng bộ.</td>
+            </tr>
+            <tr data-keywords="success rate ty le thanh cong phien thau">
+              <td><strong>Tỷ Lệ Thành Công</strong></td>
+              <td class="mono">Auction Success Rate</td>
+              <td><span class="glossary-tag auction">Sơ cấp</span></td>
+              <td>% phiên có khối lượng trúng &gt; 0; heatmap 4 quý: xanh ≥80 · vàng 50–80 · đỏ &lt;50.</td>
+            </tr>
+            <tr data-keywords="when issued tai phat hanh wi tham chieu">
+              <td><strong>When-Issued (WI)</strong></td>
+              <td class="mono">When-Issued Trading</td>
+              <td><span class="glossary-tag auction">Sơ cấp</span></td>
+              <td>Giao dịch “chưa phát hành chính thức” — làm tham chiếu định giá &amp; tính WI Tail trước phiên thầu.</td>
+            </tr>
+            <tr data-keywords="primary dealer thanh vien tao lap thi truong pd">
+              <td><strong>Thương nhân chính</strong></td>
+              <td class="mono">Primary Dealer</td>
               <td><span class="glossary-tag auction">Tổ chức</span></td>
-              <td>Các ngân hàng thương mại và công ty chứng khoán được Bộ Tài chính công nhận có quyền và nghĩa vụ tham gia đấu thầu trực tiếp tại HNX.</td>
+              <td>NHTM/CTCK được công nhận quyền &amp; nghĩa vụ tham gia đấu thầu trực tiếp tại HNX.</td>
+            </tr>
+            <tr data-keywords="kho bac nha nuoc kbnn issuer nguoi phat hanh">
+              <td><strong>KBNN</strong></td>
+              <td class="mono">State Treasury of Vietnam</td>
+              <td><span class="glossary-tag auction">Tổ chức</span></td>
+              <td>Nhà phát hành TPCP — ấn định hạn mức, trần lãi suất &amp; lịch gọi thầu.</td>
+            </tr>
+            <!-- Nhóm: Ngoại & vĩ mô -->
+            <tr data-keywords="foreign net flow dong von ngoai rong ndtnn">
+              <td><strong>Dòng vốn Ngoại ròng</strong></td>
+              <td class="mono">Foreign Net Flow</td>
+              <td><span class="glossary-tag curve">Thứ cấp</span></td>
+              <td>Mua − bán của NĐTNN (tỷ đồng); &gt;3.440 phiên từ 2013, trích xuất từ PDF HNX.</td>
+            </tr>
+            <tr data-keywords="cumulative flow tich luy dong von">
+              <td><strong>Cumulative Flow</strong></td>
+              <td class="mono">Cumulative Net Flow</td>
+              <td><span class="glossary-tag curve">Thứ cấp</span></td>
+              <td>Cộng dồn net theo thời gian — dốc lên = tích lũy chiến lược, dốc xuống = rút vốn.</td>
+            </tr>
+            <tr data-keywords="sbv ngan hang nha nuoc policy rate">
+              <td><strong>SBV / NHNN</strong></td>
+              <td class="mono">State Bank of Vietnam</td>
+              <td><span class="glossary-tag macro">Chính sách</span></td>
+              <td>NHTW — công bố khung lãi suất điều hành, điều tiết thanh khoản &amp; tỷ giá.</td>
+            </tr>
+            <tr data-keywords="omo nghiep vu thi truong mo open market operations">
+              <td><strong>Nghiệp vụ OMO</strong></td>
+              <td class="mono">Open Market Operations</td>
+              <td><span class="glossary-tag macro">Chính sách</span></td>
+              <td>Mua (bơm) / bán (hút) kỳ hạn &amp; tín phiếu để điều tiết O/N – 1W liên ngân hàng.</td>
+            </tr>
+            <tr data-keywords="refinancing discount tai cap von tai chiet khau lai suat dieu hanh">
+              <td><strong>Lãi suất Tái cấp vốn</strong></td>
+              <td class="mono">Refinancing Rate</td>
+              <td><span class="glossary-tag macro">Chính sách</span></td>
+              <td>Trục của khung lãi suất điều hành (lịch sử 14% → 4,5%) — nền tảng premium_policy.</td>
+            </tr>
+            <tr data-keywords="sbv bills tin phieu ngan hang nha nuoc bills">
+              <td><strong>Tín phiếu NHNN</strong></td>
+              <td class="mono">SBV Bills</td>
+              <td><span class="glossary-tag macro">Chính sách</span></td>
+              <td>Công cụ hút VND ngắn hạn — nâng liên ngân hàng rate, gây Bear Flattening cho TPCP.</td>
+            </tr>
+            <tr data-keywords="interbank rate lien ngan hang on vn note">
+              <td><strong>Lãi suất Liên ngân hàng</strong></td>
+              <td class="mono">Interbank Rate (O/N–1W)</td>
+              <td><span class="glossary-tag macro">Vĩ mô</span></td>
+              <td>Chi phí vốn ngắn hạn thật của NHTM — mắt xích truyền dẫn đầu tiên từ SBV.</td>
+            </tr>
+            <tr data-keywords="sofr fed funds usd lai suat my">
+              <td><strong>SOFR / Fed Funds</strong></td>
+              <td class="mono">US Short-term Rates</td>
+              <td><span class="glossary-tag macro">Vĩ mô</span></td>
+              <td>Lãi suất USD tham chiếu — đối thủ của VND trong chênh lệch carry &amp; quyết định vốn ngoại.</td>
+            </tr>
+            <tr data-keywords="swap points chenh lech ky han ty gia forward fx">
+              <td><strong>Swap Points</strong></td>
+              <td class="mono">FX Swap Points</td>
+              <td><span class="glossary-tag macro">Vĩ mô</span></td>
+              <td>Chênh lệch lãi suất qua tỷ giá giao ngay – kỳ hạn — proxy kỳ vọng USD/VND.</td>
+            </tr>
+            <tr data-keywords="usd vnd ty gia ap luc mat gia exchange rate">
+              <td><strong>Tỷ giá USD/VND</strong></td>
+              <td class="mono">USD/VND Exchange Rate</td>
+              <td><span class="glossary-tag macro">Vĩ mô</span></td>
+              <td>Tương quan dương với lợi suất TPCP; đợt mất giá mạnh thường đi cùng nâng ngắn VND &amp; bán ròng ngoại.</td>
+            </tr>
+            <tr data-keywords="premium policy chenh lech tpcp lai suat dieu hanh">
+              <td><strong>Policy Premium</strong></td>
+              <td class="mono">Yield – Policy Rate Spread</td>
+              <td><span class="glossary-tag macro">Vĩ mô</span></td>
+              <td>$Y_{2Y/10Y} - r_{\text{refinance}}$ — mức bù của TPCP so với lãi suất chính thức.</td>
             </tr>
           </tbody>
         </table>
@@ -653,7 +1757,7 @@
   </div><!-- end page-body -->
 </main>
 
-<script src="assets/app.js?v=1.3"></script>
+<script src="assets/app.js?v=1.4"></script>
 <script>
 // ── Live Clock ─────────────────────────────────────────────────────────
 function updateClock() {
@@ -665,32 +1769,83 @@ function updateClock() {
 setInterval(updateClock, 1000);
 updateClock();
 
-// ── Instant Search Filter ──────────────────────────────────────────────
+// ── Instant Search Filter (cards + table + live counter) ───────────────
 function filterGlossary(query) {
   const q = (query || '').toLowerCase().trim();
+  let visibleCards = 0, visibleRows = 0;
 
   // Lọc cards
   const cards = document.querySelectorAll('.glossary-card');
   cards.forEach(card => {
     const text = (card.textContent + ' ' + (card.getAttribute('data-keywords') || '')).toLowerCase();
-    card.style.display = (q === '' || text.includes(q)) ? 'flex' : 'none';
+    const show = (q === '' || text.includes(q));
+    card.style.display = show ? 'flex' : 'none';
+    if (show) visibleCards++;
   });
 
-  // Lọc bảng
+  // Lọc bảng tra cứu
   const tableRows = document.querySelectorAll('#glossary-table tbody tr');
   tableRows.forEach(row => {
     const text = (row.textContent + ' ' + (row.getAttribute('data-keywords') || '')).toLowerCase();
-    row.style.display = (q === '' || text.includes(q)) ? '' : 'none';
+    const show = (q === '' || text.includes(q));
+    row.style.display = show ? '' : 'none';
+    if (show) visibleRows++;
   });
+
+  // Ẩn section không còn card nào khớp (trừ bảng tra cứu)
+  document.querySelectorAll('section[id]').forEach(sec => {
+    if (sec.id === 'sec-table') return;
+    const anyVisible = Array.from(sec.querySelectorAll('.glossary-card'))
+      .some(c => c.style.display !== 'none');
+    sec.style.display = anyVisible ? '' : 'none';
+  });
+
+  // Cập nhật bộ đếm
+  const countEl = document.getElementById('glossary-count');
+  if (countEl) {
+    countEl.textContent = q === ''
+      ? `Toàn bộ: ${cards.length} thẻ kiến thức · ${tableRows.length} dòng tra cứu`
+      : `Khớp "${q}": ${visibleCards} thẻ · ${visibleRows} dòng`;
+  }
 }
 
-// ── Smooth Scroll & Active Nav Pills ────────────────────────────────────
-document.querySelectorAll('.glossary-pill').forEach(pill => {
-  pill.addEventListener('click', function(e) {
-    document.querySelectorAll('.glossary-pill').forEach(p => p.classList.remove('active'));
+// ── Keyboard shortcut: "/" focus search, Esc clear & blur ──────────────
+document.addEventListener('keydown', function(e) {
+  const input = document.getElementById('glossary-search');
+  if (!input) return;
+  if (e.key === '/' && document.activeElement !== input) {
+    e.preventDefault();
+    input.focus();
+    input.select();
+  } else if (e.key === 'Escape' && document.activeElement === input) {
+    input.value = '';
+    filterGlossary('');
+    input.blur();
+  }
+});
+
+// ── Smooth Scroll & Active Nav Pills (click + scroll-spy) ──────────────
+const pills = document.querySelectorAll('.glossary-pill');
+pills.forEach(pill => {
+  pill.addEventListener('click', function() {
+    pills.forEach(p => p.classList.remove('active'));
     this.classList.add('active');
   });
 });
+
+if ('IntersectionObserver' in window) {
+  const spy = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (!entry.isIntersecting) return;
+      const id = entry.target.id;
+      pills.forEach(p => p.classList.toggle('active', p.getAttribute('href') === '#' + id));
+    });
+  }, { rootMargin: '-15% 0px -70% 0px', threshold: 0 });
+  document.querySelectorAll('section[id]').forEach(sec => spy.observe(sec));
+}
+
+// ── Init counter ───────────────────────────────────────────────────────
+filterGlossary('');
 </script>
 
 </body>
