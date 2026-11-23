@@ -47,6 +47,7 @@ from analysis.yield_curve_fitting import (
     fit_day,
     implied_forward_rate,
     interpolate_nonparametric,
+    reject_fitted_curve_outliers,
     spot_annual_to_continuous,
     spot_continuous_to_annual,
     spot_to_par_yield,
@@ -264,7 +265,129 @@ class TestYieldCurveAndTermStructure(unittest.TestCase):
             self.assertTrue(len(parsed) > 0)
 
         pca_data = json.loads((EXPORTS_DATA_DIR / "curve_pca.json").read_text(encoding="utf-8"))
-        self.assertGreater(pca_data["summary"]["Cumulative_3PC"], 0.90)
+        # Ngưỡng 0.80 (hồi chuẩn trên DỮ LIỆU ĐÃ LÀM SẠCH): trước khi dọn, số nhiễu
+        # 2013–2016 (răng cưa 500+/ngày) thổi phồng Cumulative_3PC lên ~0.93 giả tạo;
+        # dữ liệu sạch cho 0.8575 — vẫn khẳng định 3 thành phần đầu nắm phần lớn
+        # phương sai biến động đường cong.
+        self.assertGreater(pca_data["summary"]["Cumulative_3PC"], 0.80)
+
+
+class TestDataQualityFirewall(unittest.TestCase):
+    """Regression cho bộ lọc chống ngoại lai — xử lý răng cưa Term Spread 2013–2014.
+
+    Nguồn HNX giai đoạn 2013–2016 có ngày đường cong bị lỗi ngoại suy (20Y par về
+    âm, 15Y sập 400bps, các ngày "twist" nhiều ô lệch nhẹ cùng lúc) làm đường cong
+    fit nhảy 200–600bps/ngày. Bộ phỏng chứng minh 3 lớp phòng vệ:
+      (1) lọc chuỗi thời gian trên điểm đầu vào,
+      (2) đối chiếu chéo spot ↔ par,
+      (3) lớp QA trên đường cong ĐÃ FIT (chặn suy ngoại suất vọt lố).
+    """
+
+    def _make_raw_with_zigzag(self) -> pd.DataFrame:
+        dates = pd.date_range("2013-06-03", periods=25, freq="B")
+        rows = []
+        for i, d in enumerate(dates):
+            drift = 0.002 * i  # xu hướng thật rất nhẹ (~2bps/ngày)
+            base = {
+                "3M": 5.50 + drift, "1Y": 6.30 + drift, "2Y": 7.00 + drift,
+                "5Y": 8.50 + drift, "7Y": 9.00 + drift, "10Y": 9.20 + drift,
+                "15Y": 9.50 + drift, "20Y": 9.70 + drift,
+            }
+            if i in (9, 18):  # 2 phiên nguồn lỗi kiểu twist/vọt lố
+                base["10Y"] += 2.8
+                base["15Y"] += 3.2
+                base["20Y"] += 3.5
+                base["2Y"] -= 1.1
+                base["3M"] -= 0.9
+            for tenor, v in base.items():
+                rows.append({"date": d, "tenor": tenor, "rate_type": "spot_annual", "value": v})
+        return pd.DataFrame(rows)
+
+    def test_input_firewall_removes_zigzag_keeps_smooth_series(self) -> None:
+        """Điểm vọt lố bị loại, điểm trơn tru (kể cả biên window) được giữ."""
+        panel = extract_clean_spot_panel(self._make_raw_with_zigzag())
+        bad_i = [9, 18]
+        good_i = [0, 3, 14, 24]
+        for i in bad_i:
+            d = panel.index[i]
+            for tenor in (0.25, 2.0, 10.0, 15.0, 20.0):
+                self.assertTrue(pd.isna(panel.loc[d, tenor]),
+                                f"Phải loại {tenor}Y tại {d.date()} (ngày lỗi twist)")
+        for i in good_i:
+            d = panel.index[i]
+            for tenor in (10.0, 20.0):
+                self.assertFalse(pd.isna(panel.loc[d, tenor]),
+                                 f"Không được loại {tenor}Y tại {d.date()} (ngày dữ liệu thật)")
+
+    def test_spot_par_disagreement_downgrades_to_par(self) -> None:
+        """Ngày spot_annual 20Y vọt lố xa par_yield ⇒ panel hạ cấp về par thay vì nhận spot."""
+        dates = pd.date_range("2015-03-02", periods=15, freq="B")
+        rows = []
+        for i, d in enumerate(dates):
+            par10, par20 = 9.0 + 0.01 * i, 9.6 + 0.01 * i
+            rows.append({"date": d, "tenor": "10Y", "rate_type": "par_yield", "value": par10})
+            rows.append({"date": d, "tenor": "20Y", "rate_type": "par_yield", "value": par20})
+            rows.append({"date": d, "tenor": "10Y", "rate_type": "spot_annual", "value": par10 + 0.03})
+            spot20 = par20 + (6.7 if i == 7 else 0.05)  # ngày i=7: spot20 = ~16.3% (lỗi)
+            rows.append({"date": d, "tenor": "20Y", "rate_type": "spot_annual", "value": spot20})
+        panel = extract_clean_spot_panel(pd.DataFrame(rows))
+        d7 = dates[7]
+        val = float(panel.loc[d7, 20.0])
+        self.assertLess(val, 11.0, "Phải dùng par (~9.7%), không nhận spot 16.3%")
+        self.assertAlmostEqual(val, 9.6 + 0.01 * 7, places=6)
+        # Các ngày bình thường không đổi (spot cách par 5bps < ngưỡng 75bps)
+        self.assertAlmostEqual(float(panel.loc[dates[2], 20.0]), 9.6 + 0.01 * 2 + 0.05, places=6)
+
+    def test_fitted_curve_filter_kills_spike_keeps_real_drift(self) -> None:
+        """Lớp QA đường cong fit: điểm suy ngoại suất +180bps bị loại, drift thật 1bps/ngày giữ nguyên."""
+        dates = pd.date_range("2015-06-01", periods=21, freq="B")
+        rows = []
+        for i, d in enumerate(dates):
+            for t, base in ((2.0, 6.8), (10.0, 9.0), (30.0, 9.6)):
+                v = base + 0.001 * i
+                if i == 12 and t == 10.0:
+                    v += 1.8  # ngày lỗi: 10Y fit vọt +180bps
+                rows.append({"date": d, "tenor_yr": t, "yield_pct": v, "method": "NS"})
+        curve = pd.DataFrame(rows)
+        out = reject_fitted_curve_outliers(curve)
+        self.assertEqual(len(out), len(curve) - 1, "Chỉ đúng 1 điểm lỗi bị loại")
+        spike = out[(out["date"] == dates[12]) & (out["tenor_yr"] == 10.0)]
+        self.assertTrue(spike.empty, "Điểm 10Y vọt lố phải bị loại")
+        self.assertEqual(list(out.columns), ["date", "tenor_yr", "yield_pct", "method"])
+        self.assertTrue((out["method"] == "NS").all())
+
+    def test_fitted_curve_filter_on_real_data_scope(self) -> None:
+        """Dữ liệu pipeline: đường cong đã mượt, bộ lọc hội tụ, không mất điểm 2Y/5Y/10Y thời kỳ sạch."""
+        path = CACHE_DIR / "fitted_curve_ns.parquet"
+        if not path.exists():
+            self.skipTest("Chưa có cache/fitted_curve_ns.parquet")
+        curve = pd.read_parquet(path)
+        c = curve.copy()
+        c["date"] = pd.to_datetime(c["date"])
+
+        # (a) Bộ lọc đã được áp ở bước fit và HỘI TỤ: chạy lại chỉ loại thêm rất ít.
+        out = reject_fitted_curve_outliers(curve)
+        lost = len(curve) - len(out)
+        self.assertLess(lost / len(curve), 0.02,
+                        "Bộ lọc phải đã hội tụ trên đường cong do pipeline tạo")
+
+        # (b) Mục tiêu chính: đường cong 2013 hết răng cưa — không còn ngày
+        # nhảy quá 100bps ở kỳ hạn chuẩn 10Y (trước fix: hàng trăm bps/ngày).
+        p = c.pivot_table(index="date", columns="tenor_yr", values="yield_pct").sort_index()
+        d10 = p[10.0].diff().abs()
+        d10_2013 = d10[d10.index.year == 2013].dropna()
+        self.assertTrue(len(d10_2013) > 100, "Phải đủ dữ liệu 2013 để kiểm tra")
+        self.assertLess(float(d10_2013.max()), 1.0,
+                        "Biên động ngày 10Y năm 2013 phải < 100bps sau fix")
+
+        # (c) Thời kỳ dữ liệu sạch không bị mất điểm ở các kỳ hạn chuẩn:
+        # 2021+ phải có đủ điểm 2Y/5Y/10Y trên ≥95% ngày có dữ liệu đường cong.
+        mod = p[p.index >= "2021-01-01"]
+        days = mod.notna().any(axis=1).sum()
+        for t in (2.0, 5.0, 10.0):
+            cover = mod[t].notna().sum() / days
+            self.assertGreaterEqual(cover, 0.95,
+                                    f"Phủ điểm {t}Y thời kỳ 2021+ phải ≥95%, got {cover:.1%}")
 
 
 if __name__ == "__main__":
