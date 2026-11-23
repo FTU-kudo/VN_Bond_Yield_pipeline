@@ -165,6 +165,7 @@ def daily_scan(
     date_col: str,
     save_every: int = 20,
     verbose: bool = True,
+    refresh_days: int = 0,
 ) -> pd.DataFrame:
     """Vòng lặp quét hàng ngày với cache tăng dần.
 
@@ -175,6 +176,11 @@ def daily_scan(
        → Ghi tăng dần mỗi save_every ngày xử lý.
     3. Lỗi mạng một ngày không nên dừng toàn bộ:
        → Catch exception, không ghi ngày đó vào checked → tự thử lại lần sau.
+
+    ``refresh_days``: số ngày gần nhất (tính từ ``end``) sẽ được **làm mới dù đã
+    checked** — HNX thường công bố bảng cong lợi suất lần đầu sau khi đóng cửa rồi
+    còn chỉnh sửa lại vào buổi tối; quét lại với cùng ``dedup_keys`` (keep="last")
+    sẽ GHI ĐÈ các dòng cũ bằng số mới nhất, đảm bảo cache giữ đúng bản cuối cùng.
 
     Parameters
     ----------
@@ -198,6 +204,9 @@ def daily_scan(
         Ghi xuống đĩa sau mỗi bao nhiêu ngày xử lý.
     verbose : bool
         In tiến độ ra stdout.
+    refresh_days : int
+        Làm mới N ngày gần nhất (tính từ ``end``) dù đã checked — số mới ghi đè
+        số cũ nhờ dedup keep="last". Mặc định 0 (không làm mới).
     """
     cache_dir.mkdir(parents=True, exist_ok=True)
     data_path = cache_dir / data_file
@@ -212,10 +221,15 @@ def daily_scan(
     pending_data: list[pd.DataFrame] = []
     pending_checked: list[date] = []
 
+    # Ngày cần LÀM MỚI dù đã checked (bản HNX có thể bị sửa sau lần xuất bản đầu)
+    refresh_dates: set[date] = set()
+    if refresh_days > 0:
+        refresh_dates = {end - timedelta(days=i) for i in range(refresh_days)}
+
     d = start
     while d <= end:
-        # Bỏ qua cuối tuần và ngày đã quét
-        if d.weekday() >= 5 or d in already_checked:
+        # Bỏ qua cuối tuần; bỏ qua ngày đã quét (trừ ngày nằm trong cửa sổ refresh)
+        if d.weekday() >= 5 or (d in already_checked and d not in refresh_dates):
             d += timedelta(days=1)
             continue
 

@@ -178,8 +178,9 @@ pip install -r requirements.txt
 File `run_pipeline.py` là trung tâm điều khiển (Entrypoint) cho toàn bộ quy trình từ cào dữ liệu, làm sạch, phân tích định lượng đến xuất bản web:
 
 ```bash
-# 1. Cập nhật hàng ngày (Chế độ khuyến nghị dùng hàng ngày sau 17:00 ICT)
-# Chỉ quét 7 ngày gần nhất, tự động bỏ qua ngày đã có, thời gian chạy ~15-30 giây
+# 1. Cập nhật hàng ngày (Chế độ khuyến nghị: sau 18:10 ICT — khi HNX đã chốt bảng cong)
+# Chỉ quét 7 ngày gần nhất, tự động bỏ qua ngày đã có (trừ 2 ngày gần nhất sẽ được
+# làm mới để lấy bản HNX đã chỉnh sửa cuối ngày), thời gian chạy ~15-30 giây
 python run_pipeline.py --mode daily
 
 # 2. Backfill toàn bộ lịch sử (Chạy lần đầu hoặc muốn làm mới toàn bộ từ 2012)
@@ -286,7 +287,8 @@ Bóc tách trực tiếp từ các file báo cáo PDF hàng ngày của HNX, the
 Hệ thống được thiết lập tự động hóa hoàn toàn thông qua **GitHub Actions** lưu tại `.github/workflows/`:
 
 1. **`daily_update.yml`**:
-   - Kích hoạt qua `repository_dispatch` (từ webhook ngoài như `cron-job.org` vào 17:30 ICT các ngày từ Thứ 2 đến Thứ 6) hoặc kích hoạt bằng tay (`workflow_dispatch`).
+   - Kích hoạt qua `repository_dispatch` (từ webhook ngoài như `cron-job.org` các ngày Thứ 2 đến Thứ 6) hoặc kích hoạt bằng tay (`workflow_dispatch`).
+   - Nếu cron kích hoạt trước **18:10 ICT**, workflow tự chờ tới 18:10 ICT rồi mới quét — để lấy **bảng cong HNX đã chốt cuối ngày** (HNX thường sửa số sau lần xuất bản đầu lúc ~16:00); 2 ngày gần nhất luôn được fetch lại và ghi đè số cũ.
    - Tự động chạy `python run_pipeline.py --mode daily`.
    - Kiểm tra thay đổi trong `cache/`, `exports/`, `dashboard/` và tự động commit, push lên nhánh `main`.
 2. **`backfill.yml`**:

@@ -101,7 +101,14 @@ def fetch_yield_curve_day(d: date, sess) -> pd.DataFrame:
 
 def run(start: str | date, end: str | date | None = None, *,
         cache_dir: str | Path = "./cache", verbose: bool = True,
-        save_every: int = 20) -> pd.DataFrame:
+        save_every: int = 20, refresh_days: int = 2) -> pd.DataFrame:
+    """Quét đường cong HNX theo ngày.
+
+    ``refresh_days=2`` (mặc định): 2 ngày gần nhất được fetch LẠI dù đã checked —
+    HNX thường công bố bảng cong sau khi đóng cửa (~16:00) rồi còn chỉnh sửa tới
+    buổi tối (~18:00+); quét lại sẽ ghi đè bản cũ bằng số mới nhất (dedup
+    keep="last"), đảm bảo cache giữ đúng bản HNX đã chốt cuối ngày.
+    """
     cache_dir = Path(cache_dir)
     d0, d1 = _as_date(start), _as_date(end or date.today())
     sess = http.session(REF_YIELD_CURVE)
@@ -110,6 +117,7 @@ def run(start: str | date, end: str | date | None = None, *,
         data_file=DATA_FILE, checked_file=CHECKED_FILE,
         dedup_keys=DEDUP_KEYS, date_col=DATE_COL,
         save_every=save_every, verbose=verbose,
+        refresh_days=refresh_days,
     )
 
 

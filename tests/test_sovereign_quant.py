@@ -15,6 +15,7 @@ Kiểm chứng toàn diện các tiêu chuẩn bắt buộc:
 from __future__ import annotations
 
 import json
+import tempfile
 import unittest
 from datetime import date
 from pathlib import Path
@@ -255,6 +256,7 @@ class TestYieldCurveAndTermStructure(unittest.TestCase):
             "auction_stats.json",
             "foreign_flow.json",
             "metadata.json",
+            "hnx_yield_curve.json",
         ]
         for fname in expected_jsons:
             fpath = EXPORTS_DATA_DIR / fname
@@ -270,6 +272,17 @@ class TestYieldCurveAndTermStructure(unittest.TestCase):
         # dữ liệu sạch cho 0.8575 — vẫn khẳng định 3 thành phần đầu nắm phần lớn
         # phương sai biến động đường cong.
         self.assertGreater(pca_data["summary"]["Cumulative_3PC"], 0.80)
+
+        # metadata phải ghi thời điểm chụp bảng HNX (khác giờ export) cho badge
+        # "HNX lấy lúc …" trên header dashboard
+        meta = json.loads((EXPORTS_DATA_DIR / "metadata.json").read_text(encoding="utf-8"))
+        self.assertIn("hnx_curve_fetched_at", meta)
+        self.assertTrue(meta["hnx_curve_fetched_at"], "Thiếu hnx_curve_fetched_at trong metadata")
+
+        # hnx_yield_curve.json phải có dữ liệu spot_annual để đối chiếu 1-1
+        hnx_rows = json.loads((EXPORTS_DATA_DIR / "hnx_yield_curve.json").read_text(encoding="utf-8"))
+        self.assertGreater(len(hnx_rows), 1000)
+        self.assertTrue(all("date" in r and "tenor" in r and "value" in r for r in hnx_rows[:10]))
 
 
 class TestDataQualityFirewall(unittest.TestCase):
@@ -388,6 +401,66 @@ class TestDataQualityFirewall(unittest.TestCase):
             cover = mod[t].notna().sum() / days
             self.assertGreaterEqual(cover, 0.95,
                                     f"Phủ điểm {t}Y thời kỳ 2021+ phải ≥95%, got {cover:.1%}")
+
+
+class TestDailyScanRefresh(unittest.TestCase):
+    """daily_scan(refresh_days=N) phải fetch lại N ngày gần nhất dù đã checked và GHI ĐỀ số cũ.
+
+    Quy định mới (chống lệch số liệu HNX): HNX công bố bảng cong sau khi đóng cửa
+    rồi còn chỉnh sửa tới buổi tối — cache phải giữ được BẢN CUỐI cùng.
+    """
+
+    def _run_scan(self, cache_dir, start, end, fetch_log, values, refresh_days=0):
+        import sys as _sys
+        pipeline_dir = str(REPO_ROOT / "pipeline")
+        if pipeline_dir not in _sys.path:
+            _sys.path.insert(0, pipeline_dir)
+        from common import daily_scan
+
+        def fake_fetch(d, _sess):
+            fetch_log.append(d)
+            v = values.get(d.isoformat())
+            if v is None:
+                return pd.DataFrame()
+            return pd.DataFrame([{
+                "date": pd.Timestamp(d), "tenor": "10Y",
+                "rate_type": "spot_annual", "value": v,
+            }])
+
+        return daily_scan(
+            fake_fetch, start=start, end=end, sess=None, cache_dir=Path(cache_dir),
+            data_file="scan_data.parquet", checked_file="scan_checked.parquet",
+            dedup_keys=["date", "tenor", "rate_type"], date_col="date",
+            verbose=False, refresh_days=refresh_days,
+        )
+
+    def test_refresh_days_refetches_and_overwrites_recent_dates(self) -> None:
+        from datetime import date as _date
+        start, end = _date(2026, 11, 18), _date(2026, 11, 20)  # Wed–Fri, bỏ qua T7/CN
+        with tempfile.TemporaryDirectory() as tmp:
+            values = {"2026-11-18": 4.0, "2026-11-19": 4.1, "2026-11-20": 4.2}
+            log1: list = []
+            df1 = self._run_scan(tmp, start, end, log1, values, refresh_days=0)
+            self.assertEqual(len(log1), 3, "Lần 1 phải quét đủ 3 ngày")
+            self.assertEqual(len(df1), 3)
+
+            # Lần 2: không refresh → ngày đã checked bị bỏ qua, không fetch lại
+            log2: list = []
+            self._run_scan(tmp, start, end, log2, values, refresh_days=0)
+            self.assertEqual(len(log2), 0, "Không refresh thì không được fetch lại ngày đã checked")
+
+            # Lần 3: refresh_days=2 → chỉ 19 & 20 được fetch lại; số mới GHI ĐÈ số cũ
+            values["2026-11-19"] = 5.1
+            values["2026-11-20"] = 5.2
+            log3: list = []
+            df3 = self._run_scan(tmp, start, end, log3, values, refresh_days=2)
+            self.assertEqual([d.isoformat() for d in log3],
+                             ["2026-11-19", "2026-11-20"],
+                             "Chỉ 2 ngày gần nhất được refresh, 18/11 bỏ qua")
+            self.assertEqual(len(df3), 3, "Refresh không được tạo dòng trùng (dedup keep=last)")
+            got = {str(r["date"])[:10]: float(r["value"]) for _, r in df3.iterrows()}
+            self.assertEqual(got, {"2026-11-18": 4.0, "2026-11-19": 5.1, "2026-11-20": 5.2},
+                             "Số mới phải ghi đè số cũ, ngày không refresh giữ nguyên")
 
 
 if __name__ == "__main__":
