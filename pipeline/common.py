@@ -221,10 +221,16 @@ def daily_scan(
     pending_data: list[pd.DataFrame] = []
     pending_checked: list[date] = []
 
-    # Ngày cần LÀM MỚI dù đã checked (bản HNX có thể bị sửa sau lần xuất bản đầu)
+    # Ngày cần LÀM MỚI dù đã checked (bản HNX có thể bị sửa sau lần xuất bản đầu).
+    # Đi ngược N NGÀY LÀM VIỆC từ ``end`` (không phải ngày dương lịch) — với cửa sổ
+    # thanh toán T+2, end có thể rơi vào cuối tuần xa hôm nay 2-3 ngày dương lịch.
     refresh_dates: set[date] = set()
     if refresh_days > 0:
-        refresh_dates = {end - timedelta(days=i) for i in range(refresh_days)}
+        cur = end
+        while len(refresh_dates) < refresh_days and cur >= start:
+            if cur.weekday() < 5:
+                refresh_dates.add(cur)
+            cur -= timedelta(days=1)
 
     d = start
     while d <= end:
@@ -328,3 +334,20 @@ def vn_weekdays(start: date, end: date) -> list[date]:
             out.append(d)
         d += timedelta(days=1)
     return out
+
+
+def add_business_days(d: date, n: int) -> date:
+    """Cộng ``n`` ngày LÀM VIỆC (bỏ Thứ 7 / Chủ nhật), ``n`` có thể âm.
+
+    Dùng cho cửa sổ **ngày thanh toán HNX**: trang ``duong-cong-loi-suat``
+    mặc định chọn "Ngày thanh toán" = hôm nay + 2 ngày làm việc (T+2) — đó
+    là đường cong MỚI NHẤT mà HNX công bố (áp dụng cho phiên giao dịch hôm nay).
+    """
+    cur = d
+    added = 0
+    step = 1 if n >= 0 else -1
+    while added < abs(n):
+        cur += timedelta(days=step)
+        if cur.weekday() < 5:
+            added += 1
+    return cur

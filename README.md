@@ -179,8 +179,9 @@ File `run_pipeline.py` là trung tâm điều khiển (Entrypoint) cho toàn b�
 
 ```bash
 # 1. Cập nhật hàng ngày (Chế độ khuyến nghị: sau 18:10 ICT — khi HNX đã chốt bảng cong)
-# Chỉ quét 7 ngày gần nhất, tự động bỏ qua ngày đã có (trừ 2 ngày gần nhất sẽ được
-# làm mới để lấy bản HNX đã chỉnh sửa cuối ngày), thời gian chạy ~15-30 giây
+# Quét 7 ngày gần nhất + cửa sổ ngày thanh toán T+2 (đường cong "Ngày thanh toán"
+# mặc định trên hnx.vn = phiên giao dịch hôm nay — nếu thiếu sẽ trễ 2 phiên so với
+# trang HNX). 3 ngày thanh toán gần nhất luôn được fetch lại và ghi đè số cũ.
 python run_pipeline.py --mode daily
 
 # 2. Backfill toàn bộ lịch sử (Chạy lần đầu hoặc muốn làm mới toàn bộ từ 2012)
@@ -288,7 +289,8 @@ Hệ thống được thiết lập tự động hóa hoàn toàn thông qua **G
 
 1. **`daily_update.yml`**:
    - Kích hoạt qua `repository_dispatch` (từ webhook ngoài như `cron-job.org` các ngày Thứ 2 đến Thứ 6) hoặc kích hoạt bằng tay (`workflow_dispatch`).
-   - Nếu cron kích hoạt trước **18:10 ICT**, workflow tự chờ tới 18:10 ICT rồi mới quét — để lấy **bảng cong HNX đã chốt cuối ngày** (HNX thường sửa số sau lần xuất bản đầu lúc ~16:00); 2 ngày gần nhất luôn được fetch lại và ghi đè số cũ.
+   - Nếu cron kích hoạt trước **18:10 ICT**, workflow tự chờ tới 18:10 ICT rồi mới quét — để lấy **bảng cong HNX đã chốt cuối ngày** (HNX thường sửa số sau lần xuất bản đầu lúc ~16:00); 3 ngày thanh toán gần nhất luôn được fetch lại và ghi đè số cũ.
+   - Quét tới **hôm nay + 2 ngày làm việc (T+2)** — đúng "Ngày thanh toán" mặc định mà hnx.vn hiển thị (đường cong phiên hôm nay); nếu chỉ quét tới hôm nay thì dashboard sẽ luôn trễ 2 phiên so với trang HNX.
    - Tự động chạy `python run_pipeline.py --mode daily`.
    - Kiểm tra thay đổi trong `cache/`, `exports/`, `dashboard/` và tự động commit, push lên nhánh `main`.
 2. **`backfill.yml`**:

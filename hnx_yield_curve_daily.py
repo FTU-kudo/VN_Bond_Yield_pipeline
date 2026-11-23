@@ -31,7 +31,7 @@ import pandas as pd
 from vnbond import http
 from vnbond.sources.hnx import _as_date
 
-from common import daily_scan, extract_all_tables, strip_diacritics, vn_number
+from common import add_business_days, daily_scan, extract_all_tables, strip_diacritics, vn_number
 
 YIELD_CURVE_URL = "https://www.hnx.vn/ModuleReportBonds/Bond_YieldCurve/SearchAndNextPageYieldCurveData"
 REF_YIELD_CURVE = "https://www.hnx.vn/vi-vn/trai-phieu/duong-cong-loi-suat.html"
@@ -101,16 +101,24 @@ def fetch_yield_curve_day(d: date, sess) -> pd.DataFrame:
 
 def run(start: str | date, end: str | date | None = None, *,
         cache_dir: str | Path = "./cache", verbose: bool = True,
-        save_every: int = 20, refresh_days: int = 2) -> pd.DataFrame:
+        save_every: int = 20, refresh_days: int = 3) -> pd.DataFrame:
     """Quét đường cong HNX theo ngày.
 
-    ``refresh_days=2`` (mặc định): 2 ngày gần nhất được fetch LẠI dù đã checked —
-    HNX thường công bố bảng cong sau khi đóng cửa (~16:00) rồi còn chỉnh sửa tới
-    buổi tối (~18:00+); quét lại sẽ ghi đè bản cũ bằng số mới nhất (dedup
-    keep="last"), đảm bảo cache giữ đúng bản HNX đã chốt cuối ngày.
+    ``end`` mặc định = **hôm nay + 2 ngày làm việc (T+2)**: trang HNX
+    ``duong-cong-loi-suat`` chọn "Ngày thanh toán" mặc định = T+2 và đó là
+    đường cong MỚI NHẤT họ công bố (phiên giao dịch hôm nay, đăng sau khi đóng
+    cửa). Nếu chỉ quét tới ``pDate = hôm nay`` thì dashboard luôn bị TRỄ 2 phiên
+    so với trang HNX — số hiển thị khác nhau dù cùng nguồn.
+
+    ``refresh_days=3`` (mặc định): 3 ngày thanh toán gần nhất (tính ngược theo
+    NGÀY LÀM VIỆC từ ``end``) được fetch LẠI dù đã checked — HNX công bố lần
+    đầu rồi còn chỉnh sửa buổi tối; quét lại ghi đè bản cũ bằng số mới nhất
+    (dedup keep="last"), cache luôn giữ bản HNX đã chốt cuối ngày. Ngày tương
+    lai chưa có dữ liệu sẽ KHÔNG bị đánh dấu checked → tự thử lại lần sau.
     """
     cache_dir = Path(cache_dir)
-    d0, d1 = _as_date(start), _as_date(end or date.today())
+    d0 = _as_date(start)
+    d1 = _as_date(end) if end is not None else add_business_days(date.today(), 2)
     sess = http.session(REF_YIELD_CURVE)
     return daily_scan(
         fetch_yield_curve_day, start=d0, end=d1, sess=sess, cache_dir=cache_dir,

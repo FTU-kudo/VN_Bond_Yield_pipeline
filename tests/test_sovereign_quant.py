@@ -462,6 +462,47 @@ class TestDailyScanRefresh(unittest.TestCase):
             self.assertEqual(got, {"2026-11-18": 4.0, "2026-11-19": 5.1, "2026-11-20": 5.2},
                              "Số mới phải ghi đè số cũ, ngày không refresh giữ nguyên")
 
+    def test_refresh_walks_business_days_not_calendar(self) -> None:
+        """Refresh phải đếm NGÀY LÀM VIỆC ngược từ end — cửa sổ thanh toán T+2
+        có end rơi xa hôm nay nhiều ngày dương lịch (vd thứ Sáu → Thứ Ba)."""
+        from datetime import date as _date
+        start, end = _date(2026, 11, 16), _date(2026, 11, 20)  # Mon→Fri
+        with tempfile.TemporaryDirectory() as tmp:
+            values = {d: 4.0 + i for i, d in enumerate(
+                ["2026-11-18", "2026-11-19", "2026-11-20"])}
+            log: list = []
+            self._run_scan(tmp, start, end, log, values, refresh_days=0)   # seed
+            log2: list = []
+            self._run_scan(tmp, start, end, log2, values, refresh_days=3)
+            # Đúng 3 NGÀY LÀM VIỆC gần nhất từ thứ Sáu: Thứ 4, Thứ 5, Thứ 6
+            # (không phải {Fri, Thu, Wed} theo dương lịch nếu end rơi cuối tuần)
+            self.assertEqual([d.isoformat() for d in log2],
+                             ["2026-11-18", "2026-11-19", "2026-11-20"])
+
+
+class TestSettlementWindow(unittest.TestCase):
+    """Cửa sổ ngày thanh toán HNX (T+2) — trang hnx.vn mặc định 'Ngày thanh toán'
+    = hôm nay + 2 ngày làm việc; pipeline phải quét tới đó nếu không sẽ trễ 2 phiên."""
+
+    def test_add_business_days(self) -> None:
+        import sys as _sys
+        pipeline_dir = str(REPO_ROOT / "pipeline")
+        if pipeline_dir not in _sys.path:
+            _sys.path.insert(0, pipeline_dir)
+        from common import add_business_days
+
+        from datetime import date as _date
+        # Thứ Hai 23/11 +2lv = Thứ Tư 25/11 — đúng ô ngày trên trang HNX (ảnh chụp)
+        self.assertEqual(add_business_days(_date(2026, 11, 23), 2), _date(2026, 11, 25))
+        # Thứ Sáu +2lv = Thứ Ba sang tuần (bỏ T7/CN)
+        self.assertEqual(add_business_days(_date(2026, 11, 20), 2), _date(2026, 11, 24))
+        # Thứ Năm +2lv = Thứ Hai (bỏ T7/CN)
+        self.assertEqual(add_business_days(_date(2026, 11, 19), 2), _date(2026, 11, 23))
+        # Trừ ngày làm việc
+        self.assertEqual(add_business_days(_date(2026, 11, 25), -2), _date(2026, 11, 23))
+        # 0 ngày = chính nó
+        self.assertEqual(add_business_days(_date(2026, 11, 23), 0), _date(2026, 11, 23))
+
 
 if __name__ == "__main__":
     unittest.main()
