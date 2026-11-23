@@ -192,8 +192,11 @@ def compute_yield_curve_pca(
 ) -> dict:
     """Phân tích Thành phần Chính (PCA via SVD) của biến động đường cong lợi suất TPCP Việt Nam.
 
-    Trên thị trường trái phiếu chính phủ toàn cầu (Litterman & Scheinkman, 1991) và tại Việt Nam,
-    3 thành phần chính đầu tiên giải thích > 98% tổng phương sai biến động đường cong:
+    Theo Litterman & Scheinkman (1991), 3 thành phần chính đầu tiên thường giải thích
+    phần lớn phương sai biến động đường cong (trên thị trường phát triển ~98%); trên
+    dữ liệu TPCP Việt Nam **đã làm sạch ngoại lai**, thực nghiệm đạt ~86% — con số
+    ~93% trước đây là ảo do nhiễu đường cong 2013–2016 thổi phồng phương sai.
+    Ba thành phần mang ý nghĩa kinh tế (đặt dấu theo chuẩn trực quan):
         - **PC1 (Level / Parallel Shift)**: Cùng dấu trên mọi kỳ hạn.
         - **PC2 (Slope / Steepening-Flattening Twist)**: Trái dấu giữa đầu ngắn (<= 2Y) và đầu dài (>= 10Y).
         - **PC3 (Curvature / Butterfly Flex)**: Dương ở bụng (3Y–7Y), âm ở hai cánh (1Y và 15Y–20Y).

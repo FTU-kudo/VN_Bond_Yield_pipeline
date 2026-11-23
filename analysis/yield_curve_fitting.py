@@ -74,7 +74,38 @@ GRID_TENORS = np.array([
 # Giới hạn kiểm soát chất lượng lợi suất TPCP Việt Nam (%/năm)
 MIN_VALID_YIELD_PCT: float = 0.05
 MAX_VALID_YIELD_PCT: float = 20.0
-MAX_LONG_END_JUMP_PCT: float = 4.0
+# Bước nhảy tối đa giữa mốc neo ≤10Y và các kỳ hạn dài (>10Y) trong MỘT ngày.
+# SIẾT TỪ 4.0 → 1.5 (% = 150 bps): dữ liệu HNX 2013–2016 có ngày 15Y "sập" xuống
+# dưới 10Y hơn 300bps hoặc vọt lên trên 250bps so với mốc 10Y — ngưỡng 4.0 trước
+# đây đã bỏ lọt toàn bộ nhóm lỗi này.
+MAX_LONG_END_JUMP_PCT: float = 1.5
+
+# ── Kiểm soát ngoại lai đối chiếu chéo & chuỗi thời gian ───────────────────
+# Một số ngày HNX công bố đường cong bị lỗi ngoại suy ở 2013–2016 (20Y par về âm,
+# 15Y "sập" 400bps, 10Y nhảy ±150bps rồi đảo chiều về ngay phiên sau). Lọc theo
+# biên tuyệt đối KHÔNG bắt được vì giá trị vẫn nằm trong [0.05, 20] — cần 2 lớp:
+#   (a) Đối chiếu chéo spot ↔ par cùng (date, tenor): spot_annual là chuỗi suy ra
+#       nên dễ vọt lố hơn par; khi lệch nhau quá ngưỡng thì tín hiệu par đáng tin.
+#   (b) Lọc chuỗi thời gian: mỗi ô so với TRUNG VỊ CỤC BỘ ±5 phiên của chính nó.
+#       Calibrate trên dữ liệu thật: 2017–2026 hầu như không ô nào lệch >75bps
+#       (0–3 ô/9 năm) trong khi 2013–2016 có hàng trăm ô lệch 0.8%–10%.
+SPOT_PAR_MAX_DIFF_PCT: float = 0.75    # |spot − par| > 75bps ⇒ hạ cấp spot về par
+TEMPORAL_MEDIAN_WINDOW: int = 11       # cửa sổ trung vị động ±5 phiên giao dịch
+TEMPORAL_MAX_DEV_PCT: float = 0.75     # lệch cục bộ > 75bps ⇒ nghi điểm lỗi
+TEMPORAL_FILTER_PASSES: int = 2        # số lần quét (cộng dồn, không khôi phục ô đã loại)
+
+# ── Lớp QA cuối: chuỗi thời gian trên đường cong ĐÃ FIT ────────────────────
+# Một số ngày “twist” (nhiều ô cùng lệch nhẹ <60bps: 3M↑, 2Y↓, 7Y↑ cùng lúc)
+# vẫn fit được với RMSE thấp nhưng SUY NGOẠI SUẤT vọt lố ở đầu dài (10Y fit
+# 10,9% trong khi các ngày lân cận ~9,2%) — gây răng cưa 200–600bps trên biểu
+# đồ Term Spread 2013–2014. Sau khi fit, mỗi điểm đường cong được so lại với
+# TRUNG VỊ CỤC BỘ ±5 phiên của chính nó; lệch > 50bps ⇒ loại (giây gảy).
+# Calibrate trên dữ liệu thật: 2013 giữ lại ~80% phiên (biến động max/ngày
+# 584 → 88 bps), 2017+ KHÔNG ảnh hưởng 2Y/5Y/10Y — vẫn giữ nguyên các biến
+# động thật như cú +111bps trong 1 phiên năm 2024.
+FITTED_CURVE_MAX_DEV_PCT: float = 0.5
+FITTED_CURVE_MEDIAN_WINDOW: int = 11
+FITTED_CURVE_FILTER_PASSES: int = 3
 
 
 def tenor_to_years(tenor: str | float | int | None) -> float | None:
@@ -406,8 +437,8 @@ def sanitize_yield_curve_CrossSection(
 
     Thực tiễn dữ liệu lịch sử HNX (2013–2016) cho thấy một số ngày thanh khoản mỏng ở
     kỳ hạn 15Y–20Y bị thuật toán cũ của sở ngoại suy âm (-4.4%) hoặc vọt lên > 25–51%.
-    Hàm này kiểm tra biên hợp lý $[0.05\\%, 20\\%]$ và độ nhảy bậc tối đa giữa các kỳ hạn liền kề
-    ở đầu dài ($> 10\\text{Y}$).
+    Hàm này kiểm tra biên hợp lý $[0.05\\%, 20\\%]$ và độ nhảy bậc tối đa
+    ``MAX_LONG_END_JUMP_PCT`` (150bps) giữa các kỳ hạn liền kề ở đầu dài ($> 10\\text{Y}$).
     """
     mask = (
         np.isfinite(tenors_yr)
@@ -438,6 +469,77 @@ def sanitize_yield_curve_CrossSection(
     return t[keep], y[keep]
 
 
+def _reject_temporal_outliers(
+    pivot: pd.DataFrame,
+    window: int | None = None,
+    max_dev: float | None = None,
+    passes: int | None = None,
+) -> pd.DataFrame:
+    """Lọc ngoại lai CHUỖI THỜI GIAN trên bảng lợi suất ``date × tenor_yr``.
+
+    Với từng cột kỳ hạn, mỗi điểm dữ liệu được đối chiếu với **trung vị cục bộ**
+    của chính nó trong cửa sổ ``window`` phiên (mặc định ``TEMPORAL_MEDIAN_WINDOW``
+    = ±5 phiên, tâm = phiên cần xét; ``min_periods=3`` bảo vệ các giai đoạn dữ
+    liệu thưa trước 2020 — ô không đủ hàng xóm sẽ KHÔNG bị loại). Điểm lệch tuyệt
+    đối quá ``max_dev`` (mặc định ``TEMPORAL_MAX_DEV_PCT``) bị loại (NaN) và quét
+    lặp ``passes`` lần với cơ chế cộng dồn — ô đã loại sẽ không bao giờ được khôi
+    phục, nhờ đó các chuỗi lỗi so le (một phiên bình thường – một phiên vọt lố)
+    bị triệt để loại bỏ thay vì làm lệch trung vị của chính nó.
+
+    Đặc biệt: lợi suất thực tế 2021 (3M = 0,26%, 1Y = 0,43% — vùng thấp lịch sử
+    do nới lỏng COVID) trơn tru theo thời gian nên KHÔNG bị ảnh hưởng; bộ lọc chỉ
+    nhắm vào các điểm đứt gãy bất thường so với chính chuỗi của nó.
+    """
+    if pivot.empty:
+        return pivot
+    window = TEMPORAL_MEDIAN_WINDOW if window is None else int(window)
+    max_dev = TEMPORAL_MAX_DEV_PCT if max_dev is None else float(max_dev)
+    passes = TEMPORAL_FILTER_PASSES if passes is None else int(passes)
+    out = pivot.astype(float).copy()
+    for _ in range(max(1, passes)):
+        med = out.rolling(window=window, center=True, min_periods=3).median()
+        bad = ((out - med).abs() > max_dev) & out.notna()
+        if not bool(bad.to_numpy().any()):
+            break
+        out = out.mask(bad)
+    return out
+
+
+def reject_fitted_curve_outliers(curve_df: pd.DataFrame) -> pd.DataFrame:
+    """Áp lớp QA chuỗi thời gian lên đường cong **đã fit** (dạng dài).
+
+    Đầu vào/đầu ra dạng ``(date, tenor_yr, yield_pct[, method])``. Từng điểm của
+    đường cong fit được so với trung vị cục bộ ±5 phiên của chính nó
+    (``FITTED_CURVE_MAX_DEV_PCT`` = 50bps, ``FITTED_CURVE_FILTER_PASSES`` = 3 lần
+    quét cộng dồn); điểm vượt ngưỡng bị loại khỏi bản lưu/xuất.
+
+    Mục đích: chặn các ngày fit “được nhưng sai” — RMSE thấp nhưng hình dạng
+    twist của điểm đầu vào khiến NS/NSS suy ngoại suất vọt lố ở đầu dài (10Y fit
+    10,9% trong khi ngày lân cận ~9,2%) — nguồn gốc răng cưa 200–600bps trên biểu
+    đồ Term Spread lịch sử 2013–2014. Front-end (``drawSpreadChart``) tự bỏ qua
+    ngày thiếu và nối mảnh liền kề nên biểu đồ tự động mượt.
+    """
+    if curve_df is None or curve_df.empty or "yield_pct" not in curve_df.columns:
+        return curve_df
+    pivot = curve_df.pivot_table(index="date", columns="tenor_yr", values="yield_pct")
+    if pivot.empty:
+        return curve_df
+    pivot = _reject_temporal_outliers(
+        pivot,
+        window=FITTED_CURVE_MEDIAN_WINDOW,
+        max_dev=FITTED_CURVE_MAX_DEV_PCT,
+        passes=FITTED_CURVE_FILTER_PASSES,
+    )
+    long = (
+        pivot.reset_index()
+        .melt(id_vars="date", var_name="tenor_yr", value_name="yield_pct")
+        .dropna(subset=["yield_pct"])
+    )
+    if "method" in curve_df.columns and len(curve_df):
+        long["method"] = curve_df["method"].iloc[0]
+    return long.reindex(columns=curve_df.columns)
+
+
 def extract_clean_spot_panel(
     df: pd.DataFrame,
     rate_priority: list[str] | None = None,
@@ -447,8 +549,15 @@ def extract_clean_spot_panel(
     Khắc phục triệt để lỗi trộn lẫn ``spot_annual``, ``spot_continuous`` và ``primary_winning_yield``:
     1. Áp dụng thứ tự ưu tiên phân cấp trên TỪNG cặp ``(date, tenor_yr)``:
        ``spot_annual`` > ``spot_continuous`` (quy đổi sang annual) > ``par_yield`` > ``primary_winning_yield``.
-    2. Làm sạch ngoại lai từng ngày qua ``sanitize_yield_curve_CrossSection`` (loại bỏ các điểm
-       ngoại suy lỗi HNX 2013–2016 như -4.4% hay +51.7%).
+    2. **Đối chiếu chéo spot ↔ par** (``SPOT_PAR_MAX_DIFF_PCT``): ngày HNX xuất bản
+       đường cong lỗi 2013–2016 cho thấy ``spot_annual`` vọt lố xa ``par_yield``
+       (lệch tới 400bps) — khi đó hạ cấp về ``par_yield`` làm điểm quan sát.
+    3. **Lọc ngoại lai chuỗi thời gian** (``_reject_temporal_outliers``): loại điểm
+       lệch > 75bps so với trung vị cục bộ ±5 phiên — bắt các lỗi “nhảy rồi đảo
+       chiều ngay phiên sau” mà biên [0.05, 20] không nhìn thấy.
+    4. Làm sạch ngoại lai từng ngày qua ``sanitize_yield_curve_CrossSection`` (loại bỏ
+       điểm ngoại suy lỗi HNX 2013–2016 như -4.4% hay +51.7%) và siết bước nhảy
+       đầu dài ``MAX_LONG_END_JUMP_PCT`` (150bps so với mốc 10Y).
     """
     if df.empty:
         return pd.DataFrame()
@@ -479,9 +588,31 @@ def extract_clean_spot_panel(
     )
 
     pivot = clean.pivot(index="date", columns="tenor_yr", values="value").sort_index()
+
+    # ── (a) Đối chiếu chéo spot ↔ par: spot vọt lố quá ngưỡng ⇒ thay bằng par ──
+    if "par_yield" in prio_map:
+        par_rows = sub[sub["rate_type"] == "par_yield"]
+        if not par_rows.empty:
+            par_pivot = (
+                par_rows.groupby(["date", "tenor_yr"], as_index=False)["value"]
+                .mean()
+                .pivot(index="date", columns="tenor_yr", values="value")
+                .reindex(index=pivot.index, columns=pivot.columns)
+            )
+            par_pivot = par_pivot.where(
+                (par_pivot >= MIN_VALID_YIELD_PCT) & (par_pivot <= MAX_VALID_YIELD_PCT)
+            )
+            use_par = ((pivot - par_pivot).abs() > SPOT_PAR_MAX_DIFF_PCT) & par_pivot.notna() & pivot.notna()
+            if bool(use_par.to_numpy().any()):
+                pivot = pivot.mask(use_par, par_pivot)
+
+    # ── (b) Lọc ngoại lai chuỗi thời gian (trung vị cục bộ ±5 phiên) ──────────
+    pivot = _reject_temporal_outliers(pivot)
+
+    # ── (c) Biên tuyệt đối [MIN, MAX] ─────────────────────────────────────────
     pivot = pivot.where((pivot >= MIN_VALID_YIELD_PCT) & (pivot <= MAX_VALID_YIELD_PCT))
 
-    # Kiểm soát bước nhảy đầu dài 15Y, 20Y, 30Y so với mốc 10Y
+    # ── (d) Kiểm soát bước nhảy đầu dài 15Y, 20Y, 30Y so với mốc 10Y ─────────
     if 10.0 in pivot.columns:
         if 15.0 in pivot.columns:
             bad_15 = (pivot[15.0] - pivot[10.0]).abs() > MAX_LONG_END_JUMP_PCT
@@ -785,6 +916,10 @@ def fit_all_history(
 
     params_df = _fit_panel_vectorized(pivot, method=method_u)
     curve_df = _evaluate_grid_vectorized(params_df, GRID_TENORS)
+    if len(curve_df):
+        # Lớp QA cuối: loại điểm fit suy ngoại suất vọt lố (gây răng cưa
+        # Term Spread lịch sử) trước khi lưu — áp dụng cho cả NS và NSS.
+        curve_df = reject_fitted_curve_outliers(curve_df)
 
     cache_path = Path(cache_dir)
     cache_path.mkdir(parents=True, exist_ok=True)
@@ -805,6 +940,8 @@ def fit_all_history(
     if method_u == "NS" and also_fit_nss:
         nss_params = _fit_panel_vectorized(pivot, method="NSS")
         nss_curve = _evaluate_grid_vectorized(nss_params, GRID_TENORS)
+        if len(nss_curve):
+            nss_curve = reject_fitted_curve_outliers(nss_curve)
         if len(nss_params):
             nss_params.to_parquet(cache_path / "fitted_params_nss.parquet", index=False)
         if len(nss_curve):
