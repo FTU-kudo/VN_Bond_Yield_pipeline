@@ -1433,4 +1433,96 @@ select:hover, select:focus {
   gap: 0.3rem;
 }
 
+/* ── Glossary Search Meta & Keyboard Hints ────────────────────────────── */
+.glossary-search-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  max-width: 540px;
+  margin-top: 0.5rem;
+}
+
+.glossary-count {
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: var(--accent-primary);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.glossary-search-hint {
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+}
+
+.glossary-kbd {
+  display: inline-block;
+  min-width: 1.25rem;
+  padding: 0.05rem 0.35rem;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem;
+  line-height: 1.4;
+  text-align: center;
+  color: var(--text-primary);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-card);
+  border-bottom-width: 2px;
+  border-radius: 4px;
+  box-shadow: 0 1px 0 var(--border-subtle);
+}
+
+/* ── Glossary Mini Tables (inside cards) ──────────────────────────────── */
+.glossary-mini-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.78rem;
+  margin: 0.6rem 0 0.75rem;
+}
+
+.glossary-mini-table th,
+.glossary-mini-table td {
+  padding: 0.4rem 0.55rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border-subtle);
+  vertical-align: top;
+}
+
+.glossary-mini-table thead th {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-secondary);
+  background: var(--bg-surface);
+  font-weight: 600;
+}
+
+.glossary-mini-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.glossary-mini-table td {
+  color: var(--text-secondary);
+}
+
+.glossary-mini-table td strong {
+  color: var(--text-primary);
+}
+
+/* ── Glossary Transmission Steps ──────────────────────────────────────── */
+.glossary-steps li {
+  margin-bottom: 0.4rem;
+  line-height: 1.55;
+}
+
+.glossary-steps li::marker {
+  color: var(--accent-primary);
+  font-weight: 700;
+}
+
+/* ── Anchor offset for sticky nav pills ───────────────────────────────── */
+section[id^="sec-"] {
+  scroll-margin-top: 4.5rem;
+}
+
 
