@@ -15,11 +15,28 @@ permissions:
 jobs:
   update:
     runs-on: ubuntu-latest
-    # Cap nhat hang ngay chi quet vai ngay gan nhat -> phai xong trong vai
-    # phut. Treo qua muc nay la dau hieu bat thuong that su can xem ngay,
+    # Bao gom ca buoc CHO den 18:10 ICT (toi da ~2h10 tu cron 16:00) + quet +
+    # phan tich. Treo qua muc nay la dau hieu bat thuong that su can xem ngay,
     # khong phai backfill dai ngay dung.
-    timeout-minutes: 30
+    timeout-minutes: 160
     steps:
+      # HNX dang ban cong bo duong cong loi suat sau khi dong cua (~16:00 ICT)
+      # con chinh sua so lieu toi buoi toi (~18:00+). Neu cron ngoai kich hoat
+      # som, doi den 18:10 ICT roi moi quet de lay BAN CUOI CUNG — khong dung
+      # khi kich hoat bang tay (workflow_dispatch) de dev khong bi doi vo ly.
+      - name: Cho den 18:10 ICT neu cron kich hoat som
+        if: github.event_name == 'repository_dispatch'
+        run: |
+          now=$(date -u +%s)
+          target=$(date -u -d "$(date -u +%Y-%m-%d) 11:10:00" +%s)  # 18:10 ICT = 11:10 UTC
+          if [ "$now" -lt "$target" ]; then
+            nap=$(( target - now ))
+            echo "Kich hoat luc $(date -u +%H:%M)UTC — cho ${nap}s (den 18:10 ICT)..."
+            sleep "$nap"
+          else
+            echo "Da qua 18:10 ICT — chay ngay."
+          fi
+
       - uses: actions/checkout@v4
 
       - uses: actions/setup-python@v5

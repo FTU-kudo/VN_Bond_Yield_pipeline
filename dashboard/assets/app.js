@@ -36,9 +36,10 @@ const state = {
   paramsData: null,    // active fitted params (NS or NSS)
   paramsDataNS: null,  // fitted_params_ns.json
   paramsDataNSS: null, // fitted_params_nss.json
-  riskLadder: null,    // bond_risk_ladder.json
-  curvePCA: null,      // curve_pca.json
-  metadata: null,      // metadata.json
+  riskLadder: null,     // bond_risk_ladder.json
+  curvePCA: null,       // curve_pca.json
+  metadata: null,       // metadata.json
+  hnxCurveData: null,   // hnx_yield_curve.json — số HNX chính thức (spot_annual) đối chiếu 1-1
   currentDate: null,
   selectedTenors: ['2Y', '5Y', '10Y'],
 };
@@ -70,10 +71,20 @@ function updateStatusBadges() {
       }
     }
   });
+
+  // Badge thời điểm chụp bảng HNX chính thức (khác giờ export dashboard)
+  const hnxBadge = document.getElementById('hnx-fetch-badge');
+  if (hnxBadge) {
+    if (meta && meta.hnx_curve_fetched_at) {
+      hnxBadge.textContent = `🕒 HNX lấy lúc ${meta.hnx_curve_fetched_at}`;
+    } else {
+      hnxBadge.style.display = 'none';
+    }
+  }
 }
 
 async function loadAllData() {
-  const [curveNS, curveNSS, spread, auction, foreign, paramsNS, paramsNSS, riskLadder, curvePCA, meta] = await Promise.all([
+  const [curveNS, curveNSS, spread, auction, foreign, paramsNS, paramsNSS, riskLadder, curvePCA, meta, hnxRaw] = await Promise.all([
     loadJSON('fitted_curve_ns.json'),
     loadJSON('fitted_curve_nss.json'),
     loadJSON('spread_analysis.json'),
@@ -84,6 +95,7 @@ async function loadAllData() {
     loadJSON('bond_risk_ladder.json'),
     loadJSON('curve_pca.json'),
     loadJSON('metadata.json'),
+    loadJSON('hnx_yield_curve.json'),
   ]);
 
   state.curveData = curveNS;
@@ -98,6 +110,7 @@ async function loadAllData() {
   state.riskLadder = riskLadder;
   state.curvePCA = curvePCA;
   state.metadata = meta;
+  state.hnxCurveData = hnxRaw;
 
   if (curveNS && curveNS.length > 0) {
     const dates = [...new Set(curveNS.map(d => d.date))].sort();

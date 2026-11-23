@@ -238,6 +238,31 @@ def export_json(cache_dir: Path, exports_dir: Path, verbose: bool):
         if verbose:
             ok(f"{json_name}: {len(data)} records → {out_path}")
 
+    # Export bảng HNX CHÍNH THỨC (spot_annual) — cho nút đối chiếu 1-1 trên dashboard
+    hnx_curve_path = cache_dir / "hnx_yield_curve_daily.parquet"
+    if hnx_curve_path.exists():
+        try:
+            df_h = pd.read_parquet(hnx_curve_path)
+            need_cols = {"date", "tenor", "rate_type", "value"}
+            if need_cols.issubset(df_h.columns) and len(df_h):
+                df_h = df_h[df_h["rate_type"] == "spot_annual"].copy()
+                df_h["date"] = pd.to_datetime(df_h["date"])
+                dates_h = sorted(df_h["date"].dropna().unique())
+                # Cắt ~1,000 ngày gần nhất cho dashboard tải mượt (giống fitted_curve)
+                if len(dates_h) > 1000:
+                    df_h = df_h[df_h["date"] >= dates_h[-1000]]
+                df_h = df_h.sort_values(["date", "tenor"])
+                recs = [
+                    {"date": str(d)[:10], "tenor": str(t), "value": (None if pd.isna(v) else float(v))}
+                    for d, t, v in zip(df_h["date"], df_h["tenor"], df_h["value"])
+                ]
+                with open(data_dir / "hnx_yield_curve.json", "w", encoding="utf-8") as f:
+                    json.dump(recs, f, ensure_ascii=False, default=str, indent=None, allow_nan=False)
+                if verbose:
+                    ok(f"hnx_yield_curve.json: {len(recs)} records → {data_dir / 'hnx_yield_curve.json'}")
+        except Exception as exc:  # noqa: BLE001
+            warn(f"Không export được hnx_yield_curve.json: {exc}")
+
     # Export curve_pca.json tổng hợp kết quả PCA 3 nhân tố (Level, Slope, Curvature)
     pca_sum_path = cache_dir / "curve_pca_summary.parquet"
     pca_load_path = cache_dir / "curve_pca_loadings.parquet"
@@ -371,10 +396,24 @@ def export_json(cache_dir: Path, exports_dir: Path, verbose: bool):
         except Exception:
             pass
 
+    # Thời điểm pipeline chụp bảng cong HNX chính thức (fetched_at đang là UTC naive
+    # — máy chạy UTC — nên đổi sang ICT để người dùng không nhầm với giờ export)
+    hnx_fetched_ict = None
+    hnx_raw_path = cache_dir / "hnx_yield_curve_daily.parquet"
+    if hnx_raw_path.exists():
+        try:
+            df_q = pd.read_parquet(hnx_raw_path, columns=["fetched_at"])
+            ts_max = pd.to_datetime(df_q["fetched_at"], errors="coerce", utc=True).max()
+            if pd.notna(ts_max):
+                hnx_fetched_ict = ts_max.tz_convert("Asia/Ho_Chi_Minh").strftime("%H:%M %d/%m/%Y")
+        except Exception:
+            hnx_fetched_ict = None
+
     meta_info = {
         "last_updated": now_ict.strftime("%H:%M %d/%m/%Y"),
         "last_updated_iso": now_ict.isoformat(),
         "latest_data_date": latest_date_str,
+        "hnx_curve_fetched_at": hnx_fetched_ict,
     }
     meta_path = data_dir / "metadata.json"
     with open(meta_path, "w", encoding="utf-8") as f:

@@ -58,6 +58,8 @@
     </div>
     <div style="display: flex; align-items: center; gap: 1rem;">
       <span id="update-badge" class="status-badge live">Cập nhật lúc --:--</span>
+      <span id="hnx-fetch-badge" class="status-badge" title="Thời điểm pipeline chụp bảng đường cong lợi suất CHÍNH THỨC từ hnx.vn (khác với giờ export dashboard)"
+            style="background: rgba(59,130,246,0.10); color: var(--color-accent, #3b82f6); border: 1px solid rgba(59,130,246,0.25);">HNX lấy lúc --:--</span>
       <button id="theme-toggle" class="theme-toggle-btn" aria-label="Toggle Theme" onclick="VNBond.toggleTheme()">Light mode 🌓</button>
       <span id="live-clock" style="font-size:0.8rem; color: var(--text-secondary); font-family: 'JetBrains Mono', monospace;"></span>
     </div>
@@ -119,8 +121,16 @@
 
       <!-- Term Spread Gauge + bảng tenor -->
       <div class="chart-card fade-in">
-        <p class="chart-title">📋 Bảng Lợi Suất Hiện Tại</p>
-        <p class="chart-subtitle">Đường cong ngày gần nhất (% năm) · Cuộn để xem tất cả kỳ hạn</p>
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; flex-wrap: wrap;">
+          <p class="chart-title" style="margin-bottom: 0;">📋 Bảng Lợi Suất Hiện Tại</p>
+          <div class="btn-group" id="yield-src-group" title="Chọn nguồn số liệu của bảng">
+            <button class="btn btn-primary" id="btn-src-fit" onclick="selectYieldSource('fit', this)"
+                    title="Đường cong Nelson-Siegel đã fit từ dữ liệu HNX (mượt, đủ 20 kỳ hạn)">Fit NS</button>
+            <button class="btn btn-ghost" id="btn-src-hnx" onclick="selectYieldSource('hnx', this)"
+                    title="Số HNX chính thức công bố (spot theo năm) — đối chiếu 1-1 với trang hnx.vn">🌐 HNX chính thức</button>
+          </div>
+        </div>
+        <p class="chart-subtitle" id="yield-table-subtitle">Đường cong ngày gần nhất (% năm) · Cuộn để xem tất cả kỳ hạn</p>
         <div id="tenor-table-body" style="margin-top: 0.5rem;">
           <div class="skeleton" style="height: 200px; border-radius: 8px;"></div>
         </div>
@@ -356,7 +366,7 @@
 
 <!-- ── Scripts ─────────────────────────────────────────────────────── -->
 <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
-<script src="assets/app.js?v=1.5"></script>
+<script src="assets/app.js?v=1.6"></script>
 <script>
 // ── Page-specific initialization ─────────────────────────────────────
 (async function initHomePage() {
@@ -808,7 +818,29 @@ function setSpreadRange(days, btn) {
 }
 
 // ── Tenor table renderer ────────────────────────────────────────────────
+// Nguồn hiển thị: 'fit' = đường cong NS đã fit (mặc định) · 'hnx' = số HNX chính thức
+let currentYieldSource = 'fit';
+
+function selectYieldSource(src, btn) {
+  currentYieldSource = src;
+  const grp = document.getElementById('yield-src-group');
+  if (grp) grp.querySelectorAll('button').forEach(b => b.className = 'btn btn-ghost');
+  if (btn) btn.className = 'btn btn-primary';
+  const sub = document.getElementById('yield-table-subtitle');
+  if (sub) {
+    sub.textContent = src === 'hnx'
+      ? 'Số HNX chính thức (spot theo năm) — đối chiếu 1-1 với trang hnx.vn · Kỳ hạn HNX không công bố hiển thị "—"'
+      : 'Đường cong ngày gần nhất (% năm) · Cuộn để xem tất cả kỳ hạn';
+  }
+  const { curveData, currentDate } = VNBond.state;
+  if (curveData && currentDate) renderTenorTable(curveData, currentDate);
+}
+
 function renderTenorTable(curveData, date) {
+  if (currentYieldSource === 'hnx') {
+    renderHnxRawTable(curveData, date);
+    return;
+  }
   const dayData = curveData
     .filter(d => d.date === date)
     .sort((a, b) => a.tenor_yr - b.tenor_yr);
@@ -863,6 +895,81 @@ function renderTenorTable(curveData, date) {
         </tbody>
       </table>
     </div>
+  `;
+  tbody.innerHTML = html;
+}
+
+// ── Bảng số HNX CHÍNH THỨC (đối chiếu 1-1 với hnx.vn) ─────────────────
+function renderHnxRawTable(curveData, date) {
+  const tbody = document.getElementById('tenor-table-body');
+  if (!tbody) return;
+  const rawAll = VNBond.state.hnxCurveData || [];
+
+  // Cùng lưới kỳ hạn với bảng Fit → so sánh 1-1 từng dòng
+  const dayData = curveData
+    .filter(d => d.date === date)
+    .sort((a, b) => a.tenor_yr - b.tenor_yr);
+
+  const rawMap = {};
+  rawAll.filter(d => d.date === date).forEach(r => { rawMap[r.tenor] = r.value; });
+
+  // Phiên HNX gần nhất liền trước để tính biến động DoD
+  const rawDates = [...new Set(rawAll.map(d => d.date))].sort();
+  const idx = rawDates.indexOf(date);
+  const prevMap = {};
+  if (idx > 0) {
+    rawAll.filter(d => d.date === rawDates[idx - 1]).forEach(r => { prevMap[r.tenor] = r.value; });
+  }
+
+  const hasRaw = Object.keys(rawMap).length > 0;
+  const html = `
+    <div class="table-scroll-container" style="max-height: 350px;">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Kỳ Hạn</th>
+            <th>Spot (%)</th>
+            <th>Biến Động (1D)</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${dayData.map(d => {
+            const label = VNBond.tenorLabel(d.tenor_yr);
+            const colorClass = label.endsWith('M') ? 't-3m'
+              : d.tenor_yr <= 1 ? 't-1y'
+              : d.tenor_yr <= 2 ? 't-2y'
+              : d.tenor_yr <= 5 ? 't-5y'
+              : d.tenor_yr <= 10 ? 't-10y' : 't-30y';
+            const rawVal = rawMap[label];
+            let valHtml, chgHtml;
+            if (rawVal == null) {
+              valHtml = '<span class="mono text-muted" title="HNX không công bố đường cong cho kỳ hạn này">—</span>';
+              chgHtml = '<span class="mono text-muted">—</span>';
+            } else {
+              valHtml = `<span class="mono text-accent">${VNBond.fmt.rate(rawVal)}</span>`;
+              const prevVal = prevMap[label];
+              chgHtml = '<span class="mono text-muted">—</span>';
+              if (prevVal != null) {
+                const diffBps = (rawVal - prevVal) * 100;
+                const cls = Math.abs(diffBps) < 0.05 ? 'neutral' : (diffBps > 0 ? 'up' : 'down');
+                const sign = diffBps > 0.05 ? '+' : '';
+                chgHtml = `<span class="metric-change ${cls} mono" style="font-size:0.75rem;">${sign}${diffBps.toFixed(1)} bps</span>`;
+              }
+            }
+            return `
+            <tr>
+              <td><span class="tenor-tag ${colorClass}" ${rawVal == null ? 'title="Không có trên bảng HNX"' : ''}>${label}</span></td>
+              <td>${valHtml}</td>
+              <td>${chgHtml}</td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>
+    ${hasRaw ? '' : `
+      <p style="margin-top:0.6rem; font-size:0.8rem; color: var(--text-muted); text-align:center;">
+        ⚠️ HNX chưa công bố đường cong cho ngày ${VNBond.formatDateVN(date)} — số sẽ tự cập nhật ở lần chạy pipeline kế tiếp.
+      </p>`}
   `;
   tbody.innerHTML = html;
 }
